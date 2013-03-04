@@ -1,0 +1,25 @@
+
+Strand checking.
+
+Input requirements:
+All data must be in beagle file format, and markers must be SNPs coded as A/C/T/G.  Any allele that is not A/C/T/G is considered to be a missing value.
+Each beagle file must have a corresponding .markers file (see beagle 3.0 docs).  Within the .markers file the markers must be in chromosomal order (if there is just one marker out of order, the marker will be removed).  The markers file may contain just a subset of markers in the bgl file, in which case the remaining markers will be ignored.
+
+The program is called using the syntax:
+python check_strands.py infileprefixes outfileprefix
+For example: python check_strands.py hapmap_ceu_chr22 my_affy_data_chr22 my_illumina_data_chr22 my_output22
+This example requires existence of hapmap_ceu_chr22.bgl hapmap_ceu_chr22.markers my_affy_data_chr22.bgl my_affy_data_chr22.markers my_illumina_data_chr22.bgl my_illumina_data_chr22.markers
+This example will create files my_output22.log (a log file detailing the strand switches made and other issues) my_output22.markers (a markers file that has all the markers from my three input sets) and hapmap_ceu_chr22_mod.bgl my_affy_data_chr22_mod.bgl my_illumina_data_chr22_mod.bgl in which the strand switches have been made.
+The "reference" file(s) should be listed first.  The alleles in the first file will not be switched (but some markers may be removed).  When a strand switch is needed for a marker between two files, the file listed later (to the right) in the command line will receive the switch.
+
+The program does the following:
+If a marker has different positions in two marker names, the script tries to use the position in the first listed file if this the two are within 100bp.
+If there are two marker names at the same position, the script assumes it is the same marker and uses the name in the first listed file.
+If a marker has more than 2 alleles, and cannot be fixed by a strand-switch, the marker is removed.
+Strand switches are decided by looking at: alleles, allele frequencies, and LD.  If the results are inconsistent, the marker is removed.  
+Switches are only A<->T or C<->G (i.e. reverse strand).
+If a marker has different allele frequencies in two files, and this cannot be fixed by a strand switch, the marker is discarded.  To be considered "different" the frequency difference must be at least 0.2.
+To consider LD, windows of 100 consecutive markers (from combined marker list) are considered.  Only pairs of markers with abs(r) < 0.3 go into the LD score.  For a given marker, if there are at least 2 markers within the window with LD (r) having opposite signs in two files and no more than 1 marker having consistent LD for the two files, a strand switch will be attempted.  If a strand switch is attempted but is not possible, or if two or more r values are consistent but also two or more r values are not consistent with the current strand orientation, then the marker will be removed.
+
+There is also code this directory for checking for Mendelian errors in trios or in parent-offspring pairs.
+
