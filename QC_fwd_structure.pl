@@ -359,7 +359,7 @@ while($line = <BUFF>)
         }
         else
         {
-                $array[1] = -9;
+                $array[1] = 0;
         }
         $line = join(" ",@array);
         print WRBUFF $line."\n";
@@ -368,7 +368,7 @@ close(BUFF);
 close(WRBUFF);
 system("mv $dirtemp/$rounded/workdir/temp1.geno $dirtemp/$rounded/workdir/temp.geno");
 #creating the extraparam file
-system("cp $STRUCTURE_PARAM $dirtemp/$rounded/workdir/");
+system("cp $STRUCTURE_PARAM $dirtemp/$rounded/workdir/structure.extraparams");
 #creating the main param file
 open(WRBUFF,">$dirtemp/$rounded/workdir/structure.mainparams") or die "unable to write main param file\n";
 print WRBUFF '#define INFILE'." $dirtemp/$rounded/workdir/temp.geno\n";
@@ -386,7 +386,7 @@ print WRBUFF '#define PLOIDY       2'."\n";
 print WRBUFF '#define ONEROWPERIND 1'."\n";
 print WRBUFF '#define MARKERNAMES  0'."\n";
 print WRBUFF '#define MAPDISTANCES 0'."\n";
-print WRBUFF '#define MAXPOPS    2'."\n";
+print WRBUFF '#define MAXPOPS    3'."\n";
 print WRBUFF '#define BURNIN    4000'."\n";
 print WRBUFF '#define NUMREPS   4000'."\n";
 system("$STRUCTURE -m $dirtemp/$rounded/workdir/structure.mainparams -e $dirtemp/$rounded/workdir/structure.extraparams -K 3"); 
