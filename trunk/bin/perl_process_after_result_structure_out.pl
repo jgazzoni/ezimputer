@@ -41,7 +41,7 @@ while($line=<BUFF>)
 		#print "$line\n";
 		@array = split(/ /,$line);
 		
-		#print $array[1]."\t".$array[3]."\t".$array[5]."\t".$array[6]."\t".$array[7]."\t".$array[8]."\t".$array[9]."\n";
+		#die $array[1]."\t".$array[3]."\t".$array[5]."\t".$array[6]."\t".$array[7]."\t".$array[8]."\t".$array[9]."\n";
 		#$arr[0] = $array[5];
 		#$arr[1] = $array[6];
 		#$arr[2] = $array[7];
@@ -51,7 +51,7 @@ while($line=<BUFF>)
 			$arr[$i] = $array[$nu];
 			$nu++;
 		}
-		if($array[3] == -9)
+		if($array[3] == 0)
 		{
 			$samp_array[$samp_num] = "$array[1] $array[5] $array[6] $array[7]";
 			#print "$arr[5] $arr[6] $arr[7]\n";
