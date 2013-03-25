@@ -58,10 +58,15 @@ $r2="r2";
 #intial reading
 $line = <AMBI>;
 chomp($line);
+if($line !~ m/\w/)
+{	
+	system("rm $dos_out");
+	die "EOF in the file Combined_impute_results_3_prob_ambi_out.gz,check for duplicate positions in the ind.tped.gz\n";
+}
 @array = split(" ",$line);
 $pos = shift(@array);
 $snp_id = shift(@array);
-        #print $snp_id;
+#print $snp_id;
 $a1 = shift(@array);
 $a2 = shift(@array);
 print WRMAP "$chr $snp_id 0 $pos\n";
@@ -100,6 +105,11 @@ while(<INPUT>)
 		#reading dosage file
 		$line = <AMBI>;
 		chomp($line);
+		if($line !~ m/\w/)
+		{
+			system("rm $dos_out");
+			die "EOF in the file Combined_impute_results_3_prob_ambi_out.gz,check for duplicate positions in the ind.tped.gz\n";
+		}
 		@array = split(" ",$line);
 		$pos = shift(@array);
 		$snp_id = shift(@array);
@@ -143,6 +153,11 @@ while(<INPUT>)
 	#die "$line\n";
 	#update the reference(increment 1)
 	$line = <AMBI>;
+	if($line !~ m/\w/)
+	{
+		system("rm $dos_out");
+		die "EOF in the file Combined_impute_results_3_prob_ambi_out.gz,check for duplicate positions in the ind.tped.gz\n";
+	}
 	#print "$line\n";
         chomp($line);
         @array = split(" ",$line);
@@ -166,6 +181,11 @@ while(<INPUT>)
 # remaining in the reference
 while($line = <AMBI>)
 {
+		if($line !~ m/\w/)
+		{
+			system("rm $dos_out");
+			die "EOF in the file Combined_impute_results_3_prob_ambi_out.gz,check for duplicate positions in the ind.tped.gz\n";
+		}
 		print "$snp_id $r2[4]$dos\n";
 		chomp($line);
 		@array = split(" ",$line);
