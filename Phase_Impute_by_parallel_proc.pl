@@ -30,10 +30,10 @@ my $impute_window = $config{"IMPUTE_WINDOW"};
 my $impute_edge = $config{"IMPUTE_EDGE"};
 my $haps = $config{"HAPS"};
 my $email = $config{"EMAIL"};
-my $shapeit_mem = $config{"SHAPEIT_MEM"};
-my $shapeit_queue = $config{"SHAPEIT_QUEUE"};
-my $impute_mem = $config{"IMPUTE_MEM"};
-my $impute_queue = $config{"IMPUTE_QUEUE"};
+my $shapeit_mem = $config{"SGE_SHAPEIT_MEM"};
+my $shapeit_queue = $config{"SGE_SHAPEIT_QUEUE"};
+my $impute_mem = $config{"SGE_IMPUTE_MEM"};
+my $impute_queue = $config{"SGE_IMPUTE_QUEUE"};
 my $ref_keyword = $config{"IMPUTEREF_VERSION"};
 my $localtempspace_shapeit = $config{"LOCALTEMP_SHAPEIT"};
 my $localtempspace_impute = $config{"LOCALTEMP_IMPUTE"};
@@ -44,6 +44,7 @@ my $shapit_only = $config{"SHAPEITONLY"};
 my $local_temp=$config{"LOCALTEMP"};
 my $shapeit_states_phase=$config{"SHAPEIT_STATESPHASE"};
 my $pbs=$config{"PBS"};
+my $pbs_option=$config{"PBS_PARAM"};
 my $chr_start_input=$config{"CHR_START_INPUT"};
 my $small_region_extn_start=$config{"SMALL_REGION_EXTN_START"};
 my $small_region_extn_stop=$config{"SMALL_REGION_EXTN_STOP"};
@@ -70,10 +71,8 @@ $impute_window=~ s/\s|\t|\r|\n//g;
 $impute_edge=~ s/\s|\t|\r|\n//g;
 $haps=~ s/\s|\t|\r|\n//g;
 $email=~ s/\s|\t|\r|\n//g;
-$shapeit_mem=~ s/\s|\t|\r|\n//g;
-$shapeit_queue=~ s/\s|\t|\r|\n//g;
-$impute_mem=~ s/\s|\t|\r|\n//g;
-$impute_queue=~ s/\s|\t|\r|\n//g;
+
+
 $ref_keyword=~ s/\s|\t|\r|\n//g;
 $localtempspace_shapeit=~ s/\s|\t|\r|\n//g;
 $localtempspace_impute=~ s/\s|\t|\r|\n//g;
@@ -91,6 +90,19 @@ $cutoff=~ s/\s|\t|\r|\n//g;
 $edge_cutoff=~ s/\s|\t|\r|\n//g;
 $local_temp =~ s/\/$//g;
 
+if($pbs ne "YES")
+{
+	$shapeit_mem=~ s/\s|\t|\r|\n//g;
+	$shapeit_queue=~ s/\s|\t|\r|\n//g;
+	$impute_mem=~ s/\s|\t|\r|\n//g;
+	$impute_queue=~ s/\s|\t|\r|\n//g;
+}
+else
+{
+	
+	$pbs_option=~ s/"//g;
+	$pbs_option=~ s/\t|\r|\n//g;
+}
 $PLINK=~ s/\s|\t|\r|\n//g;
 $PERL=~ s/\s|\t|\r|\n//g;
 $SHAPEIT=~ s/\s|\t|\r|\n//g;
@@ -112,10 +124,7 @@ print "IMPUTE_EDGE: $impute_edge\n";
 print "HAPS: $haps\n";
 print "SAMP_SHAPEIT: $samp_shapeit\n";
 print "EMAIL: $email\n"; 
-print "SHAPEIT_MEM: $shapeit_mem\n";
-print "SHAPEIT_QUEUE: $shapeit_queue\n";
-print "IMPUTE_MEM: $impute_mem\n";
-print "IMPUTE_QUEUE: $impute_queue\n";
+
 print "IMPUTEREF VERSION: $ref_keyword\n";
 print "Local tempspace for impute $localtempspace_impute\n";
 print "Local tempspace for shapeit $localtempspace_shapeit\n";
@@ -126,6 +135,22 @@ print "SHAPEIT ONLY : $shapit_only\n";
 print "LOCALTEMP : $local_temp\n";
 print "SHAPEIT STATE PHASES : $shapeit_states_phase\n";
 print "PBS : $pbs\n";
+if($pbs ne "YES")
+{
+	print "SGE_SHAPEIT_MEM: $shapeit_mem\n";
+	print "SGE_SHAPEIT_QUEUE: $shapeit_queue\n";
+	print "SGE_IMPUTE_MEM: $impute_mem\n";
+	print "SGE_IMPUTE_QUEUE: $impute_queue\n";
+}
+else
+{
+	@pbs_param=split(/\,/,$pbs_option);
+	for($i=0;$i<@pbs_param;$i++)
+	{	
+	
+		print "PBS_PARAM:$pbs_param[$i]\n";
+	}
+}
 print "CHR_START_INPUT : $chr_start_input\n";
 print "SMALL_REGION_EXTN_START : $small_region_extn_start\n";
 print "SMALL_REGION_EXTN_STOP : $small_region_extn_stop\n";
@@ -141,7 +166,6 @@ print "GPROBS: $GPROBS\n";
 print "JAVA: $JAVA\n";
 print "QSUB: $QSUB\n";
 print "SH: $SH\n";
-
 #checking for the right tool info config file parameters
 if($SH eq "" |$JAVA eq "" |$QSUB eq "" | $PLINK eq "" | $PERL eq "" |  $SHAPEIT eq "" | $IMPUTE eq "" |$GPROBS eq "" )
 {
@@ -169,11 +193,19 @@ if($impute_edge != 125)
 }
 $dirtemp =~ s/\/$//g;
 $impute_ref =~ s/\/$//g;
-if($chr_start_input =~ m/\w/ && $small_region_extn_start !~ m/\d/ && $small_region_extn_stop !~ m/\d/)
+if($chr_start_input eq "YES" && $small_region_extn_start !~ m/\d/ && $small_region_extn_stop !~ m/\d/)
 {
-	die "$small_region_extn_start and $small_region_extn_stop should be number\n";
+	die "•	SMALL_REGION_EXTN_START and SMALL_REGION_EXTN_STOP should be number as you selected CHR_START_INPUT=YES\n";
 }
-if($edge_cutoff eq "" | $cutoff eq "" | $chr_start_input eq "" | $shapeit_states_phase eq "" |$local_temp eq "" | $shapit_only eq "" | $username eq "" |$dirtemp eq "" | $tped eq "" | $tfam eq ""  | $impute_ref eq "" | $impute_window eq "" | $impute_edge eq "" | $haps eq "" | $email eq "" | $shapeit_mem eq "" | $shapeit_queue eq "" | $impute_mem eq "" | $impute_queue eq "")
+if($pbs ne "YES" && ($shapeit_mem !~ m/\w/ | $shapeit_queue !~ m/\w/ | $impute_mem !~ m/\w/ | $impute_queue !~ m/\w/))
+{
+	die "Selected PBS=NO ,so SGE_SHAPEIT_MEM,SGE_SHAPEIT_QUEUE,SGE_IMPUTE_MEM,SGE_IMPUTE_QUEUE parameters cannot be empty\n";
+}
+if($pbs eq "YES" && $pbs_option !~ m/\w/)
+{
+	die "Selected PBS=NO ,so PBS_PARAM cannot be empty\n";
+}
+if($edge_cutoff eq "" | $cutoff eq "" | $chr_start_input eq "" | $shapeit_states_phase eq "" |$local_temp eq "" | $shapit_only eq "" | $username eq "" |$dirtemp eq "" | $tped eq "" | $tfam eq ""  | $impute_ref eq "" | $impute_window eq "" | $impute_edge eq "" | $haps eq "" | $email eq "" )
  {
 	die "input arguments empty please correct arguments and retry\n";
  }
@@ -194,10 +226,10 @@ unless(-d $dirtemp)
 {
     system("mkdir -p $dirtemp");
 }
-
-if(!(-d $impute_ref))
+$check_ref="$impute_ref/$ref_keyword"."_chr1_impute.legend.gz";
+if(!(-e $check_ref))
  {
-	die "impute ref directory not found\n";
+	die "impute ref directory not found or wrong\n";
  }
  if(uc($haps) ne "NA" && !(-e $haps)) 
  {
@@ -239,7 +271,7 @@ if(uc($restart_impute) ne "POST")
 					$chrx_check=1;
 				}
 			}
-			print "chrx_check $chrx_check\n";
+			#print "chrx_check $chrx_check\n";
 			if($chrx_check==1)
 			{
 				for($i=0;$i<@verify;$i++)
@@ -444,14 +476,18 @@ if(uc($restart_impute) ne "POST")
 				$com = '#!';
 				print ARRAY_SHAPEIT "$com $SH\n";
 				$com = '#PBS';
-				print ARRAY_SHAPEIT "$com -l walltime=10:05:00\n";
-				print ARRAY_SHAPEIT "$com -l nodes=1:ppn=1\n";
+				for($p=0;$p<@pbs_param;$p++)
+				{
+					print ARRAY_SHAPEIT "$com $pbs_param[$p]\n";
+				}
+				#print ARRAY_SHAPEIT "$com -l walltime=10:05:00\n";
+				#print ARRAY_SHAPEIT "$com -l nodes=1:ppn=1\n";
 				print ARRAY_SHAPEIT "$com -t 1-$count_shapeit_jobs\n";
 				print ARRAY_SHAPEIT "$com -M $email\n";
 				print ARRAY_SHAPEIT "$com -m a\n";
-				print ARRAY_SHAPEIT "$com -A normal\n";
+				#print ARRAY_SHAPEIT "$com -A normal\n";
 				print ARRAY_SHAPEIT "$com -V\n";
-				print ARRAY_SHAPEIT "$com -A bf0\n";
+				#print ARRAY_SHAPEIT "$com -A bf0\n";
 				print ARRAY_SHAPEIT "$com -e $dirtemp/$rounded/shapeit_logfiles_sungrid\n";
 				print ARRAY_SHAPEIT "$com -o $dirtemp/$rounded/shapeit_logfiles_sungrid\n";
 				$temp = "$SHAPEIT ".'`cat  '."$dirtemp/$rounded/$input_shapeit_jobids".' |head -${PBS_ARRAYID} |tail -1`'."\n";
@@ -500,13 +536,15 @@ if(uc($restart_impute) ne "POST")
 			open(ARRAY_SHAPEIT,">$dirtemp/$rounded/ArrayJob_shapeit_wait.csh") or die "unable to create the array job wait file shape it \n";
 			if(uc($pbs) ne "YES")
 			{
-				print ARRAY_SHAPEIT '#! '."$SH\n";
-				print ARRAY_SHAPEIT '#$ -q 1-hour'."\n";
-				print ARRAY_SHAPEIT '#$ -l h_vmem=2G'."\n";
-				print ARRAY_SHAPEIT '#$ -M '."$email\n";
-				print ARRAY_SHAPEIT '#$ -m a'."\n";
-				print ARRAY_SHAPEIT '#$ -V'."\n";
-				print ARRAY_SHAPEIT '#$ -cwd'."\n";
+				$com = '#!';
+				print ARRAY_SHAPEIT "$com $SH\n";
+				$com = '#$';
+				print ARRAY_SHAPEIT "$com -q $shapeit_queue\n";
+				print ARRAY_SHAPEIT "$com -l h_vmem=$shapeit_mem\n";
+				print ARRAY_SHAPEIT "$com -M $email\n";
+				print ARRAY_SHAPEIT "$com -m a\n";
+				print ARRAY_SHAPEIT "$com -V\n";
+				print ARRAY_SHAPEIT "$com -cwd\n";
 				$com = '#$';
 				print ARRAY_SHAPEIT "$com -e $dirtemp/$rounded/\n";
 				print ARRAY_SHAPEIT "$com -o $dirtemp/$rounded/\n";
@@ -524,13 +562,17 @@ if(uc($restart_impute) ne "POST")
 				$com = '#!';
 				print ARRAY_SHAPEIT "$com $SH\n";
 				$com = '#PBS';
-				print ARRAY_SHAPEIT "$com -l walltime=01:05:00\n";
-				print ARRAY_SHAPEIT "$com -l nodes=1:ppn=1\n";
 				print ARRAY_SHAPEIT "$com -M $email\n";
 				print ARRAY_SHAPEIT "$com -m a\n";
-				print ARRAY_SHAPEIT "$com -A normal\n";
+				for($p=0;$p<@pbs_param;$p++)
+				{
+					print ARRAY_SHAPEIT "$com $pbs_param[$p]\n";
+				}
+				#print ARRAY_SHAPEIT "$com -A normal\n";
+				#print ARRAY_SHAPEIT "$com -A bf0\n";
+				#print ARRAY_SHAPEIT "$com -l walltime=01:05:00\n";
+				#print ARRAY_SHAPEIT "$com -l nodes=1:ppn=1\n";
 				print ARRAY_SHAPEIT "$com -V\n";
-				print ARRAY_SHAPEIT "$com -A bf0\n";
 				print ARRAY_SHAPEIT "$com -e $dirtemp/$rounded/\n";
 				print ARRAY_SHAPEIT "$com -o $dirtemp/$rounded/\n";
 				print ARRAY_SHAPEIT "cp $dirtemp/$rounded/jobid_shapeit $dirtemp/$rounded/waiting.txt\n";
@@ -1332,14 +1374,18 @@ if(uc($restart_impute) ne "POST")
 		$com = '#!';
 		print ARRAY_SHAPEIT "$com $SH\n";
 		$com = '#PBS';
-		print ARRAY_SHAPEIT "$com -l walltime=10:05:00\n";
-		print ARRAY_SHAPEIT "$com -l nodes=1:ppn=1\n";
+		for($p=0;$p<@pbs_param;$p++)
+		{
+			print ARRAY_SHAPEIT "$com $pbs_param[$p]\n";
+		}
+		#print ARRAY_SHAPEIT "$com -l walltime=10:05:00\n";
+		#print ARRAY_SHAPEIT "$com -l nodes=1:ppn=1\n";
 		print ARRAY_SHAPEIT "$com -t 1-$count_impute_jobs\n";
 		print ARRAY_SHAPEIT "$com -M $email\n";
 		print ARRAY_SHAPEIT "$com -m a\n";
-		print ARRAY_SHAPEIT "$com -A normal\n";
+		#print ARRAY_SHAPEIT "$com -A normal\n";
 		print ARRAY_SHAPEIT "$com -V\n";
-		print ARRAY_SHAPEIT "$com -A bf0\n";
+		#print ARRAY_SHAPEIT "$com -A bf0\n";
 		print ARRAY_SHAPEIT "$com -e $dirtemp/$rounded/impute_logfiles_sungrid\n";
 		print ARRAY_SHAPEIT "$com -o $dirtemp/$rounded/impute_logfiles_sungrid\n";
 		print ARRAY_SHAPEIT "date\n";
@@ -1397,14 +1443,15 @@ if(uc($restart_impute) ne "POST")
 			if(uc($pbs) ne "YES")
 			{
 				open(ARRAY_SHAPEIT,">$dirtemp/$rounded/ArrayJob_shapeit_wait.csh") or die "unable to create the array job wait file shape it \n";
-				print ARRAY_SHAPEIT '#! '."$SH\n";
-				print ARRAY_SHAPEIT '#$ -q 1-hour'."\n";
-				print ARRAY_SHAPEIT '#$ -l h_vmem=2G'."\n";
-				print ARRAY_SHAPEIT '#$ -M '."$email\n";
-				print ARRAY_SHAPEIT '#$ -m a'."\n";
-				print ARRAY_SHAPEIT '#$ -V'."\n";
-				print ARRAY_SHAPEIT '#$ -cwd'."\n";
+				$com = '#!';
+				print ARRAY_SHAPEIT "$com $SH\n";
 				$com = '#$';
+				print ARRAY_SHAPEIT "$com -q $impute_queue\n";
+				print ARRAY_SHAPEIT "$com -l h_vmem=$impute_mem\n";
+				print ARRAY_SHAPEIT "$com -M $email\n";
+				print ARRAY_SHAPEIT "$com -m a\n";
+				print ARRAY_SHAPEIT "$com -V\n";
+				print ARRAY_SHAPEIT "$com -cwd\n";
 				print ARRAY_SHAPEIT "$com -e $dirtemp/$rounded/\n";
 				print ARRAY_SHAPEIT "$com -o $dirtemp/$rounded/\n";
 				
@@ -1419,13 +1466,17 @@ if(uc($restart_impute) ne "POST")
 				$com = '#!';
 				print ARRAY_SHAPEIT "$com $SH\n";
 				$com = '#PBS';
-				print ARRAY_SHAPEIT "$com -l walltime=01:05:00\n";
-				print ARRAY_SHAPEIT "$com -l nodes=1:ppn=1\n";
+				for($p=0;$p<@pbs_param;$p++)
+				{
+					print ARRAY_SHAPEIT "$com $pbs_param[$p]\n";
+				}
+				#print ARRAY_SHAPEIT "$com -l walltime=01:05:00\n";
+				#print ARRAY_SHAPEIT "$com -l nodes=1:ppn=1\n";
 				print ARRAY_SHAPEIT "$com -M $email\n";
 				print ARRAY_SHAPEIT "$com -m a\n";
-				print ARRAY_SHAPEIT "$com -A normal\n";
+				#print ARRAY_SHAPEIT "$com -A normal\n";
 				print ARRAY_SHAPEIT "$com -V\n";
-				print ARRAY_SHAPEIT "$com -A bf0\n";
+				#print ARRAY_SHAPEIT "$com -A bf0\n";
 				print ARRAY_SHAPEIT "$com -e $dirtemp/$rounded/\n";
 				print ARRAY_SHAPEIT "$com -o $dirtemp/$rounded/\n";
 				print ARRAY_SHAPEIT "cp $dirtemp/$rounded/jobid_impute $dirtemp/$rounded/waiting.txt\n";
@@ -1755,14 +1806,18 @@ else
 	$com = '#!';
 	print ARRAY_SHAPEIT "$com $SH\n";
 	$com = '#PBS';
-	print ARRAY_SHAPEIT "$com -l walltime=10:05:00\n";
-	print ARRAY_SHAPEIT "$com -l nodes=1:ppn=1\n";
-	print ARRAY_SHAPEIT "$com -t 1-$count_jobs_jobs\n";
+	for($p=0;$p<@pbs_param;$p++)
+	{
+		print ARRAY_SHAPEIT "$com $pbs_param[$p]\n";
+	}
+	#print ARRAY_SHAPEIT "$com -l walltime=10:05:00\n";
+	#print ARRAY_SHAPEIT "$com -l nodes=1:ppn=1\n";
+	print ARRAY_SHAPEIT "$com -t 1-$count_post_jobs\n";
 	print ARRAY_SHAPEIT "$com -M $email\n";
 	print ARRAY_SHAPEIT "$com -m a\n";
-	print ARRAY_SHAPEIT "$com -A normal\n";
+	#print ARRAY_SHAPEIT "$com -A normal\n";
 	print ARRAY_SHAPEIT "$com -V\n";
-	print ARRAY_SHAPEIT "$com -A bf0\n";
+	#print ARRAY_SHAPEIT "$com -A bf0\n";
 	print ARRAY_SHAPEIT "$com -e $dirtemp/$rounded/post_logfiles_sungrid\n";
 	print ARRAY_SHAPEIT "$com -o $dirtemp/$rounded/post_logfiles_sungrid\n";
 	$temp = 'k=`cat  '."$dirtemp/$rounded/file_post".' |head -${PBS_ARRAYID} |tail -1`';
@@ -1801,14 +1856,15 @@ else
 open(ARRAY_SHAPEIT,">$dirtemp/$rounded/ArrayJob_post_wait.csh") or die "unable to create the array job wait file shape it \n";
 if(uc($pbs) ne "YES")
 {
-	print ARRAY_SHAPEIT '#! '."$SH\n";
-	print ARRAY_SHAPEIT '#$ -q 1-hour'."\n";
-	print ARRAY_SHAPEIT '#$ -l h_vmem=2G'."\n";
-	print ARRAY_SHAPEIT '#$ -M '."$email\n";
-	print ARRAY_SHAPEIT '#$ -m a'."\n";
-	print ARRAY_SHAPEIT '#$ -V'."\n";
-	print ARRAY_SHAPEIT '#$ -cwd'."\n";
+	$com = '#!';
+	print ARRAY_SHAPEIT "$com $SH\n";
 	$com = '#$';
+	print ARRAY_SHAPEIT "$com -q $shapeit_queue\n";
+	print ARRAY_SHAPEIT "$com -l h_vmem=$shapeit_mem\n";
+	print ARRAY_SHAPEIT "$com -M $email\n";
+	print ARRAY_SHAPEIT "$com -m a\n";
+	print ARRAY_SHAPEIT "$com -V\n";
+	print ARRAY_SHAPEIT "$com -cwd\n";
 	print ARRAY_SHAPEIT "$com -e $dirtemp/$rounded/\n";
 	print ARRAY_SHAPEIT "$com -o $dirtemp/$rounded/\n";
 	print ARRAY_SHAPEIT "cp $dirtemp/$rounded/jobid_shapeit $dirtemp/$rounded/waiting.txt\n";
@@ -1821,13 +1877,17 @@ else
 	$com = '#!';
 	print ARRAY_SHAPEIT "$com $SH\n";
 	$com = '#PBS';
-	print ARRAY_SHAPEIT "$com -l walltime=01:05:00\n";
-	print ARRAY_SHAPEIT "$com -l nodes=1:ppn=1\n";
+	for($p=0;$p<@pbs_param;$p++)
+	{
+		print ARRAY_SHAPEIT "$com $pbs_param[$p]\n";
+	}
+	#print ARRAY_SHAPEIT "$com -l walltime=01:05:00\n";
+	#print ARRAY_SHAPEIT "$com -l nodes=1:ppn=1\n"; 
 	print ARRAY_SHAPEIT "$com -M $email\n";
 	print ARRAY_SHAPEIT "$com -m a\n";
-	print ARRAY_SHAPEIT "$com -A normal\n";
+	#print ARRAY_SHAPEIT "$com -A normal\n";
 	print ARRAY_SHAPEIT "$com -V\n";
-	print ARRAY_SHAPEIT "$com -A bf0\n";
+	#print ARRAY_SHAPEIT "$com -A bf0\n";
 	print ARRAY_SHAPEIT "$com -e $dirtemp/$rounded/\n";
 	print ARRAY_SHAPEIT "$com -o $dirtemp/$rounded/\n";
 	print ARRAY_SHAPEIT "cp $dirtemp/$rounded/jobid_shapeit $dirtemp/$rounded/waiting.txt\n";
