@@ -9,7 +9,9 @@ sub getDetails
 		my @arr = split('=',$line);
 		chomp($arr[0]);
 		chomp($arr[1]);
-		$config{$arr[0]} = "$arr[1]";			
+		my $key=shift(@arr);
+		my $value=join('=',@arr);
+		$config{$key} = $value;			
 	}
 }
 return \%config;
