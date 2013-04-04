@@ -10,8 +10,8 @@ use Getopt::Long;
 'DBSNP_DOWNLOADLINK=s' => \$dbsnp_ver,
 'DBSNP_DIR=s' => \$dbsnp_dir,
 'INPUT_FILE=s' => \$inputfile,
-'OUTPUTFILE_BUILD37=s'=> \$outputfile_37,
-'OUTPUTFILE_BUILD36=s' => \$outputfile_36,
+'REMAPPED_CURRENT_BUILD=s'=> \$outputfile_37,
+'NOTMAPPED_OLD_BUILD=s' => \$outputfile_36,
 );
 chomp($inputfile);
 chomp($dbsnp_ver);
@@ -28,13 +28,13 @@ $outputfile_36 =~ s/\s|\t|\r|\n//g;
 #checking for missing arguments
 if( $dbsnp_dir eq "" || $dbsnp_ver eq "" || $inputfile eq "" || $outputfile_37 eq "" || $outputfile_36 eq "")
 {
-	die "missing arguments\n USAGE : perl Upgrade_inputmarkers_to_build37_by_DBSNP.pl  -DBSNP_DIR <DBSNP DIR> -DBSNP_DOWNLOADLINK <DBSNP VERSION>  -INPUT_FILE <INPUT TPED FILE> -OUTPUTFILE_BUILD37 <OUTPUT TPED FILE BUILD 37> -OUTPUTFILE_BUILD36 <OUTPUT TPED FILE BUILD 36>\n";
+	die "missing arguments\n USAGE : perl Upgrade_inputmarkers_to_build37_by_DBSNP.pl  -DBSNP_DIR <DBSNP DIR> -DBSNP_DOWNLOADLINK <DBSNP VERSION>  -INPUT_FILE <INPUT TPED FILE> -REMAPPED_CURRENT_BUILD <NEW OUTPUT TPED FILE MAPPED> -NOTMAPPED_OLD_BUILD <OUTPUT TPED FILE FOR UNMAPPED>\n";
 }
 print "***********INPUT ARGUMENTS***********\n";
 print "DBSNP_DOWNLOAD LINK: $dbsnp_ver\n";
 print "INPUT_FILE: $inputfile\n";
-print "OUTPUTFILE_BUILD37 : $outputfile_37\n";
-print "OUTPUTFILE_BUILD36 : $outputfile_36\n";
+print "REMAPPED_CURRENT_BUILD : $outputfile_37\n";
+print "NOTMAPPED_OLD_BUILD : $outputfile_36\n";
 print "DBSNP_DIR : $dbsnp_dir\n";
 #downloading the dnsnp file 
 #$file1="b".$dbsnp_ver."_SNPChrPosOnRef.bcp.gz";
