@@ -83,7 +83,7 @@ wget http://www.shapeit.fr/script/get.php?id=16
 #Untar the downloaded package
 tar -zxvf shapeit.v1.ESHG.linux.x64.tar.gz
 #Try SHAPEIT
-stest=`$EZIMPUTER/EXTERNALTOOLS/SHAPEIT/shapeit.v1.ESHG.linux.x86_64 --h | grep -c 'Phaser'`
+stest=` ($EZIMPUTER/EXTERNALTOOLS/SHAPEIT/shapeit.v1.ESHG.linux.x86_64 --h  2>&1 )| grep -c 'Phaser'`
 #You should be able to see
 #Phaser options:
 #  --help                                Produce licence message
