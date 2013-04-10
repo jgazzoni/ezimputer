@@ -1,12 +1,27 @@
+# This assumes you already created a tool_info.config file in the main directory where you installed the tools.
+#
 #set your ezimputer program directory
-export EZIMPUTER=/data4/bsi/bioinf_int/s106381.borawork/naresh_scripts/PAPER/EasyImputer_v2
+export EZIMPUTER=/data2/bsi/staff_analysis/m037385/ezimputer/ezimputer_code
 #set your working directory
-export EXAMPLES=/data4/bsi/bioinf_int/s106381.borawork/naresh_scripts/PAPER/EasyImputer_v2/examples
+export EXAMPLES=/data2/bsi/staff_analysis/m037385/ezimputer/ezimputer_code/examples
+
+#$EZIMPUTER/make_tool_info.sh $EZIMPUTER > $EXAMPLES/tool_info.config
+$EZIMPUTER/make_tool_info.sh $EZIMPUTER > $EXAMPLES/tool_info.config
+
+export TOOLINFO=$EXAMPLES/tool_info.config
+
+PERL=`grep 'PERL=' $TOOLINFO | cut -d '=' -f2`
+
 
 #First you need to run the WHOLE_GENOME_IMPUTATION.sh to generate the WHOLE_GENOME PLINK dataset
 #unzip the ted file
+cd $EXAMPLES
+
+
+
 gunzip $EXAMPLES/fwdStrandResults_input.tped.gz
 #extracting smalle region from whole genome
+# Before running this script, you must run the whole genome workflow example up to the QC Step to generate the fwdStrandResults_input file
 $EZIMPUTER/EXTERNALTOOLS/PLINK/plink --tfile $EXAMPLES/fwdStrandResults_input --chr 2 --from-kb 3500 --to-kb 6000 --transpose --recode --out $EXAMPLES/small_region_fwdStrandResults_input
 #compress the tped file
 gzip $EXAMPLES/small_region_fwdStrandResults_input.tped
@@ -43,5 +58,5 @@ echo "WINDOW_CUTOFF_NUM_MARKERS=200"  >> $EXAMPLES/Small_region_impute_run_info.
 echo "EDGE_CUTOFF_NUM_MARKERS=50"  >> $EXAMPLES/Small_region_impute_run_info.config
 
 #runing the impute job
-/usr/bin/perl $EZIMPUTER/bin/Phase_Impute_by_parallel_proc.pl -run_config $EXAMPLES/Small_region_impute_run_info.config -tool_config $EXAMPLES/tool_info.config
+$PERL $EZIMPUTER/bin/Phase_Impute_by_parallel_proc.pl -run_config $EXAMPLES/Small_region_impute_run_info.config -tool_config $TOOLINFO
 

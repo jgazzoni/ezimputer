@@ -9,8 +9,12 @@
 if [ "$#" -eq 1 ]
 then
 EZIMPUTER=$1
-PLINK="${EZIMPUTER}/EXTERNALTOOLS/PLINK/plink"
-testp=`${EZIMPUTER}/EXTERNALTOOLS/STRUCTURE/console/source/structure_kernel_src/structure | grep -c 'Purcell'`
+PLINK="${EZIMPUTER}/EXTERNALTOOLS/PLINK/plink-1.07-x86_64/plink"
+testp=0
+if [ -e ${EZIMPUTER}/EXTERNALTOOLS/STRUCTURE/console/source/structure_kernel_src/structure ] 
+    then
+    testp=`${EZIMPUTER}/EXTERNALTOOLS/STRUCTURE/console/source/structure_kernel_src/structure | grep -c 'Purcell'`
+fi
 if [ $testp -eq 1 ] 
     then
     PLINK="${EZIMPUTER}/EXTERNALTOOLS/STRUCTURE/console/source/structure_kernel_src/structure"
