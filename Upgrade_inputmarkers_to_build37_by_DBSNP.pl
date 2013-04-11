@@ -52,17 +52,34 @@ unless(-d "$dbsnp_dir")
     system("mkdir -p $dbsnp_dir");
 }
 chdir("$dbsnp_dir/");
-
+if((-e $file1))
+{
+	$sys="gunzip -c $dbsnp_dir/$file1|awk '{if(NF==4)print \$0}'|gzip > $dbsnp_dir/temp.gz";
+        system($sys);
+        system("mv $dbsnp_dir/temp.gz $dbsnp_dir/$file1");
+	$count =`gunzip -c $dbsnp_dir/$file1|wc -l`;
+        if($count < 1000)
+        {
+		print "removing existing dbsnp file it has very few markers or no markers\n";
+		system("rm $dbsnp_dir/$file1");
+	}
+}
 if(!(-e $file1))
 {
 	system("wget $hyperlink1"); 
 	$sys="gunzip -c $dbsnp_dir/$file1|awk '{if(NF==4)print \$0}'|gzip > $dbsnp_dir/temp.gz";
 	system($sys);
 	system("mv $dbsnp_dir/temp.gz $dbsnp_dir/$file1");
+	$count =`gunzip -c $dbsnp_dir/$file1|wc -l`;
+	if($count < 1000)
+	{
+		die "something wrong with process DBSNP file.Number of markers in the file are less than 1000\ntry this command manually\nwget $hyperlink1\ngunzip -c $dbsnp_dir/$file1|awk '{if(NF==4)print \$0}'|gzip > $dbsnp_dir/temp.gz\nmv $dbsnp_dir/temp.gz $dbsnp_dir/$file1\n";
+	}
 }
 
 if(!(-e $file1))
 {
+	
 	die "$file1 not downloaded properly.Please change the hyperlink in the script $hyperlink1\n";
 }
 print "Done downloading file $file1\n";
@@ -77,7 +94,7 @@ while(<BUFF>)
 	chomp($_);
 	$_ =~ s/\t/ /g;
 	@a = split(" ",$_);
-	if($a[1] =~ m/^rs/)
+	if($a[1] =~ m/^rs\d+$/)
 	{
 		$a[1] =~ s/rs//g;
 		$_=join(" ",@a);	
@@ -90,16 +107,15 @@ while(<BUFF>)
 } 
 close(BUFF);
 close(WRBUFF1);
-close(WRBUFF2);
+#close(WRBUFF2);
 #sorting the build 37 file in order to compare with DB snp
 system("sort -k2,2n $outputfile_37 > $outputfile_37.tmp");
 system("mv $outputfile_37.tmp $outputfile_37");
 
-
 #updating the rsid position and chr according to dbsnp (if not found in dbsnp then transfering to build 36 file)
 open(BUFF,"$outputfile_37") or die "no file exists $outputfile_37\n";
 open(WRBUFF1,">$outputfile_37.tmp") or die " not able to write $outputfile_37.tmp\n";
-open(WRBUFF2,">>$outputfile_36") or die " not able to write $outputfile_36.tmp\n";
+#open(WRBUFF2,">>$outputfile_36") or die " not able to write $outputfile_36.tmp\n";
 #die "$dbsnp_dir/$dbsnp_ver/$file1\n";
 open(DB,"gunzip -c $dbsnp_dir/$file1 |") or die " no file exists $file1\n";
 while($line=<BUFF>)
@@ -147,14 +163,16 @@ while($line=<BUFF>)
 		}
 		else
 		{
+			$a[1] = "rs$a[1]";
+			$line=join(" ",@a);
 			print WRBUFF2 $line."\n";
 		}
 		#die "success\n";
 	}
 	else
 	{
-		#$a[1] = "rs$a[1]";
-		#$line=join(" ",@a);
+		$a[1] = "rs$a[1]";
+		$line=join(" ",@a);
 		print WRBUFF2 $line."\n";
 	}
 }
