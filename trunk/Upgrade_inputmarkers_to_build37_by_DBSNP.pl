@@ -24,6 +24,14 @@ $inputfile =~ s/\s|\t|\r|\n//g;
 $dbsnp_ver =~ s/\s|\t|\r|\n//g;
 $dbsnp_dir =~ s/\s|\t|\r|\n//g;
 $outputfile_37 =~ s/\s|\t|\r|\n//g;
+@temp_sort=split(/\//,$outputfile_37);
+pop(@temp_sort);
+$temp_sort=join('/',@temp_sort);
+if($temp_sort !~ m/\w/)
+{
+	$temp_sort=`pwd`;
+}
+#die "$temp_sort\n";
 $outputfile_36 =~ s/\s|\t|\r|\n//g;
 #checking for missing arguments
 if( $dbsnp_dir eq "" || $dbsnp_ver eq "" || $inputfile eq "" || $outputfile_37 eq "" || $outputfile_36 eq "")
@@ -109,7 +117,7 @@ close(BUFF);
 close(WRBUFF1);
 #close(WRBUFF2);
 #sorting the build 37 file in order to compare with DB snp
-system("sort -k2,2n $outputfile_37 > $outputfile_37.tmp");
+system("sort -k2,2n -T $temp_sort $outputfile_37 > $outputfile_37.tmp");
 system("mv $outputfile_37.tmp $outputfile_37");
 
 #updating the rsid position and chr according to dbsnp (if not found in dbsnp then transfering to build 36 file)
@@ -180,7 +188,7 @@ close(BUFF);
 close(WRBUFF1);
 close(WRBUFF2);
 close(DB);
-system("sort -k1,1n -k4,4n  $outputfile_37.tmp >$outputfile_37");
+system("sort -k1,1n -k4,4n   -T $temp_sort $outputfile_37.tmp >$outputfile_37");
 system("rm $outputfile_37.tmp");
 
 print "Update done\n";
