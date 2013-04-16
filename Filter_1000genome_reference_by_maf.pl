@@ -174,7 +174,7 @@ for($chr=1;$chr<24;$chr++)
 	{
 		chomp($_);
 		@gen=split(" ",$_);
-		if(exists($pos{$gen[0]}))
+		if(exists($selected{$gen[0]}))
 		{
 			print WRGEN $_."\n";
 		}
