@@ -385,7 +385,7 @@ if(uc($restart_impute) ne "POST")
 			}
 			else
 			{
-				$dirtemp="/data2/bsi/RandD/Arraybased_RND/Easy_imputer_test/temp";
+				#$dirtemp="/data2/bsi/RandD/Arraybased_RND/Easy_imputer_test/temp";
 				open(RESTART,"$dirtemp/$rounded/ArrayJob_file_shapeit")or die " no file found $dirtemp/$rounded/ArrayJob_file_shapeit\n";
 				open(WRRESTART,">$dirtemp/$rounded/ArrayJob_file_shapeit_restart")or die " not able to write $dirtemp/$rounded/ArrayJob_file_shapeit_restart\n";
 				open(RESTART_GUNZIP,"$dirtemp/$rounded/Gunzip_file_shapeit")or die "no file found Gunzip_file_shapeit\n";
