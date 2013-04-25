@@ -1,0 +1,22 @@
+INSTALLING THE EXTERNAL PACKAGES
+(1) Use the "install_tools.sh" script to install the external tools needed by ezimputer.
+	Usage: install_tools.sh path_to_ezimputer_install_without_trailing_slash
+
+CREATING THE TOOL INFO CONFIG FILE
+(2) You can create a tool info file manually or use the "make_tool_info.sh" to create tool info config file which is required for the QC & imputation workflow.
+	Usage :  make_tool_info.sh path_to_ezimputer_install_without_a_slash_at_the_end
+
+CONFIGURE THE SGE OR PBS SCHEDULER
+(3)Once the tool info config file is created, manually edit the SGE parameters(SGE_SHAPEIT_MEM, SGE_SHAPEIT_QUEUE, SGE_IMPUTE_MEM, SGE_IMPUTE_QUEUE) or PBS parameters(PBS,PBS_PARAM) according to server job scheduler setting (Refer to manual for more details).If your server job scheduler is not SGE or PBS then refer to the manual (section) "Appendix H" to run the workflow manually.
+
+For running the examples.Follow the below steps:
+(4)	To run the examples, change the Path in the ./examples/WHOLE_GENOME_IMPUTATION_SGE.sh file for paramaters 'EZIMPUTER' & 'EXAMPLES' to point to the paths appropriate for your installation. 
+
+	The example script "WHOLE_GENOME_IMPUTATION_SGE.sh" downloads the hapmap plink file and does the imputation.
+	The example script "SMALL_REGION_IMPUTATION_SGE.sh" needs the files downloaded from running the first example. This script extracts small region in chromosome 2 and does the imputation.
+
+The example scripts splits each chromosome in to smaller chunks and performs imputation.In this process the workflow creates and submits multiple jobs for the phasing and imputation.Currently the workflow supports SGE & PBS job scheduling.
+
+
+Notes: When using a computer cluster for ezimputer, many sites place restrictions on compute queues: Jobs have maximum memory usage and maximum run time (cpu limit). Sometimes these limits are set by the user sometimes the queue itself has an implicit limit. To change the default job settings in ezimputer (appropriate for up to 2000 samples), you may need to change the queue settings in each script.  Comments are included in the scripts.
+NOTE:  For the smaller datasets phasing and imputation with less than 2000 samples set SGE parameters for 7-day queues(The job run can run for 7 days) and for bigger datasets set SGE parameters for longer job queues. Check the use manual for additional details.
