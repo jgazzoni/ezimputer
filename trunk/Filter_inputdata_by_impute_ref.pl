@@ -4,13 +4,23 @@
 #inputfile : Input tped file
 #outputfile: Output tped file
 #####################################################################################################################################################
+#!/usr/bin/env perl
+
+#get current directory
+use Cwd 'abs_path';
+$line = abs_path($0);
+chomp $line;
+@DR_array = split('/',$line);
+pop(@DR_array);
+$dir = join("/",@DR_array);
+
+
 use Getopt::Long;
 #reading input arguments
 &Getopt::Long::GetOptions(
 'REF_GENOME_DIR=s' => \$reffile_dir,
 'INPUT_FILE=s' => \$inputfile,
 'OUTPUT_FILE=s'=> \$outputfile,
-'IMPUTEREF_VERSION=s' => \$ref_keyword,
 'LMAF=s' => \$lmaf,
 'UMAF=s' => \$umaf,
 'POPULATION=s' => \$pop
@@ -24,9 +34,9 @@ chomp($maf);
 chomp($pop);
 
 #checking for missing arguments
-if($pop eq "" | $ref_keyword eq "" || $reffile_dir eq "" || $inputfile eq "" || $outputfile eq "" || $lmaf eq "" || $umaf eq "")
+if($pop eq "" | $reffile_dir eq "" || $inputfile eq "" || $outputfile eq "" || $lmaf eq "" || $umaf eq "")
 {
-	die "missing arguments\n USAGE : perl Filter_inputdata_by_impute_ref.pl   -POPULATION <Different population : afr,amr,asn,eur> -LMAF <Lower Limit Minor allele frequency> -UMAF <Upper Limit Minor allele frequency> -REF_GENOME_DIR <Reference Genome Directory> -IMPUTEREF_VERSION <IMPUTE REFERNCE REF KEYWORD like ALL_1000G_phase1integrated_v3 > -INPUT_FILE <INPUT TPED FILE> -OUTPUT_FILE <OUTPUT TPED FILE>\n";
+	die "missing arguments\n USAGE : perl Filter_inputdata_by_impute_ref.pl   -POPULATION <Different population : afr,amr,asn,eur> -LMAF <Lower Limit Minor allele frequency> -UMAF <Upper Limit Minor allele frequency> -REF_GENOME_DIR <Reference Genome Directory or  or Path to Metainfo file> -INPUT_FILE <INPUT TPED FILE> -OUTPUT_FILE <OUTPUT TPED FILE>\n";
 }
 @pop=split(',',$pop);
 @lmaf=split(',',$lmaf);
@@ -39,26 +49,69 @@ if(@pop != @lmaf || @pop != @umaf)
  for($i=0;$i<@pop;$i++)
  {
 	$pop{uc($pop[$i])}="";
-	# $pop = $pop[$i];
-	# if($pop ne "afr" && $pop ne "amr" && $pop ne "asn" && $pop ne "eur")
-	# {
-		# die "$pop should be 'afr' or 'amr' or 'asn' or 'eur'\n";
-	# }
-	# $pop[$i] ="$pop.maf"; 
- } 
+} 
 #die "$pop\n";
 print "***********INPUT ARGUMENTS***********\n";
 print "REF_GENOME_DIR: $reffile_dir\n";
 print "INPUT_FILE: $inputfile\n";
 print "OUTPUTFILE : $outputfile\n";
-print "IMPUTEREF_VERSION : $ref_keyword\n";
 print "LMAF : $lmaf\n";
 print "UMAF : $umaf\n";
 print "POPULATION : @pop\n";
 
+
+
+unless((-d $reffile_dir) || (-f $reffile_dir))
+{
+    print "Directory doesn't exist $reffile_dir\n";
+}
+$reffile_dir =~ s/\/$//g;
+
+#reading ref directory
+require "$dir/bin/Read_reffile.pl";
+
+getRef($reffile_dir);
+
+#check reference
+for(my $chr=23;$chr>0;$chr--)
+{
+	if(exists($ref_meta{"chr$chr".'_'."genetic"}))
+	{
+		print "chr$chr".'_'."genetic"." ".$ref_meta{"chr$chr".'_'."genetic"}."\n";
+	}
+	else
+	{
+		die "there is a problem in the ref dir or metainfo file provided. No value for chr$chr".'_'."genetic\n";
+	}
+	if(exists($ref_meta{"chr$chr".'_'."hap"}))
+	{
+			print "chr$chr".'_'."hap"." ".$ref_meta{"chr$chr".'_'."hap"}."\n";
+	}
+	else
+	{
+			die "there is a problem in the ref dir or metainfo file provided. No value for chr$chr".'_'."hap\n";
+	}
+	if(exists($ref_meta{"chr$chr".'_'."legend"}))
+	{
+			print "chr$chr".'_'."legend"." ".$ref_meta{"chr$chr".'_'."legend"}."\n";
+	}
+	else
+	{
+			die "there is a problem in the ref dir or metainfo file provided. No value for chr$chr".'_'."legend\n";
+	}
+}
+if(exists($ref_meta{"sample"}))
+{
+	print "sample"." ".$ref_meta{"sample"}."\n";
+}
+else
+{
+    die "there is a problem in the ref dir or metainfo file provided. No value for sample\n";
+}
+
 #opening the sample in the impute 1000 genome reference and extracting the columns for population and group
-$file_samp="$reffile_dir/$ref_keyword".".sample";
-open(SAMP,"$file_samp") or die "no sample file found $file_samp in the reference directory provided\n";
+$file="$reffile_dir/".$ref_meta{"sample"};
+open(SAMP,"$file") or die "no sample file found $file in the reference directory provided\n";
 $samp=<SAMP>;
 #print $samp."\n";
 @samp=split(" ",$samp);
@@ -90,6 +143,14 @@ while(<SAMP>)
 	{
 		$pop{uc($samp[$samp_group])}=$pop{uc($samp[$samp_group])}." $samp1_a1 $samp1_a2";
 	}
+	if(exists($pop{"ALL"}))
+	{
+		$pop{"ALL"}=$pop{"ALL"}." $samp1_a1 $samp1_a2";
+	}
+	else
+	{
+		$pop{"ALL"}=" $samp1_a1 $samp1_a2";
+	}
 }
 
 #storing the chr and position in the hash for the input data
@@ -106,17 +167,11 @@ while(<BUFF>)
 while(my($chr,$value)=each %chr)
 {
 	#opening the legend and haps file in the reference file directory
-	if($chr ==23)
-	{
-		#$ref="/data4/bsi/refdata/genetics/1000Genomes/downloaded_data/release/20110521/impute/ALL_1000G_phase1integrated_feb2012_impute/ALL_1000G_phase1integrated_feb2012_chrX_nonPAR_impute.legend.gz";
-		$ref="$reffile_dir/$ref_keyword"."_chrX_nonPAR_impute.legend.gz";
-		$ref_hap="$reffile_dir/$ref_keyword"."_chrX_nonPAR_impute.hap.gz";
-	}
-	elsif($chr <23)
+	if($chr <24)
 	{
 		#$ref="/data4/bsi/refdata/genetics/1000Genomes/downloaded_data/release/20110521/impute/ALL_1000G_phase1integrated_feb2012_impute/ALL_1000G_phase1integrated_feb2012_chr".$chr."_impute.legend.gz";
-		$ref="$reffile_dir/".$ref_keyword."_chr".$chr."_impute.legend.gz";
-		$ref_hap="$reffile_dir/".$ref_keyword."_chr".$chr."_impute.hap.gz";
+		$ref_hap="$reffile_dir/".$ref_meta{"chr$chr".'_'."hap"};
+		$ref="$reffile_dir/".$ref_meta{"chr$chr".'_'."legend"};
 	}
 	else
 	{

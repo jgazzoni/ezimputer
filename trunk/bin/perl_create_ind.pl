@@ -3,7 +3,7 @@ use Getopt::Std;
 getopt("a:i:r:o:c:m", \%args);
 $ambi = $args{a};
 chomp $ambi;
-$r2 = $args{r};
+$beagle_r2 = $args{r};
 chomp $r2;
 $input = $args{i};
 chomp $input;
@@ -18,9 +18,9 @@ if($ambi eq "")
 {
         die "entered ambi $ambi snps file name  is empty\n";
 }
-if($r2 eq "")
+if($beagle_r2 eq "")
 {
-        die "entered  r2 file $r2  is empty\n";
+        die "entered  beagle_r2 file $beagle_r2  is empty\n";
 }
 if($input eq "")
 {
@@ -44,7 +44,7 @@ if(!(-e $ambi))
 }
 open(AMBI,"gunzip -c $ambi|") or die "no file found $ambi\n";
 
-open R2,"gunzip -c $r2|" or die "no file found $r2 file\n";
+open R2,"gunzip -c $beagle_r2|" or die "no file found $beagle_r2 file\n";
 if(!(-e $input))
 {
 	die "$input file not exists\n";
@@ -55,13 +55,13 @@ open(WRDOS,"|gzip > $dos_out") or die "not able to write dos out $dos_out file\n
 open(WRMAP,"|gzip > $map") or die "not able to write map file $map file\n";
 $line = <AMBI>;
 $r2="r2";
-#intial reading
+#intial line reading
 $line = <AMBI>;
 chomp($line);
 if($line !~ m/\w/)
 {	
 	system("rm $dos_out");
-	die "EOF in the file Combined_impute_results_3_prob_ambi_out.gz,check for duplicate positions in the ind.tped.gz\n";
+	die "EOF in the file Combined_impute_results_3_prob_ambi_out.gz,check the file Combined_impute_results_3_prob_ambi_out.gz\n";
 }
 @array = split(" ",$line);
 $pos = shift(@array);
@@ -89,6 +89,7 @@ $r2 = <R2>;
 chomp($r2);
 @r2 = split("\t",$r2);
 #die "$pos $snp_id $r2[4] $dos\n";
+$prev_pos_tped="";
 while(<INPUT>)
 {
 	chomp($_);
@@ -97,14 +98,20 @@ while(<INPUT>)
 	$rsid_tped = shift(@tped);
 	shift(@tped);
 	$pos_tped = shift(@tped);
+	if($prev_pos_tped eq $pos_tped)
+	{
+		next;
+	}
 	#print "$rsid_tped\t$pos_tped\n";
 	#reading dosage file
 	while($pos_tped ne $pos)
 	{
+		#print "$pos_tped ne $pos\n";
 		print "$snp_id $r2[4]$dos\n";
 		#reading dosage file
 		$line = <AMBI>;
 		chomp($line);
+		#print "ambi $line\n";
 		if($line !~ m/\w/)
 		{
 			system("rm $dos_out");
@@ -176,7 +183,7 @@ while(<INPUT>)
 		$r2 = <R2>;
         chomp($r2);
         @r2 = split("\t",$r2);
-
+		$prev_pos_tped=$pos_tped;
 }
 # remaining in the reference
 while($line = <AMBI>)

@@ -92,10 +92,11 @@ while($line = <DOS>)
 			$line1 = join(" ",@array_sam);
 			$j = 0;
 			#print "$line\n$line1\n";
+=head			
 			#count the maf and checking should be greater than 30%
 			$maf_check = $line1;
 			
-			if($line1 =~ m/A/)
+			if($line1 =~ m/A/ || $line1 =~ m/T/)
 			{
 				$allele1_count_1 =$maf_check=~ tr/A//;
 				$allele1_count_2 =$maf_check=~ tr/T//;
@@ -117,6 +118,7 @@ while($line = <DOS>)
 				$cutoff = $allele1_count_2/($allele1_count_2+$allele1_count_1);
 				#print "$print $allele1_count_2 $allele1_count_1 $cutoff\n";
 			}
+=cut			
 			#if($cutoff < 0.4)
 			{
 				#print "counting the matches of homozygotes in both strands\n";
