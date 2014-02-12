@@ -1,8 +1,18 @@
 #!/usr/bin/perl
+
+#get current directory
+use Cwd 'abs_path';
+$line = abs_path($0);
+chomp $line;
+@DR_array = split('/',$line);
+pop(@DR_array);
+$dir = join("/",@DR_array);
+
+
 use Getopt::Std;
 #input arguments
 #getopt("f:t:h:n:e:a:u", \%args); 
-getopt("f:h:n:e:a:u:i:r:o:v:b", \%args);
+getopt("f:h:n:e:a:u:i:r:o:v:b:l", \%args);
 my $sample = $args{f};
 #my $marker= $args{t};
 my $reference= $args{h};
@@ -11,8 +21,7 @@ my $name_excluded_snps = $args{e};
 my $ambi_excluded = $args{a};
 my $unsure_snp_allels_ref_data = $args{u};
 my $marker = $args{i};
-my $ref_keyword = $args{v};
-
+my $less_num_samp = $args{l};
 
 print "sample\t$sample\n";
 print "reference\t$reference\n";
@@ -21,8 +30,7 @@ print "name_excluded_snps\t$name_excluded_snps\n";
 print "ambi_excluded\t$ambi_excluded\n";
 print "unsure_snp_allels_ref_data\t$unsure_snp_allels_ref_data\n";
 print "marker\t$marker\n";
-print "reference version\t$ref_keyword\n";
-
+print "LESS_NUM_SAMP\t$less_num_samp\n";
 
 if($sample eq "")
 {
@@ -59,33 +67,55 @@ if($unsure_snp_allels_ref_data eq "")
         die "entered unsure forward strand excluded snps file name is empty\n";
 
 }
-if($ref_keyword eq "")
+
+
+#reading ref directory
+require "$dir/Read_reffile.pl";
+
+getRef($reference);
+
+#check reference
+for(my $chr=23;$chr>0;$chr--)
 {
-		die "entered reference version number is empty\n";
+	if(exists($ref_meta{"chr$chr".'_'."genetic"}))
+	{
+		print "chr$chr".'_'."genetic"." ".$ref_meta{"chr$chr".'_'."genetic"}."\n";
+	}
+	else
+	{
+		die "there is a problem in the ref dir or metainfo file provided. No value for chr$chr".'_'."genetic\n";
+	}
+	if(exists($ref_meta{"chr$chr".'_'."hap"}))
+	{
+			print "chr$chr".'_'."hap"." ".$ref_meta{"chr$chr".'_'."hap"}."\n";
+	}
+	else
+	{
+			die "there is a problem in the ref dir or metainfo file provided. No value for chr$chr".'_'."hap\n";
+	}
+	if(exists($ref_meta{"chr$chr".'_'."legend"}))
+	{
+			print "chr$chr".'_'."legend"." ".$ref_meta{"chr$chr".'_'."legend"}."\n";
+	}
+	else
+	{
+			die "there is a problem in the ref dir or metainfo file provided. No value for chr$chr".'_'."legend\n";
+	}
 }
-#if($noref eq "")
-#{
-#	die "entered snps_notin_xchr_beagle_imp_reference file name is empty\n";
-#}
-#if($noref_out eq "")
-#{
-#	die "entered snps_notin_xchr_beagle_imp_reference output file name is empty\n";
-#}
+if(exists($ref_meta{"sample"}))
+{
+	print "sample"." ".$ref_meta{"sample"}."\n";
+}
+else
+{
+    die "there is a problem in the ref dir or metainfo file provided. No value for sample\n";
+}
+
 open(WRBUFF_TPED,">$name_tped");
 open(WRBUFF_NOREF,"|gzip >$name_excluded_snps");
 open(WRBUFF_AMBI,"|gzip >$ambi_excluded");
 open(WRBUFF4,"|gzip >$unsure_snp_allels_ref_data");
-#open(WRNOREF,">$noref_out");
-#print "Forward strand tped file : $sample Forward strand indication file : $marker Reference snps file: $reference\n";
-#print "Input tped file : $sample Reference snps file: $reference\n";
-#snps_notin_xchr_beagle_imp_reference
-#open NOREF,"<$noref"  or die "Can't open no ref : $!";
-#while(<NOREF>)
-#{
-#	chomp($_);
-#	@array_noref = split(" ",$_);
-#	$noref{$array_noref[1]} = $_;
-#}
+
 
 #dirtemp
 $dirtemp=$name_tped;
@@ -108,7 +138,8 @@ for($i=0;$i<@ls;$i++)
 	undef(@array);
 	#print "$ls[$i]\n";
 }
-@check_chr = sort {$a <=> $b} @check_chr;
+#@check_chr = keys %check_chr;
+#die "@check_chr\n";
 #loading fwd strand indicator file in to the hash
 if(uc($marker) ne "NA")
 {
@@ -149,17 +180,9 @@ while($line = <TBUFF>)
 	#when new chr starts creating hash with 1000 genome ref file for that chr
 	if($ch != $prevchr)
 	{
-		#if($prevchr ne "")
-		#{
-		#		die;
-		#}	
-		if($ch ==23 && exists($check_chr{$ch}))
+		if($ch < 24 && exists($check_chr{$ch}))
 		{
-			$refer_1000 = "$reference/".$ref_keyword."_chrX_nonPAR_impute.legend.gz";
-		}
-		elsif($ch < 23 && exists($check_chr{$ch}))
-		{
-			$refer_1000 = "$reference/".$ref_keyword."_chr$ch"."_impute.legend.gz";
+			$refer_1000="$reference/".$ref_meta{"chr$ch".'_'."legend"};
 		}
 		else
 		{
@@ -214,25 +237,40 @@ while($line = <TBUFF>)
 			$plinkfile_count=`grep -P "^$ch\t" $dir/processed_beagle_input.bim|wc -l`;
 			chomp($plinkfile_count);
 			#print $plinkfile_count."\n";
-			if($hap_count  != $plinkfile_count)
+			if($hap_count  != $plinkfile_count )
 			{
-					print "number of rows in the haps file and plink file doesn't match for chr $ch :haps-$hap_count plinkfile-$plinkfile_count\n";
+					print "number of rows in the haps file and plink file doesn't match for chr $ch :haps-$hap_count plinkfile-$plinkfile_count && less_num_samp eq $less_num_samp \n";
 			}
 
-			$sys="mv $dir/$ch/snps_chr$ch.haps.gz  $dir/$ch/temp_snps_chr$ch.haps.gz";
+			#$sys="mv $dir/$ch/snps_chr$ch.haps.gz  $dir/$ch/temp_snps_chr$ch.haps.gz";
 			#print "$sys\n";
 			
 			if(-e "$dir/$ch/snps_chr$ch.haps.gz")
 			{
-				system("mv $dir/$ch/snps_chr$ch.haps.gz  $dir/$ch/temp_snps_chr$ch.haps.gz"); 
+				#system("mv $dir/$ch/snps_chr$ch.haps.gz  $dir/$ch/temp_snps_chr$ch.haps.gz"); 
 			}
 			else
 			{
 				die "$dir/$ch/snps_chr$ch.haps.gz not exists cannot move\n";
 			}
 			#opening the haps file for corresponding chr
-			open(HAPS,"gunzip -c $dir/$ch/temp_snps_chr$ch.haps.gz |") or die "no haps file exists for chr $ch\n";
-			open(WRHAPS,"|gzip > $dir/$ch/snps_chr$ch.haps.gz ") or die " not able to write the haps $dir/$ch/snps_chr$ch.haps.gz file\n";
+			undef(%low_samp);
+			if($less_num_samp eq "YES")
+			{
+				#open(HAPS,"gunzip -c $dir/$ch/temp_snps_chr$ch.haps.gz |") or die "no haps file exists for chr $ch\n";
+				open(HAPS,"gunzip -c $dir/$ch/snps_chr$ch.haps.gz |") or die "no haps file exists for chr $ch\n";
+				while($haps = <HAPS>)
+				{
+					chomp($haps);
+					@haps = split(" ",$haps);
+					$low_samp{$haps[2]}=1;
+				}
+			}
+			close(HAPS);	
+			#open(HAPS,"gunzip -c $dir/$ch/temp_snps_chr$ch.haps.gz |") or die "no haps file exists for chr $ch\n";
+			#open(WRHAPS,"|gzip > $dir/$ch/snps_chr$ch.haps.gz ") or die " not able to write the haps $dir/$ch/snps_chr$ch.haps.gz file\n";
+			open(HAPS,"gunzip -c $dir/$ch/snps_chr$ch.haps.gz |") or die "no haps file exists for chr $ch\n";
+			open(WRHAPS,"|gzip > $dir/$ch/imp_ref_snps_chr$ch.haps.gz ") or die " not able to write the haps $dir/$ch/snps_chr$ch.haps.gz file\n";
 		}
 	}
 	#if chr is greater than 23 than directly write to the extra file
@@ -240,86 +278,89 @@ while($line = <TBUFF>)
 	{
 		print WRBUFF_NOREF $line."\n";
 	}
+	#elsif($less_num_samp eq "YES" && (!exists($low_samp{$pos})))
+	#{
+	#	next;
+	#}
 	else
 	{
-		$haps = <HAPS>;
-		chomp($haps);
-		@haps = split(" ",$haps);
-		#if($pos == 29092777)
-		#{
-		#	print "test : $pos\t$haps[2]\t$hash1{$pos}\n";
-		#}
-		if($haps[2] ne $pos)
+		if(!($less_num_samp eq "YES" && (!exists($low_samp{$pos}))))
 		{
-			die "$ch $prev_chr haps file position $haps[2] not match to tped file position $pos\n";
-			system("rm $dir/$ch/snps_chr$ch.haps.gz");
-		}
-		$genotype_line ="";
-		if($line_temp =~ m/A/)
-		{
-			$genotype_line =$genotype_line."A";
-		}
-		if($line_temp =~ m/C/)
-		{
-			$genotype_line =$genotype_line."C";
-		}
-		if($line_temp =~ m/G/)
-		{
-			$genotype_line =$genotype_line."G";
-		}
-		if($line_temp =~ m/T/)
-		{
-			$genotype_line =$genotype_line."T";
-		}
-		#print $genotype_line."\n";
-		$gnt_snp1 = $hash1{$pos};
-		$gnt_snp2 = $genotype_line;
-		if(!(exists($hash1{$pos})))
-		{	
-			print WRBUFF_NOREF $line."\n";
-			#print "y\n";
-		}
-		elsif(($line =~ m/A T/ || $line =~ m/T A/ || $line =~ m/G C/  || $line =~ m/C G/ ) && $hash2{$rsid} ==1)
-		{	
-			print WRBUFF_AMBI $line."\n";
-		}
-		#checking for alleles that do not match reference and fliping the input if necessary
-		elsif($gnt_snp1 !~ m/$gnt_snp2/ && $gnt_snp2 !~ m/$gnt_snp1/)
-		{
-			$flip_gnt = $genotype_line;
-			$flip_gnt =~ tr/TGCA/ACGT/;
-			@arr_gnt = split(//,$flip_gnt);
-			@arr_gnt = sort(@arr_gnt);
-			$flip_gnt =join("",@arr_gnt);
-			#print "sucess\t".$flip_gnt."\t".$genotype_line."\n";
-			if($hash1{$pos} =~ m/$flip_gnt/ || $flip_gnt =~ m/$hash1{$pos}/)
+			
+		
+			$haps = <HAPS>;
+			chomp($haps);
+			@haps = split(" ",$haps);
+			#if($pos == 29092777)
+			#{
+			#	print "test : $pos\t$haps[2]\t$hash1{$pos}\n";
+			#}
+			if($haps[2] ne $pos)
 			{
-				if($hash1{$pos} ne "")
+				die "$ch $prev_chr haps file position $haps[2] not match to tped file position $pos\n";
+				system("rm $dir/$ch/snps_chr$ch.haps.gz");
+			}
+			$genotype_line ="";
+			if($line_temp =~ m/A/)
+			{
+				$genotype_line =$genotype_line."A";
+			}
+			if($line_temp =~ m/C/)
+			{
+				$genotype_line =$genotype_line."C";
+			}
+			if($line_temp =~ m/G/)
+			{
+				$genotype_line =$genotype_line."G";
+			}
+			if($line_temp =~ m/T/)
+			{
+				$genotype_line =$genotype_line."T";
+			}
+			#print $genotype_line."\n";
+			$gnt_snp1 = $hash1{$pos};
+			$gnt_snp2 = $genotype_line;
+			if(!(exists($hash1{$pos})))
+			{	
+				print WRBUFF_NOREF $line."\n";
+				#print "y\n";
+			}
+			elsif(($line =~ m/A T/ || $line =~ m/T A/ || $line =~ m/G C/  || $line =~ m/C G/ ) && $hash2{$rsid} ==1)
+			{	
+				print WRBUFF_AMBI $line."\n";
+			}
+			#checking for alleles that do not match reference and fliping the input if necessary
+			elsif($gnt_snp1 !~ m/$gnt_snp2/ && $gnt_snp2 !~ m/$gnt_snp1/)
+			{
+				$flip_gnt = $genotype_line;
+				$flip_gnt =~ tr/TGCA/ACGT/;
+				@arr_gnt = split(//,$flip_gnt);
+				@arr_gnt = sort(@arr_gnt);
+				$flip_gnt =join("",@arr_gnt);
+				#print "sucess\t".$flip_gnt."\t".$genotype_line."\n";
+				if($hash1{$pos} =~ m/$flip_gnt/ || $flip_gnt =~ m/$hash1{$pos}/)
 				{
-					$line =~ tr/TGCA/ACGT/;
-					$haps[3]  =~ tr/TGCA/ACGT/;
-					$haps[4]  =~ tr/TGCA/ACGT/;
-					$haps =join(" ",@haps);
-					#print " test ma $gnt_snp1 $gnt_snp2 $array[1] sucess2\n";
-					print WRBUFF_TPED $line."\n";
-					print WRHAPS $haps."\n";
+					if($hash1{$pos} ne "")
+					{
+						$line =~ tr/TGCA/ACGT/;
+						$haps[3]  =~ tr/TGCA/ACGT/;
+						$haps[4]  =~ tr/TGCA/ACGT/;
+						$haps =join(" ",@haps);
+						#print " test ma $gnt_snp1 $gnt_snp2 $array[1] sucess2\n";
+						print WRBUFF_TPED $line."\n";
+						print WRHAPS $haps."\n";
+					}
+				}
+				else
+				{
+					print WRBUFF4 $line."\n";
 				}
 			}
 			else
 			{
-				#die "$hash1{$pos}\t$genotype_line\tallels are different in reference and in input for $rsid\n";
-				print WRBUFF4 $line."\n";
+				print WRBUFF_TPED $line."\n";
+				print WRHAPS $haps."\n";
 			}
-		}
-		else
-		{
-			#if($array[1] eq "rs1005482")
-			#{
-			#		print " $array[1] sucess\n";
-			#}
-			print WRBUFF_TPED $line."\n";
-			print WRHAPS $haps."\n";
-			#print "z\n";
 		}
 	}
 	$prevchr = $ch;

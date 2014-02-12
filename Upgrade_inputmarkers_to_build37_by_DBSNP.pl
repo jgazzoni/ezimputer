@@ -1,9 +1,10 @@
 #####################################################################################################################################################
 #Purpose: To upgrade build 36 positions to build 37 positions 
-#Date: 11-09-2012
+#Date: 10-24-2012
 #inputfile : build36 tped file
 #outputfile: new build37 tped file & left over build 36 tped file
 #####################################################################################################################################################
+#!/usr/bin/env perl
 use Getopt::Long;
 #reading input arguments
 &Getopt::Long::GetOptions(
@@ -60,14 +61,15 @@ unless(-d "$dbsnp_dir")
     system("mkdir -p $dbsnp_dir");
 }
 chdir("$dbsnp_dir/");
+
 if((-e $file1))
 {
-	$sys="gunzip -c $dbsnp_dir/$file1|awk '{if(NF==4)print \$0}'|gzip > $dbsnp_dir/temp.gz";
-        system($sys);
-        system("mv $dbsnp_dir/temp.gz $dbsnp_dir/$file1");
+	#$sys="gunzip -c $dbsnp_dir/$file1|awk '{if(NF==4)print \$0}'|gzip > $dbsnp_dir/temp.gz";
+    #system($sys);
+    #system("mv $dbsnp_dir/temp.gz $dbsnp_dir/$file1");
 	$count =`gunzip -c $dbsnp_dir/$file1|wc -l`;
-        if($count < 1000)
-        {
+    if($count < 1000)
+    {
 		print "removing existing dbsnp file it has very few markers or no markers\n";
 		system("rm $dbsnp_dir/$file1");
 	}
@@ -75,9 +77,9 @@ if((-e $file1))
 if(!(-e $file1))
 {
 	system("wget $hyperlink1"); 
-	$sys="gunzip -c $dbsnp_dir/$file1|awk '{if(NF==4)print \$0}'|gzip > $dbsnp_dir/temp.gz";
-	system($sys);
-	system("mv $dbsnp_dir/temp.gz $dbsnp_dir/$file1");
+	#$sys="gunzip -c $dbsnp_dir/$file1|awk '{if(NF==4)print \$0}'|gzip > $dbsnp_dir/temp.gz";
+	#system($sys);
+	#system("mv $dbsnp_dir/temp.gz $dbsnp_dir/$file1");
 	$count =`gunzip -c $dbsnp_dir/$file1|wc -l`;
 	if($count < 1000)
 	{
@@ -91,104 +93,140 @@ if(!(-e $file1))
 	die "$file1 not downloaded properly.Please change the hyperlink in the script $hyperlink1\n";
 }
 print "Done downloading file $file1\n";
+
 open(BUFF,"$inputfile") or die "no file exists $inputfile\n";
 open(WRBUFF1,">$outputfile_37") or die "not able write to $outputfile_37\n";
 open(WRBUFF2,">$outputfile_36") or die "not able write to $outputfile_36\n";
-my %hash;
+open(WRBUFF3,">$outputfile_36.log") or die "not able write to $outputfile_36\n";
+my %hash,%db;
 #parsing through input tped file and separatin the markers based on the marker ID type (starts with rs)
+$num_25=0;
+$num_0=0;
+$num_rs=0;
+$num_nors=0;
 while(<BUFF>)
 {
 	#print "$.\n";
 	chomp($_);
 	$_ =~ s/\t/ /g;
 	@a = split(" ",$_);
-	if($a[1] =~ m/^rs\d+$/)
+	if($a[0] eq "25" || $a[0] eq "XY")
+	{
+		$num_25++
+	}
+	elsif($a[0] eq "0" )
+	{
+		$num_0++;
+	}
+	elsif($a[1] =~ m/^rs\d+$/)
 	{
 		$a[1] =~ s/rs//g;
-		$_=join(" ",@a);	
-		print WRBUFF1 "$_\n";
+		$hash{$a[1]} = $a[0]."_".$a[3];
+		$num_rs++;
 	}
 	else
 	{
-		print WRBUFF2 "$_\n";
+		$num_nors++;
 	}
 } 
 close(BUFF);
-close(WRBUFF1);
-#close(WRBUFF2);
-#sorting the build 37 file in order to compare with DB snp
-system("sort -k2,2n -T $temp_sort $outputfile_37 > $outputfile_37.tmp");
-system("mv $outputfile_37.tmp $outputfile_37");
+print "Number of Markers Mapped to chr25 : $num_25\n";
+print "Number of Markers Mapped to chr0 : $num_0\n";
+print "Number of Markers have rsids: $num_rs\n";
+print "Number of Markers with no rsid : $num_nors\n";
 
-#updating the rsid position and chr according to dbsnp (if not found in dbsnp then transfering to build 36 file)
-open(BUFF,"$outputfile_37") or die "no file exists $outputfile_37\n";
-open(WRBUFF1,">$outputfile_37.tmp") or die " not able to write $outputfile_37.tmp\n";
-#open(WRBUFF2,">>$outputfile_36") or die " not able to write $outputfile_36.tmp\n";
-#die "$dbsnp_dir/$dbsnp_ver/$file1\n";
+$num_db=0;
+#parsing through the dbsnp file
 open(DB,"gunzip -c $dbsnp_dir/$file1 |") or die " no file exists $file1\n";
-while($line=<BUFF>)
+while($db=<DB>)
 {
-	chomp($line);
-	@a=split(" ",$line);
-	$db=<DB>;
 	chomp($db);
 	@db=split("\t",$db);
-	while($a[1] > $db[0])
+	if(exists($hash{$db[0]}))
 	{
-		$db=<DB>;
-		if($db !~ m/\w/)
-		{
-			last;
-		}
-		chomp($db);
-		@db=split("\t",$db);
-	}
-	while($a[1] < $db[0])
-	{
-		#$a[1] = "rs$a[1]";
-		#$line=join(" ",@a);
-		print WRBUFF2 $line."\n";
-		$line=<BUFF>;
-		if($line !~ m/\w/)
-		{
-			last;
-		}
-		@a=split(" ",$line);
-	}
-	if($a[1] == $db[0])
-	{
-		$a[0] = $db[1];
-		$a[0] =~ s/X/23/g;
-		$a[0] =~ s/Y/24/g;
-		$a[0] =~ s/MT/26/g;
-		if($a[0] =~ m/\d+/)
-		{
-		#dbsnp position is zero based so increment by 1
-		$a[3] = $db[2]+1;
-		$a[1] = "rs$a[1]";
-		$line=join(" ",@a);
-		print WRBUFF1 $line."\n";
-		}
-		else
-		{
-			$a[1] = "rs$a[1]";
-			$line=join(" ",@a);
-			print WRBUFF2 $line."\n";
-		}
-		#die "success\n";
-	}
-	else
-	{
-		$a[1] = "rs$a[1]";
-		$line=join(" ",@a);
-		print WRBUFF2 $line."\n";
+		$db[1] =~ s/X/23/g;
+		$db[1] =~ s/Y/24/g;
+		$db[1] =~ s/MT/26/g;
+		$db[2]++;
+		$db{$db[0]} =$db[1]."_".$db[2];
+		$num_db++;
+		delete $hash{$db[0]};
 	}
 }
-close(BUFF);
+print "Number of Markers exist in DBSNP: $num_db\n";
+close(DB);
+$num=0;
+open(BUFF,"$inputfile") or die "no file exists $inputfile\n";
+while(<BUFF>)
+{
+	#print "$.\n";
+	chomp($_);
+	$_ =~ s/\t/ /g;
+	@a = split(" ",$_);
+	$a[0] =~ s/X/23/g;
+	$a[0] =~ s/Y/24/g;
+	$a[0] =~ s/MT/26/g;
+	$a[0] =~ s/M/26/g;
+	$_ = join(" ",@a);
+#markers mapped chr 25	
+	if($a[0] eq "25" || $a[0] eq "XY")
+	{
+		print WRBUFF2 "$_\n";
+		print WRBUFF3 "$a[1] chr25\n";
+	}
+#markers mapped chr 0	
+	elsif($a[0] eq "0" )
+	{
+		print WRBUFF2 "$_\n";
+		print WRBUFF3 "$a[1] chr0\n";
+	}
+#markers with RSid	
+	elsif($a[1] =~ m/^rs\d+$/)
+	{
+		$a[1] =~ s/rs//g;
+#markers with RSid but not in DBsnp
+		if(exists($hash{$a[1]}))
+		{
+			print WRBUFF2 "$_\n";
+			print WRBUFF3 "rs$a[1] NOT_MAP_DBSNP\n";
+			$num++;
+		}
+#markers with RSid in DBsnp		
+		elsif(exists($db{$a[1]}))
+		{
+			@b=split("_",$db{$a[1]});
+			if($b[0] !~ m/\d/)
+			{
+				print WRBUFF3 "rs$a[1] MAP_DBSNP_BUT_DBSNPCHR_$b[0]\n";
+				print WRBUFF2 "$_\n";
+			}
+			else
+			{
+				$a[0] = $b[0];
+				$a[1]="rs".$a[1];
+				$a[3]=$b[1];
+				$_=join(" ",@a);
+				print WRBUFF1 "$_\n";
+			}
+		}
+#unknown condition		
+		else
+		{
+			print WRBUFF2 "$_\n";
+			print WRBUFF3 "rs$a[1] UNKNOWN\n";
+		}
+	}
+#markers with no RSid
+	else
+	{
+		print WRBUFF2 "$_\n";
+		print WRBUFF3 "$a[1] No_RSID\n";
+	}	
+}	
+print "Number of Markers with RSids but not in DBSNP: $num\n";
+close(WRBUFF);
 close(WRBUFF1);
 close(WRBUFF2);
-close(DB);
-system("sort -k1,1n -k4,4n   -T $temp_sort $outputfile_37.tmp >$outputfile_37");
-system("rm $outputfile_37.tmp");
-
+close(WRBUFF3);
 print "Update done\n";
+

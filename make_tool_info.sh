@@ -10,18 +10,9 @@ if [ "$#" -eq 1 ]
 then
 EZIMPUTER=$1
 PLINK="${EZIMPUTER}/EXTERNALTOOLS/PLINK/plink-1.07-x86_64/plink"
-testp=0
-if [ -e ${EZIMPUTER}/EXTERNALTOOLS/STRUCTURE/console/source/structure_kernel_src/structure ] 
-    then
-    testp=`${EZIMPUTER}/EXTERNALTOOLS/STRUCTURE/console/source/structure_kernel_src/structure | grep -c 'Purcell'`
-fi
-if [ $testp -eq 1 ] 
-    then
-    PLINK="${EZIMPUTER}/EXTERNALTOOLS/STRUCTURE/console/source/structure_kernel_src/structure"
-fi
 STRUCTURE="${EZIMPUTER}/EXTERNALTOOLS/STRUCTURE/console/structure"
 STRUCTURE_PARAM="${EZIMPUTER}/EXTERNALTOOLS/STRUCTURE/console/extraparams"
-SHAPEIT="${EZIMPUTER}/EXTERNALTOOLS/SHAPEIT/shapeit.v1.ESHG.linux.x86_64"
+SHAPEIT="${EZIMPUTER}/EXTERNALTOOLS/SHAPEIT/shapeit.v2.r727.linux.x64"
 IMPUTE="${EZIMPUTER}/EXTERNALTOOLS/IMPUTE/impute_v2.3.0_x86_64_static/impute2"
 CHECK_STRAND="${EZIMPUTER}/EXTERNALTOOLS/CHECK_STRAND/check_strands_16May11/check_strands.py"
 GPROBS="${EZIMPUTER}/EXTERNALTOOLS/GPROBS/gprobsmetrics.jar"

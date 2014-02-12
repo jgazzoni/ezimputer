@@ -1,5 +1,5 @@
 #####################################################################################################################################################
-#Purpose: To filter the input plink data based various population MAF's on 1000 genome data
+#Purpose: QC_fwd_structure : perl_scri[t_fwd_strand_mapping
 #Date: 11-09-2012
 #inputfile : Input tped file
 #outputfile: Output tped file
@@ -51,6 +51,50 @@ print "TEMPDIR : $temp\n";
 print "DB : $ann_db\n";
 print "CHECK_STRAND : $CHECK_STRAND\n";
 print "PYTHON : $PYTHON\n";
+
+
+#reading ref directory
+require "$dir/Read_reffile.pl";
+
+getRef($reffile_dir);
+
+#check reference
+for(my $chr=23;$chr>0;$chr--)
+{
+	if(exists($ref_meta{"chr$chr".'_'."genetic"}))
+	{
+		print "chr$chr".'_'."genetic"." ".$ref_meta{"chr$chr".'_'."genetic"}."\n";
+	}
+	else
+	{
+		die "there is a problem in the ref dir or metainfo file provided. No value for chr$chr".'_'."genetic\n";
+	}
+	if(exists($ref_meta{"chr$chr".'_'."hap"}))
+	{
+			print "chr$chr".'_'."hap"." ".$ref_meta{"chr$chr".'_'."hap"}."\n";
+	}
+	else
+	{
+			die "there is a problem in the ref dir or metainfo file provided. No value for chr$chr".'_'."hap\n";
+	}
+	if(exists($ref_meta{"chr$chr".'_'."legend"}))
+	{
+			print "chr$chr".'_'."legend"." ".$ref_meta{"chr$chr".'_'."legend"}."\n";
+	}
+	else
+	{
+			die "there is a problem in the ref dir or metainfo file provided. No value for chr$chr".'_'."legend\n";
+	}
+}
+if(exists($ref_meta{"sample"}))
+{
+	print "sample"." ".$ref_meta{"sample"}."\n";
+}
+else
+{
+    die "there is a problem in the ref dir or metainfo file provided. No value for sample\n";
+}
+
 #checking if input file exists
 if(!(-e $inputfile))
 {
@@ -68,18 +112,8 @@ unless(-d "$ann_db/beagle_impute_$ref_keyword")
 
 for($chr=1;$chr<=23;$chr++)
 {
-	if($chr ==23)
-	{
-		#$ref="/data4/bsi/refdata/genetics/1000Genomes/downloaded_data/release/20110521/impute/feb2012_impute/feb2012_chrX_nonPAR_impute.legend.gz";
-		$ref="$reffile_dir/".$ref_keyword."_chrX_nonPAR_impute.legend.gz";
-		$ref_hap="$reffile_dir/".$ref_keyword."_chrX_nonPAR_impute.hap.gz";
-	}
-	elsif($chr <23)
-	{
-		#$ref="/data4/bsi/refdata/genetics/1000Genomes/downloaded_data/release/20110521/impute/feb2012_impute/feb2012_chr".$chr."_impute.legend.gz";
-		$ref="$reffile_dir/".$ref_keyword."_chr".$chr."_impute.legend.gz";
-		$ref_hap="$reffile_dir/".$ref_keyword."_chr".$chr."_impute.hap.gz";
-	}
+	$ref_hap="$reffile_dir/".$ref_meta{"chr$chr".'_'."hap"};
+	$ref="$reffile_dir/".$ref_meta{"chr$chr".'_'."legend"};
 	$k=0;
 	if(!(-e "$ann_db/beagle_impute_$ref_keyword/ref_$chr.bgl.gz") && !(-e "$ann_db/beagle_impute_$ref_keyword/ref_$chr.markers.gz"))
 	{
@@ -183,13 +217,15 @@ while(<BUFF>)
 			if($chr ==23)
 			{
 				$flag=0;
-				$ref="$reffile_dir/".$ref_keyword."_chrX_nonPAR_impute.legend.gz";
-				$ref_hap="$reffile_dir/".$ref_keyword."_chrX_nonPAR_impute.hap.gz";
+				$ref_hap="$reffile_dir/".$ref_meta{"chr$chr".'_'."hap"};
+				$ref="$reffile_dir/".$ref_meta{"chr$chr".'_'."legend"};
+	
 			}
 			elsif($chr <23)
 			{
-				$ref="$reffile_dir/".$ref_keyword."_chr".$chr."_impute.legend.gz";
-				$ref_hap="$reffile_dir/".$ref_keyword."_chr".$chr."_impute.hap.gz";
+				$ref_hap="$reffile_dir/".$ref_meta{"chr$chr".'_'."hap"};
+				$ref="$reffile_dir/".$ref_meta{"chr$chr".'_'."legend"};
+	
 			}
 			#opening the haps and legend file
 			open(LEGEND,"gunzip -c $ref|") or die " no file exists $ref\n";

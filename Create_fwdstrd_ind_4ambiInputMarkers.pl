@@ -4,6 +4,7 @@
 #inputfile : tped file
 #outputfile: Ambiguous forward strand indicator file
 #####################################################################################################################################################
+#!/usr/bin/env perl
 use Getopt::Long;
 #reading input arguments
 &Getopt::Long::GetOptions(

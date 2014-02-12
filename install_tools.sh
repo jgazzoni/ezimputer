@@ -10,10 +10,36 @@ then
 
 
 export EZIMPUTER=$1
+echo "$EZIMPUTER"
+
 #Create main tools directory
 mkdir $EZIMPUTER/EXTERNALTOOLS
 #Change directory
 cd  $EZIMPUTER/EXTERNALTOOLS
+
+tools_installed=""
+tools_installed_ind=1
+
+#CHECK_STRAND
+#Create main CHECK_STRAND directory
+mkdir $EZIMPUTER/EXTERNALTOOLS/CHECK_STRAND
+#Change to CHECK_STRAND directory
+cd $EZIMPUTER/EXTERNALTOOLS/CHECK_STRAND
+#Download CHECK_STRAND package
+wget http://faculty.washington.edu/sguy/beagle/strand_switching/check_strands_16May11.tar.gz
+#uncompress the package
+tar -zxvf check_strands_16May11.tar.gz
+#change directory
+cd check_strands_16May11
+python $EZIMPUTER/EXTERNALTOOLS/CHECK_STRAND/check_strands_16May11/check_strands.py
+if [ $? -ne 0 ]
+    then
+    echo "Unable to download beagle utils or python is not set to the path"
+    tools_installed_ind=0
+	tools_installed=$tools_installed" CHECK_STRAND_BEAGLE_UTILS"
+fi
+
+
 #PLINK 
 #Create main plink directory
 mkdir $EZIMPUTER/EXTERNALTOOLS/PLINK
@@ -30,7 +56,8 @@ testp=`$EZIMPUTER/EXTERNALTOOLS/PLINK/plink-1.07-x86_64/plink | grep -c 'Purcell
 if [ $testp -eq 0 ]
     then
     echo "Error during plink installation"
-    $EZIMPUTER/EXTERNALTOOLS/PLINK/plink-1.07-x86_64/plink
+    tools_installed_ind=0
+	tools_installed=$tools_installed" PLINK"
 fi
 
 
@@ -40,67 +67,22 @@ mkdir $EZIMPUTER/EXTERNALTOOLS/STRUCTURE
 #Change to STRUCTURE directory
 cd $EZIMPUTER/EXTERNALTOOLS/STRUCTURE
 #Download the STRUCTURE tool
-wget http://pritch.bsd.uchicago.edu/structure_software/release_versions/v2.3.4/release/structure_linux_console.tar.gz
-tar -zxvf structure_linux_console.tar.gz
-cd console
-#test the structure executable with absolute path (change the permission if necessary)
+wget http://pritchardlab.stanford.edu/structure_software/release_versions/v2.3.4/release/structure_linux_console.tar.gz
 
-
-test=`$EZIMPUTER/EXTERNALTOOLS/STRUCTURE/console/structure | grep -c 'STRUCTURE'`
-if [ $test -eq 0 ] 
-    then 
-    testlibc=`$EZIMPUTER/EXTERNALTOOLS/STRUCTURE/console/structure | grep -c 'libc'`
-    if [ $testlibc -eq 1 ] 
-    then
-#If you the program is giving the error ./lib/libc.so.6: version `GLIBC_2.7' not found.. You need to #download the source and recompile the program
-	mkdir $EZIMPUTER/EXTERNALTOOLS/STRUCTURE/console/source/
-	cd $EZIMPUTER/EXTERNALTOOLS/STRUCTURE/console/source/
-#Get the source package
-	wget http://pritch.bsd.uchicago.edu/structure_software/release_versions/v2.3.4/structure_kernel_source.tar.gz
 #uncompress the  package
-	tar -zxvf structure_kernel_source.tar.gz
-	cd structure_kernel_src/
-#compile
-	make
+tar -zxvf structure_linux_console.tar.gz
+cd console/
+
 #Test the new executable
-	testnew=`$EZIMPUTER/EXTERNALTOOLS/STRUCTURE/console/source/structure_kernel_src/structure | grep -c 'STRUCTURE'`
-	if [ $testlibc -eq 0 ] 
-	then
-	    echo "installation of STRUCTURE failed after compilation\n";
-	fi
-    else 
-	    echo "installation of STRUCTURE failed for unknown reason, please try manually\n";
-    fi
+echo "$EZIMPUTER/EXTERNALTOOLS/STRUCTURE/console/structure"
+testnew=`$EZIMPUTER/EXTERNALTOOLS/STRUCTURE/console/structure | grep -c 'STRUCTURE'`
+if [ $testnew -eq 0 ] 
+then
+	echo "installation of STRUCTURE failed after compilation\n";
+	tools_installed_ind=0
+	tools_installed=$tools_installed" STRUCTURE"
 fi
 
-#SHAPEIT
-#Create main SHAPEIT directory
-mkdir $EZIMPUTER/EXTERNALTOOLS/SHAPEIT
-#Change to SHAPEIT directory
-cd $EZIMPUTER/EXTERNALTOOLS/SHAPEIT
-#Download SHAPEIT tool package
-wget http://www.shapeit.fr/script/get.php?id=16
-#Untar the downloaded package
-tar -zxvf shapeit.v1.ESHG.linux.x64.tar.gz
-#Try SHAPEIT
-stest=` ($EZIMPUTER/EXTERNALTOOLS/SHAPEIT/shapeit.v1.ESHG.linux.x86_64 --h  2>&1 )| grep -c 'Phaser'`
-#You should be able to see
-#Phaser options:
-#  --help                                Produce licence message
-#  --licence                             Produce licence message
-#  -v [ --version ]                      Produce version details
-#  -L [ --output-log ] arg (=shapeit_05032013_14h55m40s_b4340e74-e467-4ed8-9bc9-4dee02807b9a.log)
-#                                        Log file
-#  --exclude-snp arg                     File containing all the positions of
-#                                        the SNPs to exclude in input files
-#  --include-snp arg                     File containing all the positions of
-#.(and many more lines)
-
-if [ $stest -eq 0 ]
-    then
-    echo "Unable to install shapeit"
-    $EZIMPUTER/EXTERNALTOOLS/SHAPEIT/shapeit.v1.ESHG.linux.x86_64 --h
-fi
 
 
 #IMPUTE
@@ -133,29 +115,14 @@ itest=`./impute2 | grep -c 'IMPUTE'`
 if [ $itest -eq 0 ]
     then
     echo "Error during the impute installation"
-    ./impute2
+    tools_installed_ind=0
+	tools_installed=$tools_installed" IMPUTE"
 fi
 
 
 
-#CHECK_STRAND
-#Create main CHECK_STRAND directory
-mkdir $EZIMPUTER/EXTERNALTOOLS/CHECK_STRAND
-#Change to CHECK_STRAND directory
-cd $EZIMPUTER/EXTERNALTOOLS/CHECK_STRAND
-#Download CHECK_STRAND package
-wget http://faculty.washington.edu/sguy/beagle/strand_switching/check_strands_16May11.tar.gz
-#uncompress the package
-tar -zxvf check_strands_16May11.tar.gz
-#change directory
-cd check_strands_16May11
-# test program
-#python check_strands.py
-# You should be able to see
-#usage: python check_strands.py infileprefixes outfileprefix
-#outfiles: check_strands.py.markers check_strands.py.log
-#completed combining marker files
-#done checking frequencies
+
+
 
 #(1)GPROBS
 #Create main GPROBS directory
@@ -164,10 +131,51 @@ mkdir $EZIMPUTER/EXTERNALTOOLS/GPROBS
 cd $EZIMPUTER/EXTERNALTOOLS/GPROBS
 #Download GPROBS package
 wget http://faculty.washington.edu/browning/beagle_utilities/gprobsmetrics.jar
-#Once you are done with downloading next step is to create the tool info config file (here). 
+java -jar $EZIMPUTER/EXTERNALTOOLS/GPROBS/gprobsmetrics.jar  -h
+if [ $? -ne 0 ]
+    then
+    echo "Unable to download gprobs or java is not set to the path"
+    tools_installed_ind=0
+	tools_installed=$tools_installed" GPROBS"
+fi
 
 
+
+#SHAPEIT
+#Create main SHAPEIT directory
+mkdir $EZIMPUTER/EXTERNALTOOLS/SHAPEIT
+#Change to SHAPEIT directory
+cd $EZIMPUTER/EXTERNALTOOLS/SHAPEIT
+#Download SHAPEIT tool package
+timeout 20 wget http://www.shapeit.fr/script/get.php?id=16
+if [ $? -eq 124 ]
+    then
+    echo "timeout occured while downloading shapeit tool, so copying the tool from local source"
+    cp /data5/bsi/bioinf_int/s106381.borawork/naresh_scripts/PAPER/EasyImputer_v2/bin/TOOLS/SHAPEIT2/shapeit.v2.r727.linux.x64.tar.gz .
+	
+fi
+
+
+#Untar the downloaded package
+ tar -zxvf shapeit.v2.r727.linux.x64.tar.gz
+#Try SHAPEIT
+$EZIMPUTER/EXTERNALTOOLS/SHAPEIT/shapeit.v2.r727.linux.x64 
+
+if [ $? -eq 0 ]
+    then
+    echo "Unable to install shapeit"
+    tools_installed_ind=0
+	tools_installed=$tools_installed" SHAPEIT"
+fi
+
+if [ $tools_installed_ind -eq 0 ]
+then
+	echo "Following tools not installed properly"
+	echo $tools_installed
+fi
 else
 
 echo "usage: install_tools.sh path_to_ezimputer_install_without_trailing_slash"
 fi
+
+#Once you are done with downloading next step is to create the tool info config file (here). 

@@ -1,4 +1,4 @@
-
+#!/usr/bin/env perl
 
 #get current directory
 use Cwd 'abs_path';
@@ -34,7 +34,6 @@ my $shapeit_mem = $config{"SGE_SHAPEIT_MEM"};
 my $shapeit_queue = $config{"SGE_SHAPEIT_QUEUE"};
 my $impute_mem = $config{"SGE_IMPUTE_MEM"};
 my $impute_queue = $config{"SGE_IMPUTE_QUEUE"};
-my $ref_keyword = $config{"IMPUTEREF_VERSION"};
 my $localtempspace_shapeit = $config{"LOCALTEMP_SHAPEIT"};
 my $localtempspace_impute = $config{"LOCALTEMP_IMPUTE"};
 my $rounded = $config{"INNER_DIR"};
@@ -42,14 +41,16 @@ my $restart_impute = $config{"RESTART"};
 my $username = $config{"USERNAME"};
 my $shapit_only = $config{"SHAPEITONLY"};
 my $local_temp=$config{"LOCALTEMP"};
-my $shapeit_states_phase=$config{"SHAPEIT_STATESPHASE"};
-my $pbs=$config{"PBS"};
+my $shapeit_states_param=$config{"SHAPEIT_EXTRA_PARAM"};
+my $envr=$config{"ENVR"};
 my $pbs_option=$config{"PBS_PARAM"};
 my $chr_start_input=$config{"CHR_START_INPUT"};
 my $small_region_extn_start=$config{"SMALL_REGION_EXTN_START"};
 my $small_region_extn_stop=$config{"SMALL_REGION_EXTN_STOP"};
 my $cutoff =$config{"WINDOW_CUTOFF_NUM_MARKERS"};
 my $edge_cutoff=$config{"EDGE_CUTOFF_NUM_MARKERS"};
+my $less_num_samp=$config{"LESS_NUM_SAMP"};
+#my $edge_cutoff=$config{"POP"};
 
 #reading tool info parameters
 getDetails($toolconfig);
@@ -71,9 +72,7 @@ $impute_window=~ s/\s|\t|\r|\n//g;
 $impute_edge=~ s/\s|\t|\r|\n//g;
 $haps=~ s/\s|\t|\r|\n//g;
 $email=~ s/\s|\t|\r|\n//g;
-
-
-$ref_keyword=~ s/\s|\t|\r|\n//g;
+$less_num_samp=~ s/\s|\t|\r|\n//g;
 $localtempspace_shapeit=~ s/\s|\t|\r|\n//g;
 $localtempspace_impute=~ s/\s|\t|\r|\n//g;
 $rounded=~ s/\s|\t|\r|\n//g;
@@ -81,8 +80,8 @@ $restart_impute=~ s/\s|\t|\r|\n//g;
 $username=~ s/\s|\t|\r|\n//g;
 $shapit_only=~ s/\s|\t|\r|\n//g;
 $local_temp=~ s/\s|\t|\r|\n//g;
-$shapeit_states_phase=~ s/\s|\t|\r|\n//g;
-$pbs=~ s/\s|\t|\r|\n//g;
+$shapeit_states_param=~ s/\t|\r|\n//g;
+$envr=~ s/\s|\t|\r|\n//g;
 $chr_start_input=~ s/\s|\t|\r|\n//g;
 $small_region_extn_start=~ s/\s|\t|\r|\n//g;
 $small_region_extn_stop=~ s/\s|\t|\r|\n//g;
@@ -90,18 +89,21 @@ $cutoff=~ s/\s|\t|\r|\n//g;
 $edge_cutoff=~ s/\s|\t|\r|\n//g;
 $local_temp =~ s/\/$//g;
 
-if($pbs ne "YES")
+if($envr =~ m/SGE/i)
 {
 	$shapeit_mem=~ s/\s|\t|\r|\n//g;
 	$shapeit_queue=~ s/\s|\t|\r|\n//g;
 	$impute_mem=~ s/\s|\t|\r|\n//g;
 	$impute_queue=~ s/\s|\t|\r|\n//g;
 }
-else
+elsif($envr =~ m/PBS/i)
 {
-	
 	$pbs_option=~ s/"//g;
 	$pbs_option=~ s/\t|\r|\n//g;
+}
+else
+{
+
 }
 $PLINK=~ s/\s|\t|\r|\n//g;
 $PERL=~ s/\s|\t|\r|\n//g;
@@ -122,10 +124,8 @@ print "IMPUTE_REF: $impute_ref\n";
 print "IMPUTE_WINDOW: $impute_window\n";
 print "IMPUTE_EDGE: $impute_edge\n";
 print "HAPS: $haps\n";
-print "SAMP_SHAPEIT: $samp_shapeit\n";
 print "EMAIL: $email\n"; 
-
-print "IMPUTEREF VERSION: $ref_keyword\n";
+print "LESS_NUM_SAMP: $less_num_samp\n";
 print "Local tempspace for impute $localtempspace_impute\n";
 print "Local tempspace for shapeit $localtempspace_shapeit\n";
 print "ROUNDED $rounded\n";
@@ -133,16 +133,16 @@ print "IMPUTE_RESTART : $restart_impute\n";
 print "USERNAME : $username\n";
 print "SHAPEIT ONLY : $shapit_only\n";
 print "LOCALTEMP : $local_temp\n";
-print "SHAPEIT STATE PHASES : $shapeit_states_phase\n";
-print "PBS : $pbs\n";
-if($pbs ne "YES")
+print "SHAPEIT_EXTRA_PARAM : $shapeit_states_param\n";
+print "ENVR : $envr\n";
+if($envr =~ m/SGE/i)
 {
 	print "SGE_SHAPEIT_MEM: $shapeit_mem\n";
 	print "SGE_SHAPEIT_QUEUE: $shapeit_queue\n";
 	print "SGE_IMPUTE_MEM: $impute_mem\n";
 	print "SGE_IMPUTE_QUEUE: $impute_queue\n";
 }
-else
+elsif($envr =~ m/PBS/i)
 {
 	@pbs_param=split(/\,/,$pbs_option);
 	for($i=0;$i<@pbs_param;$i++)
@@ -166,6 +166,7 @@ print "GPROBS: $GPROBS\n";
 print "JAVA: $JAVA\n";
 print "QSUB: $QSUB\n";
 print "SH: $SH\n";
+
 #checking for the right tool info config file parameters
 if($SH eq "" |$JAVA eq "" |$QSUB eq "" | $PLINK eq "" | $PERL eq "" |  $SHAPEIT eq "" | $IMPUTE eq "" |$GPROBS eq "" )
 {
@@ -181,7 +182,7 @@ if(!(-e $SH) | !(-e $JAVA) | !(-e $QSUB) | !(-e $PLINK) | !(-e $PERL) | !(-e $SH
 #checking impute window and edge sizes
 if(!($impute_window >= 2000000 && $impute_window <= 5000000))
 {
-	die "impute window should be between 2 and 5 mb\n";
+	#die "impute window should be between 2 and 5 mb\n";
 }
 if($restart_impute ne "POST" && $restart_impute ne "IMPUTE" && $restart_impute ne "SHAPEIT" && $restart_impute ne "NO" && $restart_impute ne "NA")
 {
@@ -197,22 +198,23 @@ if($chr_start_input eq "YES" && $small_region_extn_start !~ m/\d/ && $small_regi
 {
 	die "•	SMALL_REGION_EXTN_START and SMALL_REGION_EXTN_STOP should be number as you selected CHR_START_INPUT=YES\n";
 }
-if($pbs ne "YES" && ($shapeit_mem !~ m/\w/ | $shapeit_queue !~ m/\w/ | $impute_mem !~ m/\w/ | $impute_queue !~ m/\w/))
+if($envr !~ m/SGE/i && $envr !~ m/PBS/i && $envr !~ m/MANUAL/i ) 
 {
-	die "Selected PBS=NO ,so SGE_SHAPEIT_MEM,SGE_SHAPEIT_QUEUE,SGE_IMPUTE_MEM,SGE_IMPUTE_QUEUE parameters cannot be empty\n";
+	die "ENVR config parameter should be SGE, PBS, or MANUAL. Entered ENVR must be $envr \n";
 }
-if($pbs eq "YES" && $pbs_option !~ m/\w/)
+if($envr =~ m/SGE/i && ($shapeit_mem !~ m/\w/ | $shapeit_queue !~ m/\w/ | $impute_mem !~ m/\w/ | $impute_queue !~ m/\w/))
 {
-	die "Selected PBS=NO ,so PBS_PARAM cannot be empty\n";
+	die "Selected ENVR=SGE ,so SGE_SHAPEIT_MEM,SGE_SHAPEIT_QUEUE,SGE_IMPUTE_MEM,SGE_IMPUTE_QUEUE parameters cannot be empty\n";
 }
-if($edge_cutoff eq "" | $cutoff eq "" | $chr_start_input eq "" | $shapeit_states_phase eq "" |$local_temp eq "" | $shapit_only eq "" | $username eq "" |$dirtemp eq "" | $tped eq "" | $tfam eq ""  | $impute_ref eq "" | $impute_window eq "" | $impute_edge eq "" | $haps eq "" | $email eq "" )
+if($envr =~ m/PBS/i && $pbs_option !~ m/\w/)
+{
+	die "Selected ENVR=PBS ,so PBS_PARAM cannot be empty\n";
+}
+if($edge_cutoff eq "" | $cutoff eq "" | $chr_start_input eq "" | $shapeit_states_param eq "" |$local_temp eq "" | $shapit_only eq "" | $username eq "" |$dirtemp eq "" | $tped eq "" | $tfam eq ""  | $impute_ref eq "" | $impute_window eq "" | $impute_edge eq "" | $haps eq "" | $email eq "" )
  {
 	die "input arguments empty please correct arguments and retry\n";
  }
- if($shapeit_states_phase <100)
- {
-	die "shapeit_states_phase parameter should be greater than 99\n";
- }
+
   
  if(!(-e $tped) | !(-e $tfam))
  {
@@ -220,17 +222,18 @@ if($edge_cutoff eq "" | $cutoff eq "" | $chr_start_input eq "" | $shapeit_states
  }
 if(($restart_impute eq "NO" || $restart_impute eq "NA" )&& (-d "$dirtemp/$rounded"))
 {
-	die "Restart option is NA and temp direcoty already exists remove temp directory and retry \n";
+	die "Restart option is NA and temp directory already exists, please remove temp directory and retry \n";
 }
 unless(-d $dirtemp)
 {
     system("mkdir -p $dirtemp");
 }
-$check_ref="$impute_ref/$ref_keyword"."_chr1_impute.legend.gz";
-if(!(-e $check_ref))
- {
-	die "impute ref directory not found or wrong\n";
- }
+
+if(!(-d $impute_ref) && !(-f $impute_ref))
+{
+    print "Directory doesn't exist $reffile_dir\n";
+}
+
  if(uc($haps) ne "NA" && !(-e $haps)) 
  {
 	die "input haps  does not exist\n";
@@ -240,26 +243,81 @@ if(uc($rounded) eq "NA")
 	$round = sprintf("%.0f", rand()*time());
 	$rounded = "temp".$round;
 }
+
+#reading ref directory
+require "$dir/bin/Read_reffile.pl";
+
+getRef($impute_ref);
+
+#check reference
+for(my $chr=23;$chr>0;$chr--)
+{
+	if(exists($ref_meta{"chr$chr".'_'."genetic"}))
+	{
+		print "chr$chr".'_'."genetic"." ".$ref_meta{"chr$chr".'_'."genetic"}."\n";
+	}
+	else
+	{
+		die "there is a problem in the ref dir or metainfo file provided. No value for chr$chr".'_'."genetic\n";
+	}
+	if(exists($ref_meta{"chr$chr".'_'."hap"}))
+	{
+			print "chr$chr".'_'."hap"." ".$ref_meta{"chr$chr".'_'."hap"}."\n";
+	}
+	else
+	{
+			die "there is a problem in the ref dir or metainfo file provided. No value for chr$chr".'_'."hap\n";
+	}
+	if(exists($ref_meta{"chr$chr".'_'."legend"}))
+	{
+			print "chr$chr".'_'."legend"." ".$ref_meta{"chr$chr".'_'."legend"}."\n";
+	}
+	else
+	{
+			die "there is a problem in the ref dir or metainfo file provided. No value for chr$chr".'_'."legend\n";
+	}
+}
+if(exists($ref_meta{"sample"}))
+{
+	print "sample"." ".$ref_meta{"sample"}."\n";
+}
+else
+{
+    die "there is a problem in the ref dir or metainfo file provided. No value for sample\n";
+}
+
+
 if(uc($restart_impute) ne "POST")
 {
 	if(uc($restart_impute) ne "IMPUTE")
 	{
-
 		if(uc($restart_impute) ne "SHAPEIT")
 		{
 			#creating a temp directory if not presen
 			system("mkdir -p $dirtemp");
 			system("mkdir $dirtemp/$rounded");
-			#system("cp $tfam  $dirtemp/$rounded/");
-			#@tfam_ar=split(/\//,$tfam);
-			#$tfam = pop(@tfam_ar);
+			system("mkdir $dirtemp/$rounded/archive_logfiles_sungrid/");
+			system("cp $toolconfig $dirtemp/$rounded/archive_logfiles_sungrid/");
+			system("cp $config $dirtemp/$rounded/archive_logfiles_sungrid/");
 			
+			#copying the tfam file
 			system("cp $tfam $dirtemp/$rounded/unprocessed_input.tfam");
-			system("cp $tped $dirtemp/$rounded/unprocessed_input.tped.gz"); 
-			#system("cp $tped $dirtemp/$rounded/unprocessed_input.tped.gz");
-			system("gunzip $dirtemp/$rounded/unprocessed_input.tped.gz");
+			
+			#copying the tped file
+			if($tped =~ m/gz$/)
+			{
+				system("cp $tped $dirtemp/$rounded/unprocessed_input.tped.gz"); 
+				#system("cp $tped $dirtemp/$rounded/unprocessed_input.tped.gz");
+				system("gunzip $dirtemp/$rounded/unprocessed_input.tped.gz");
+			}
+			else
+			{
+				system("cp $tped $dirtemp/$rounded/unprocessed_input.tped");
+			}
+			
 			#checking if data contain chr x then checking for gender information in the tfam file
-			$verify=`cut -f5 -d ' ' $dirtemp/$rounded/unprocessed_input.tfam|sort|uniq`;
+			$ENV{TMPDIR} = "$dirtemp/$rounded/";
+			$verify=`cut -f5 -d ' ' $dirtemp/$rounded/unprocessed_input.tfam|sort -T $dirtemp/$rounded/|uniq`;
 			@verify=split("\n",$verify);
 			open(CHECK_X,"$dirtemp/$rounded/unprocessed_input.tped") or die " no file found $dirtemp/$rounded/unprocessed_input.tped\n";
 			$chrx_check=0;
@@ -282,20 +340,13 @@ if(uc($restart_impute) ne "POST")
 					}
 				}
 			}	
-			#system("cp $dirtemp/$rounded/unprocessed_input.tfam $dirtemp/$rounded/processed_beagle_input.tfam");
-			#system("$PLINK --tfile $dirtemp/$rounded/unprocessed_input --transpose --recode --out $dirtemp/$rounded/processed_beagle_input");
+			#converting unprocessed_input transpose to binary format
 			system("$PLINK --tfile $dirtemp/$rounded/unprocessed_input --make-bed --out $dirtemp/$rounded/processed_beagle_input");
 			system("rm  $dirtemp/$rounded/unprocessed_input.*");
 
 			
-			#system("$PLINK --tfile $dirtemp/$rounded/processed_beagle_input --out $dirtemp/$rounded/processed_beagle_input --make-bed");
-			#system("rm $dirtemp/$rounded/processed_beagle_input.tfam $dirtemp/$rounded/processed_beagle_input.tped");
-			#system("rm $dirtemp/$rounded/unprocessed_beagle_input.tfam $dirtemp/$rounded/unprocessed_beagle_input.tped");
-
 			#checking for the chr23 exists
 			open(CHECK,"$dirtemp/$rounded/processed_beagle_input.bim") or die "no file exists\n";
-			#@check_chr = (1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23);
-			#$prev_chr = 0;
 			while(<CHECK>)
 			{
 				@array = split("\t",$_);
@@ -315,6 +366,11 @@ if(uc($restart_impute) ne "POST")
 				#chopping the chr 1-22 and submitting the jobs for imputation
 				#creating the argument file for the array job for the shape it program
 				open(ARRAY_WRBUFF,">$dirtemp/$rounded/ArrayJob_file_shapeit")or die "unable to write the file ArrayJob_file_shapeit\n";
+				#if($less_num_samp eq "YES")
+				#{
+				#	open(ARRAY_WRBUFF_LESS_SAMP,">$dirtemp/$rounded/ArrayJob_file_shapeit_lesssamp")or die "unable to write the file ArrayJob_file_shapeit\n";
+				
+				#}
 				open(GUNZIP_SHAPIT_WRBUFF,">$dirtemp/$rounded/Gunzip_file_shapeit")or die "unable to write the file Gunzip_file_shapeit\n";
 				@check_chr_t=();
 				for($i=0;$i<@check_chr;$i++)
@@ -337,55 +393,113 @@ if(uc($restart_impute) ne "POST")
 				for($i=0;$i<@check_chr;$i++)
 				{
 					$j = $check_chr[$i];
-					#if($j < 24)
-					#{
-						system("mkdir $dirtemp/$rounded/$j");
-						system("$PLINK --bfile $dirtemp/$rounded/processed_beagle_input --chr $j --make-bed  --out $dirtemp/$rounded/$j/snps_chr$j");
-						if($j == 23)
+					system("mkdir $dirtemp/$rounded/$j");
+					system("$PLINK --bfile $dirtemp/$rounded/processed_beagle_input --chr $j --make-bed  --out $dirtemp/$rounded/$j/snps_chr$j");
+					if($j == 23)
+					{
+						#print ARRAY_WRBUFF "--input-bed  $dirtemp/$rounded/$j/snps_chr$j.bed $dirtemp/$rounded/$j/snps_chr$j.bim $dirtemp/$rounded/$j/snps_chr$j.fam --input-map $impute_ref/genetic_map_chrX_nonPAR_combined_b37.txt  --output-max  $dirtemp/$rounded/$j/snps_chr$j.haps $dirtemp/$rounded/$j/snps_chr$j.sample #--seed 123456789 --states-phase\n"; 
+						if($less_num_samp ne "YES")
 						{
-							#print ARRAY_WRBUFF "--input-bed  $dirtemp/$rounded/$j/snps_chr$j.bed $dirtemp/$rounded/$j/snps_chr$j.bim $dirtemp/$rounded/$j/snps_chr$j.fam --input-map $impute_ref/genetic_map_chrX_nonPAR_combined_b37.txt  --output-max  $dirtemp/$rounded/$j/snps_chr$j.haps $dirtemp/$rounded/$j/snps_chr$j.sample\n"; 
-							if(uc($pbs) ne "YES")
+							if($envr =~ m/SGE/i)
 							{
-								print ARRAY_WRBUFF "--input-bed  $dirtemp/$rounded/$j/snps_chr$j.bed $dirtemp/$rounded/$j/snps_chr$j.bim $dirtemp/$rounded/$j/snps_chr$j.fam --input-map $impute_ref/genetic_map_chrX_nonPAR_combined_b37.txt  --output-max  snps_chr$j.haps snps_chr$j.sample --chrX --seed 123456789 --states-phase $shapeit_states_phase --output-log $dirtemp/$rounded/shapeit_logfiles_sungrid/$j\n"; 
+								print ARRAY_WRBUFF "--input-bed  $dirtemp/$rounded/$j/snps_chr$j.bed $dirtemp/$rounded/$j/snps_chr$j.bim $dirtemp/$rounded/$j/snps_chr$j.fam --input-map $impute_ref/".$ref_meta{"chr$j".'_'."genetic"}." --output-max  snps_chr$j.haps snps_chr$j.sample --chrX  $shapeit_states_param --output-log $dirtemp/$rounded/shapeit_logfiles_sungrid/$j\n"; 
+							}
+							elsif($envr =~ m/PBS/i)
+							{
+								print ARRAY_WRBUFF "--input-bed  $dirtemp/$rounded/$j/snps_chr$j.bed $dirtemp/$rounded/$j/snps_chr$j.bim $dirtemp/$rounded/$j/snps_chr$j.fam --input-map $impute_ref/".$ref_meta{"chr$j".'_'."genetic"}."  --output-max  $dirtemp/$rounded/$j/snps_chr$j.haps $dirtemp/$rounded/$j/snps_chr$j.sample --chrX $shapeit_states_param --output-log $dirtemp/$rounded/shapeit_logfiles_sungrid/$j\n"; 	
 							}
 							else
 							{
-								print ARRAY_WRBUFF "--input-bed  $dirtemp/$rounded/$j/snps_chr$j.bed $dirtemp/$rounded/$j/snps_chr$j.bim $dirtemp/$rounded/$j/snps_chr$j.fam --input-map $impute_ref/genetic_map_chrX_nonPAR_combined_b37.txt  --output-max  $dirtemp/$rounded/$j/snps_chr$j.haps $dirtemp/$rounded/$j/snps_chr$j.sample --chrX --seed 123456789 --states-phase $shapeit_states_phase --output-log $dirtemp/$rounded/shapeit_logfiles_sungrid/$j\n"; 	
-							}		
+								print ARRAY_WRBUFF "--input-bed  $dirtemp/$rounded/$j/snps_chr$j.bed $dirtemp/$rounded/$j/snps_chr$j.bim $dirtemp/$rounded/$j/snps_chr$j.fam --input-map $impute_ref/".$ref_meta{"chr$j".'_'."genetic"}."  --output-max  snps_chr$j.haps snps_chr$j.sample --chrX  $shapeit_states_param --output-log $dirtemp/$rounded/shapeit_logfiles_sungrid/$j\n"; 
+							}
 						}
 						else
 						{
-							#$array_job = "--input-bed  $dirtemp/$rounded/$j/snps_chr$j.bed $dirtemp/$rounded/$j/snps_chr$j.bim $dirtemp/$rounded/$j/snps_chr$j.fam --input-map $impute_ref/genetic_map_chr$j"."_combined_b37.txt  --output-max  $dirtemp/$rounded/$j/snps_chr$j.haps $dirtemp/$rounded/$j/snps_chr$j.sample\n";
-							if(uc($pbs) ne "YES")
+							$samp =$ref_meta{"sample"};
+							$genetic=$ref_meta{"chr$j".'_'."genetic"};
+							$legend =$ref_meta{"chr$j".'_'."legend"};
+							$hap =$ref_meta{"chr$j".'_'."hap"};
+							if($envr =~ m/SGE/i)
 							{
-								$array_job = "--input-bed  $dirtemp/$rounded/$j/snps_chr$j.bed $dirtemp/$rounded/$j/snps_chr$j.bim $dirtemp/$rounded/$j/snps_chr$j.fam --input-map $impute_ref/genetic_map_chr$j"."_combined_b37.txt  --output-max  snps_chr$j.haps snps_chr$j.sample --seed 123456789 --states-phase $shapeit_states_phase --output-log $dirtemp/$rounded/shapeit_logfiles_sungrid/$j\n";
+								$array_job = "-check -B  $dirtemp/$rounded/$j/snps_chr$j -M $impute_ref/$genetic --input-ref $impute_ref/$hap $impute_ref/$legend $impute_ref/$samp --output-log  $dirtemp/$rounded/$j/snps_chr$j.alignments";
+								$array_job1 = "-B  $dirtemp/$rounded/$j/snps_chr$j -M $impute_ref/$genetic  --input-ref $impute_ref/$hap $impute_ref/$legend $impute_ref/$samp  -O snps_chr$j --exclude-snp $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.exclude  $shapeit_states_param --chrX --output-log $dirtemp/$rounded/shapeit_logfiles_sungrid/";
+								print ARRAY_WRBUFF "$array_job".'___'.$array_job1."\n";
+							}
+							elsif($envr =~ m/PBS/i)
+							{
+								$array_job = "-check -B  $dirtemp/$rounded/$j/snps_chr$j -M $impute_ref/$genetic  --input-ref $impute_ref/$hap $impute_ref/$legend $impute_ref/$samp --output-log  $dirtemp/$rounded/$j/snps_chr$j.alignments";
+								$array_job1 = "-B  $dirtemp/$rounded/$j/snps_chr$j -M $impute_ref/$genetic  --input-ref $impute_ref/$hap $impute_ref/$legend $impute_ref/$samp -O $dirtemp/$rounded/$j/snps_chr$j --exclude-snp $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.exclude  $shapeit_states_param --chrX --output-log $dirtemp/$rounded/shapeit_logfiles_sungrid";
+								print ARRAY_WRBUFF "$array_job".'___'.$array_job1."\n";
+							}
+							else
+							{
+								$array_job = "-check -B  $dirtemp/$rounded/$j/snps_chr$j -M $impute_ref/$genetic --input-ref $impute_ref/$hap $impute_ref/$legend $impute_ref/$samp --output-log  $dirtemp/$rounded/$j/snps_chr$j.alignments";
+								$array_job1 = "-B  $dirtemp/$rounded/$j/snps_chr$j -M $impute_ref/$genetic  --input-ref $impute_ref/$hap $impute_ref/$legend $impute_ref/$samp  -O snps_chr$j --exclude-snp $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.exclude  $shapeit_states_param --chrX --output-log $dirtemp/$rounded/shapeit_logfiles_sungrid/";
+								print ARRAY_WRBUFF "$array_job".'___'.$array_job1."\n";
+							}
+						}		
+					}
+					else
+					{
+						if($less_num_samp ne "YES")
+						{
+							$genetic=$ref_meta{"chr$j".'_'."genetic"};
+							if($envr =~ m/SGE/i)
+							{
+								$array_job = "--input-bed  $dirtemp/$rounded/$j/snps_chr$j.bed $dirtemp/$rounded/$j/snps_chr$j.bim $dirtemp/$rounded/$j/snps_chr$j.fam --input-map $impute_ref/$genetic  --output-max  snps_chr$j.haps snps_chr$j.sample $shapeit_states_param --output-log $dirtemp/$rounded/shapeit_logfiles_sungrid/$j\n";
+								print ARRAY_WRBUFF $array_job;
+							}
+							elsif($envr =~ m/PBS/i)
+							{
+								$array_job = "--input-bed  $dirtemp/$rounded/$j/snps_chr$j.bed $dirtemp/$rounded/$j/snps_chr$j.bim $dirtemp/$rounded/$j/snps_chr$j.fam --input-map $impute_ref/$genetic  --output-max  $dirtemp/$rounded/$j/snps_chr$j.haps $dirtemp/$rounded/$j/snps_chr$j.sample $shapeit_states_param --output-log $dirtemp/$rounded/shapeit_logfiles_sungrid/$j\n";
 								print ARRAY_WRBUFF $array_job;
 							}
 							else
 							{
-								$array_job = "--input-bed  $dirtemp/$rounded/$j/snps_chr$j.bed $dirtemp/$rounded/$j/snps_chr$j.bim $dirtemp/$rounded/$j/snps_chr$j.fam --input-map $impute_ref/genetic_map_chr$j"."_combined_b37.txt  --output-max  $dirtemp/$rounded/$j/snps_chr$j.haps $dirtemp/$rounded/$j/snps_chr$j.sample --seed 123456789 --states-phase $shapeit_states_phase --output-log $dirtemp/$rounded/shapeit_logfiles_sungrid/$j\n";
+								$array_job = "--input-bed  $dirtemp/$rounded/$j/snps_chr$j.bed $dirtemp/$rounded/$j/snps_chr$j.bim $dirtemp/$rounded/$j/snps_chr$j.fam --input-map $impute_ref/$genetic  --output-max  snps_chr$j.haps snps_chr$j.sample $shapeit_states_param --output-log $dirtemp/$rounded/shapeit_logfiles_sungrid/$j\n";
 								print ARRAY_WRBUFF $array_job;
 							}
 						}
-						#print GUNZIP_SHAPIT_WRBUFF "gzip $dirtemp/$rounded/$j/snps_chr$j.haps\n";
-						print GUNZIP_SHAPIT_WRBUFF "$dirtemp/$rounded/$j/\n";
-						#system("$PLINK --bfile $dirtemp/$rounded/processed_beagle_input --chr $j  --transpose --recode --out $temp_dir/$j/snps_chr$j");
-						#system("$PLINK --tfile $temp_dir/$j/snps_chr$j --missing --out $temp_dir/$j/snps_chr$j");
-						#system("perl $dir/bin/perl_prep_impute.pl $temp_dir/$j/snps_chr$j");
-					#}
+						else
+						{
+							$samp =$ref_meta{"sample"};
+							$genetic=$ref_meta{"chr$j".'_'."genetic"};
+							$legend =$ref_meta{"chr$j".'_'."legend"};
+							$hap =$ref_meta{"chr$j".'_'."hap"};
+							if($envr =~ m/SGE/i)
+							{
+								$array_job = "-check -B  $dirtemp/$rounded/$j/snps_chr$j -M $impute_ref/$genetic  --input-ref $impute_ref/$hap $impute_ref/$legend $impute_ref/$samp --output-log  $dirtemp/$rounded/$j/snps_chr$j.alignments";
+								$array_job1 = "-B  $dirtemp/$rounded/$j/snps_chr$j -M $impute_ref/$genetic  --input-ref $impute_ref/$hap $impute_ref/$legend $impute_ref/$samp  -O snps_chr$j --exclude-snp $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.exclude  $shapeit_states_param --output-log $dirtemp/$rounded/shapeit_logfiles_sungrid/";
+								print ARRAY_WRBUFF "$array_job".'___'.$array_job1."\n";
+							}
+							elsif($envr =~ m/PBS/i)
+							{
+								$array_job = "-check -B  $dirtemp/$rounded/$j/snps_chr$j -M $impute_ref/$genetic  --input-ref $impute_ref/$hap $impute_ref/$legend $impute_ref/$samp --output-log  $dirtemp/$rounded/$j/snps_chr$j.alignments";
+								$array_job1 = "-B  $dirtemp/$rounded/$j/snps_chr$j -M $impute_ref/$genetic  --input-ref $impute_ref/$hap $impute_ref/$legend $impute_ref/$samp -O $dirtemp/$rounded/$j/snps_chr$j --exclude-snp $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.exclude  $shapeit_states_param --output-log $dirtemp/$rounded/shapeit_logfiles_sungrid";
+								print ARRAY_WRBUFF "$array_job".'___'.$array_job1."\n";
+							}
+							else
+							{
+								$array_job = "-check -B  $dirtemp/$rounded/$j/snps_chr$j -M $impute_ref/$genetic  --input-ref $impute_ref/$hap $impute_ref/$legend $impute_ref/$samp --output-log  $dirtemp/$rounded/$j/snps_chr$j.alignments";
+								$array_job1 = "-B  $dirtemp/$rounded/$j/snps_chr$j -M $impute_ref/$genetic  --input-ref $impute_ref/$hap $impute_ref/$legend $impute_ref/$samp  -O snps_chr$j --exclude-snp $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.exclude  $shapeit_states_param --output-log $dirtemp/$rounded/shapeit_logfiles_sungrid/";
+								print ARRAY_WRBUFF "$array_job".'___'.$array_job1."\n";
+							
+							}
+						}
+					}
+					print GUNZIP_SHAPIT_WRBUFF "$dirtemp/$rounded/$j/\n";	
 				}
 				close(ARRAY_WRBUFF);
 
-				#system("gzip $dirtemp/$rounded/*.tped");
 				$count_shapeit_jobs = `wc -l $dirtemp/$rounded/ArrayJob_file_shapeit`;
 				$count_shapeit_jobs =~  s/ .*//g;
 				chomp($count_shapeit_jobs);
 				$input_shapeit_jobids = "ArrayJob_file_shapeit";
 				$input_shapeit_jobids_gunzip="Gunzip_file_shapeit";
+				$input_shapeit_jobids_shapeit_lesssamp ="ArrayJob_file_shapeit_lesssamp";
 			}
 			else
 			{
-				#$dirtemp="/data2/bsi/RandD/Arraybased_RND/Easy_imputer_test/temp";
 				open(RESTART,"$dirtemp/$rounded/ArrayJob_file_shapeit")or die " no file found $dirtemp/$rounded/ArrayJob_file_shapeit\n";
 				open(WRRESTART,">$dirtemp/$rounded/ArrayJob_file_shapeit_restart")or die " not able to write $dirtemp/$rounded/ArrayJob_file_shapeit_restart\n";
 				open(RESTART_GUNZIP,"$dirtemp/$rounded/Gunzip_file_shapeit")or die "no file found Gunzip_file_shapeit\n";
@@ -394,18 +508,43 @@ if(uc($restart_impute) ne "POST")
 				while($restart=<RESTART>)
 				{
 						chomp($restart);
+						$restart=~ s/\s+/ /g;
 						$restart_gz = <RESTART_GUNZIP>;
 						chomp($restart_gz);
 						@array=split(" ",$restart);
 						@array1 = split(/\//,$array[2]);
 						$chr = $array1[@array1-2];
 						$array[2] =~ s/bim/haps/g;
-						if(!(-e "$array[2].gz"))
+						$file=$array[2];
+						if($less_num_samp eq "YES")
+						{	
+							$file=$array[2].".haps";
+						}
+						if(!(-e "$file.gz"))
 						{
+								
 								print WRRESTART $restart."\n";
 								print WRRESTART_GUNZIP  $restart_gz."\n";
 								$count_shapeit_jobs++;
 						}
+						else
+						{
+							#print "sucess\n";
+							$count_shapeit =`gunzip -c  $file.gz| wc -l `;
+							chomp($count_shapeit);
+							$count_shapeit =~ s/\s.+//g;
+							#print "count_shapeit $count_shapeit\n";
+							if($count_shapeit < 1)
+							{
+								system("chmod 755 $file.gz");
+								system("rm $file.gz");
+								print WRRESTART $restart."\n";
+								print WRRESTART_GUNZIP  $restart_gz."\n";
+								$count_shapeit_jobs++;
+							}
+							
+						}
+						#die;
 				}
 				close(RESTART);
 				close(WRRESTART);
@@ -413,202 +552,303 @@ if(uc($restart_impute) ne "POST")
 				$input_shapeit_jobids_gunzip="Gunzip_file_shapeit_restart";
 
 			}
-			system("mkdir $dirtemp/$rounded/shapeit_logfiles_sungrid");
-			open(ARRAY_SHAPEIT,">$dirtemp/$rounded/ArrayJob_shapeit.csh") or die "unable to create the array job file\n";
-			if(-e "$dirtemp/$rounded/shapeit_check_jobs")
-			{		
-				system("rm $dirtemp/$rounded/shapeit_check_jobs");
-				
-			}
-			system("touch $dirtemp/$rounded/shapeit_check_jobs");
-			if(uc($pbs) ne "YES")
+			if($count_shapeit_jobs > 0)
 			{
-				#print ARRAY_SHAPEIT $shapeit;
-				$com = '#!';
-				print ARRAY_SHAPEIT "$com $SH\n";
-				$com = '#$';
-				print ARRAY_SHAPEIT "$com -q $shapeit_queue\n";
-				print ARRAY_SHAPEIT "$com -l h_vmem=$shapeit_mem\n";
-				print ARRAY_SHAPEIT "$com -t 1-$count_shapeit_jobs:1\n";
-				print ARRAY_SHAPEIT "$com -M $email\n";
-				print ARRAY_SHAPEIT "$com -m a\n";
-				print ARRAY_SHAPEIT "$com -l loc2tmp=$localtempspace_shapeit\n";
-				print ARRAY_SHAPEIT "$com -V\n";
-				print ARRAY_SHAPEIT "$com -cwd\n";
-				print ARRAY_SHAPEIT "$com -e $dirtemp/$rounded/shapeit_logfiles_sungrid\n";
-				print ARRAY_SHAPEIT "$com -o $dirtemp/$rounded/shapeit_logfiles_sungrid\n";
-				print ARRAY_SHAPEIT "$com -notify\n";
-				$temp = 'tmp='.$local_temp.'/'.$username.'/`expr $RANDOM \* $RANDOM`';
-				print ARRAY_SHAPEIT "$temp\n";
-				print ARRAY_SHAPEIT 'cleanup () {'."\n";
-				print ARRAY_SHAPEIT '/bin/rm -rf $tmp'."\n";
-				print ARRAY_SHAPEIT '}'."\n";
-				print ARRAY_SHAPEIT "trap 'cleanup' USR1 USR2 EXIT\n";
-				$temp = 'mkdir -p $tmp';
-				print ARRAY_SHAPEIT "$temp\n";
-				$temp = 'cd $tmp';
-				print ARRAY_SHAPEIT "$temp\n";
-				print ARRAY_SHAPEIT 't1=`pwd`'."\n";
-				print ARRAY_SHAPEIT 't2=`uname -n`'."\n";
-				print ARRAY_SHAPEIT 't3="$t1 $t2"'."\n";
-				print ARRAY_SHAPEIT 'echo $t3 > '."$dirtemp/$rounded/shapeit_system\n";
-				#print ARRAY_SHAPEIT "uname -n >> $dirtemp/$rounded/shapeit_system\n";
-				$temp = 'k=`cat  '."$dirtemp/$rounded/$input_shapeit_jobids".' |head -$SGE_TASK_ID |tail -1`';
-				print ARRAY_SHAPEIT "$temp\n";
-				$temp = "$SHAPEIT ".'$k '."\n";
-				print ARRAY_SHAPEIT "$temp";
-				$temp='gzip snps_chr*.haps';
-				print ARRAY_SHAPEIT "$temp\n";
-				print ARRAY_SHAPEIT "wait\n";
-				$temp = 'k1'.'=`cat  '."$dirtemp/$rounded/$input_shapeit_jobids_gunzip".' |head -$SGE_TASK_ID |tail -1`';
-				print ARRAY_SHAPEIT "$temp\n";
-				$temp = 'mv snps_chr* $k1';
-				print ARRAY_SHAPEIT "$temp\n";
-				$temp = 'rm -rf $tmp';
-				print ARRAY_SHAPEIT "$temp\n";
-				$temp = 'echo $SGE_TASK_ID >>'."$dirtemp/$rounded/shapeit_check_jobs\n";
-				print ARRAY_SHAPEIT "$temp\n";
-				#$temp = "cp $dirtemp/$rounded/ArrayJob_file_shapeit ".'$k1/waiting.txt'."\n";
-				#print ARRAY_SHAPEIT "$temp\n";
-			}
-			else
-			{
-				$com = '#!';
-				print ARRAY_SHAPEIT "$com $SH\n";
-				$com = '#PBS';
-				for($p=0;$p<@pbs_param;$p++)
-				{
-					print ARRAY_SHAPEIT "$com $pbs_param[$p]\n";
+				system("mkdir $dirtemp/$rounded/shapeit_logfiles_sungrid");
+				open(ARRAY_SHAPEIT,">$dirtemp/$rounded/ArrayJob_shapeit.csh") or die "unable to create the array job file\n";
+				if(-e "$dirtemp/$rounded/shapeit_check_jobs")
+				{		
+					system("rm $dirtemp/$rounded/shapeit_check_jobs");
+					
 				}
-				#print ARRAY_SHAPEIT "$com -l walltime=10:05:00\n";
-				#print ARRAY_SHAPEIT "$com -l nodes=1:ppn=1\n";
-				print ARRAY_SHAPEIT "$com -t 1-$count_shapeit_jobs\n";
-				print ARRAY_SHAPEIT "$com -M $email\n";
-				print ARRAY_SHAPEIT "$com -m a\n";
-				#print ARRAY_SHAPEIT "$com -A normal\n";
-				print ARRAY_SHAPEIT "$com -V\n";
-				#print ARRAY_SHAPEIT "$com -A bf0\n";
-				print ARRAY_SHAPEIT "$com -e $dirtemp/$rounded/shapeit_logfiles_sungrid\n";
-				print ARRAY_SHAPEIT "$com -o $dirtemp/$rounded/shapeit_logfiles_sungrid\n";
-				$temp = "$SHAPEIT ".'`cat  '."$dirtemp/$rounded/$input_shapeit_jobids".' |head -${PBS_ARRAYID} |tail -1`'."\n";
-				print ARRAY_SHAPEIT "$temp\n";
-				$temp='gzip '.'`cat  '."$dirtemp/$rounded/$input_shapeit_jobids_gunzip".' |head -${PBS_ARRAYID} |tail -1`'.'snps_chr*.haps';
-				print ARRAY_SHAPEIT "$temp\n";
-				#$temp = "cp $dirtemp/$rounded/ArrayJob_file_shapeit ".'`cat  '."$dirtemp/$rounded/Gunzip_file_shapeit".' |head -${PBS_ARRAYID} |tail -1`'."/waiting.txt\n";
-				$temp = 'echo ${PBS_ARRAYID} >>'."$dirtemp/$rounded/shapeit_check_jobs\n";
-				print ARRAY_SHAPEIT "$temp\n";
-				#print ARRAY_SHAPEIT "wait\n";
-				#$temp = 'mv snps_chr* '.'`cat  '."$dirtemp/$rounded/Gunzip_file_shapeit".' |head -${PBS_ARRAYID} |tail -1`';
-				#print ARRAY_SHAPEIT "$temp\n";
-				#$temp = 'rm -rf $tmp';
-				#print ARRAY_SHAPEIT "$temp\n";
-			}	
-			#submitting and storing the job id
-			#die "qsub $dirtemp/$rounded/ArrayJob_shapeit.csh > $dirtemp/$rounded/jobid_shapeit\n";
-			
-			if(uc($pbs) ne "YES")
-			{
-				system("$QSUB $dirtemp/$rounded/ArrayJob_shapeit.csh > $dirtemp/$rounded/jobid_shapeit");
-				
-				#readin job id from submit_shapeit
-				open(ARRAY_SHAPEIT,"$dirtemp/$rounded/jobid_shapeit") or die "unable to open file $dirtemp/$rounded/jobid_shapeit\n";
-				$shapeit = <ARRAY_SHAPEIT>;
-				print "$shapeit\n";
-				@shapeit =split(" ",$shapeit);
-				@shapeit1 =split(/\./,$shapeit[2]);
-				print "JOB ID $shapeit1[0]\n";
-				$job_id_shapeit = $shapeit1[0];
-			}
-			else
-			{
-				system(" $QSUB $dirtemp/$rounded/ArrayJob_shapeit.csh > $dirtemp/$rounded/jobid_shapeit");
-					#readin job id from submit_shapeit
-				open(ARRAY_SHAPEIT,"$dirtemp/$rounded/jobid_shapeit") or die "unable to open file $dirtemp/$rounded/jobid_shapeit\n";
-				$shapeit = <ARRAY_SHAPEIT>;
-				print "$shapeit\n";
-				@shapeit1 =split(/\./,$shapeit);
-				#$shapeit1[0]=~ s/\[\]//g;
-				print "JOB ID $shapeit1[0]\n";
-				$job_id_shapeit = $shapeit1[0];
-			}
-			#die $job_id_shapeit."\n";
-			#making the array job to wait
-			open(ARRAY_SHAPEIT,">$dirtemp/$rounded/ArrayJob_shapeit_wait.csh") or die "unable to create the array job wait file shape it \n";
-			if(uc($pbs) ne "YES")
-			{
-				$com = '#!';
-				print ARRAY_SHAPEIT "$com $SH\n";
-				$com = '#$';
-				print ARRAY_SHAPEIT "$com -q $shapeit_queue\n";
-				print ARRAY_SHAPEIT "$com -l h_vmem=$shapeit_mem\n";
-				print ARRAY_SHAPEIT "$com -M $email\n";
-				print ARRAY_SHAPEIT "$com -m a\n";
-				print ARRAY_SHAPEIT "$com -V\n";
-				print ARRAY_SHAPEIT "$com -cwd\n";
-				$com = '#$';
-				print ARRAY_SHAPEIT "$com -e $dirtemp/$rounded/\n";
-				print ARRAY_SHAPEIT "$com -o $dirtemp/$rounded/\n";
-				#if(-e "$dirtemp/$rounded/waiting.txt")
-				#{
-				#	system("rm $dirtemp/$rounded/waiting.txt");
-				#}
-				print ARRAY_SHAPEIT "cp $dirtemp/$rounded/jobid_shapeit $dirtemp/$rounded/waiting.txt\n";
-				$sys = "$QSUB -hold_jid $job_id_shapeit $dirtemp/$rounded/ArrayJob_shapeit_wait.csh\n";
-				print $sys."\n";
-				system($sys);	
-			}
-			else
-			{
-				$com = '#!';
-				print ARRAY_SHAPEIT "$com $SH\n";
-				$com = '#PBS';
-				print ARRAY_SHAPEIT "$com -M $email\n";
-				print ARRAY_SHAPEIT "$com -m a\n";
-				for($p=0;$p<@pbs_param;$p++)
+				system("touch $dirtemp/$rounded/shapeit_check_jobs");
+				if($envr =~ m/SGE/i)
 				{
-					print ARRAY_SHAPEIT "$com $pbs_param[$p]\n";
-				}
-				#print ARRAY_SHAPEIT "$com -A normal\n";
-				#print ARRAY_SHAPEIT "$com -A bf0\n";
-				#print ARRAY_SHAPEIT "$com -l walltime=01:05:00\n";
-				#print ARRAY_SHAPEIT "$com -l nodes=1:ppn=1\n";
-				print ARRAY_SHAPEIT "$com -V\n";
-				print ARRAY_SHAPEIT "$com -e $dirtemp/$rounded/\n";
-				print ARRAY_SHAPEIT "$com -o $dirtemp/$rounded/\n";
-				print ARRAY_SHAPEIT "cp $dirtemp/$rounded/jobid_shapeit $dirtemp/$rounded/waiting.txt\n";
-				$sys = "$QSUB -W depend=afterokarray:$job_id_shapeit $dirtemp/$rounded/ArrayJob_shapeit_wait.csh\n";
-				print $sys."\n";
-				system($sys);
-			
-			}
-			$flag = 1;
-			while($flag > 0)
-			{
-				#print "in the loop\n";
-				if($flag%1000000000  == 0)
+					#multi threaded code starts
+					$thread=0;
+					if($shapeit_states_param =~ m/thread/)
 					{
-							$flag = 1;
-							print "waiting for the shapeit array job to complete\n";
+							if($shapeit_states_param =~ m/thread\s*(.\d*?)\s*/)
+							{
+									$thread=$1;
+							}
 					}
-				$flag++;
-
-				if(-e "$dirtemp/$rounded/waiting.txt")	
-				{
-						$flag =0;
+					#multi threaded code ends
+					
+					#print ARRAY_SHAPEIT $shapeit;
+					$com = '#!';
+					print ARRAY_SHAPEIT "$com $SH\n";
+					$com = '#$';
+					print ARRAY_SHAPEIT "$com -q $shapeit_queue\n";
+					print ARRAY_SHAPEIT "$com -l h_vmem=$shapeit_mem\n";
+					print ARRAY_SHAPEIT "$com -t 1-$count_shapeit_jobs:1\n";
+					print ARRAY_SHAPEIT "$com -M $email\n";
+					print ARRAY_SHAPEIT "$com -m a\n";
+					print ARRAY_SHAPEIT "$com -l loc2tmp=$localtempspace_shapeit\n";
+					print ARRAY_SHAPEIT "$com -V\n";
+					print ARRAY_SHAPEIT "$com -cwd\n";
+					if($thread != 0)
+					{
+						print ARRAY_SHAPEIT "$com -pe threaded $thread\n";
+					}
+					print ARRAY_SHAPEIT "$com -e $dirtemp/$rounded/shapeit_logfiles_sungrid\n";
+					print ARRAY_SHAPEIT "$com -o $dirtemp/$rounded/shapeit_logfiles_sungrid\n";
+					print ARRAY_SHAPEIT "$com -notify\n";
+					$temp = 'tmp='.$local_temp.'/'.$username.'/`expr $RANDOM \* $RANDOM`';
+					print ARRAY_SHAPEIT "$temp\n";
+					print ARRAY_SHAPEIT 'cleanup () {'."\n";
+					print ARRAY_SHAPEIT 'rm $tmp/*'."\n";
+					print ARRAY_SHAPEIT 'rmdir $tmp/'."\n";
+					print ARRAY_SHAPEIT '}'."\n";
+					print ARRAY_SHAPEIT "trap 'cleanup' USR1 USR2 EXIT\n";
+					$temp = 'mkdir -p $tmp';
+					print ARRAY_SHAPEIT "$temp\n";
+					$temp = 'cd $tmp';
+					print ARRAY_SHAPEIT "$temp\n";
+					print ARRAY_SHAPEIT 't1=`pwd`'."\n";
+					print ARRAY_SHAPEIT 't2=`uname -n`'."\n";
+					print ARRAY_SHAPEIT 't3="$t1 $t2"'."\n";
+					print ARRAY_SHAPEIT 'echo $t3 > '."$dirtemp/$rounded/shapeit_system\n";
+					if($less_num_samp =~  m/YES/i)
+					{	
+						$temp = 'k=`cat  '."$dirtemp/$rounded/$input_shapeit_jobids".' |head -$SGE_TASK_ID |tail -1`';
+						print ARRAY_SHAPEIT "$temp\n";
+						$temp = 'ks1=`echo  $k|awk -F "___" \'{print $1}\'`';
+						print ARRAY_SHAPEIT "$temp\n";
+						$temp = "$SHAPEIT ".'$ks1 '."\n";
+						print ARRAY_SHAPEIT "$temp";
+						$temp = 'align=`echo $ks1|tr \' \' \'\n\'|grep alignments`'."\n";
+						print ARRAY_SHAPEIT "$temp\n";
+						$temp = 'touch $align.snp.strand.exclude'."\n";
+						print ARRAY_SHAPEIT "$temp\n";
+						$temp = 'ks2=`echo  $k|awk -F "___" \'{print $2}\'`';
+						print ARRAY_SHAPEIT "$temp\n";
+						$temp = "$SHAPEIT ".'$ks2 '."\n";
+						print ARRAY_SHAPEIT "$temp";
+					}
+					else
+					{
+						$temp = 'k=`cat  '."$dirtemp/$rounded/$input_shapeit_jobids".' |head -$SGE_TASK_ID |tail -1`';
+						print ARRAY_SHAPEIT "$temp\n";
+						$temp = "$SHAPEIT ".'$k '."\n";
+						print ARRAY_SHAPEIT "$temp";
+					}
+					$temp='gzip snps_chr*.haps';
+					print ARRAY_SHAPEIT "$temp\n";
+					print ARRAY_SHAPEIT "wait\n";
+					$temp = 'k1'.'=`cat  '."$dirtemp/$rounded/$input_shapeit_jobids_gunzip".' |head -$SGE_TASK_ID |tail -1`';
+					print ARRAY_SHAPEIT "$temp\n";
+					$temp = 'mv snps_chr* $k1';
+					print ARRAY_SHAPEIT "$temp\n";
+					$temp = 'rm $tmp/*';
+					print ARRAY_SHAPEIT "$temp\n";
+					$temp = 'rmdir $tmp/';
+					print ARRAY_SHAPEIT "$temp\n";
+					$temp = 'echo $SGE_TASK_ID >>'."$dirtemp/$rounded/shapeit_check_jobs\n";
+					print ARRAY_SHAPEIT "$temp\n";
 				}
-			}		
-			#print "successfully completed\n";
-			if(-e "$dirtemp/$rounded/waiting.txt")
-			{
-					system("rm $dirtemp/$rounded/waiting.txt");
+				elsif($envr =~ m/PBS/i)
+				{
+					
+					$com = '#!';
+					print ARRAY_SHAPEIT "$com $SH\n";
+					$com = '#PBS';
+					for($p=0;$p<@pbs_param;$p++)
+					{
+						print ARRAY_SHAPEIT "$com $pbs_param[$p]\n";
+					}
+					#print ARRAY_SHAPEIT "$com -l walltime=10:05:00\n";
+					#print ARRAY_SHAPEIT "$com -l nodes=1:ppn=1\n";
+					print ARRAY_SHAPEIT "$com -t 1-$count_shapeit_jobs\n";
+					print ARRAY_SHAPEIT "$com -M $email\n";
+					print ARRAY_SHAPEIT "$com -m a\n";
+					#print ARRAY_SHAPEIT "$com -A normal\n";
+					print ARRAY_SHAPEIT "$com -V\n";
+					
+					#print ARRAY_SHAPEIT "$com -A bf0\n";
+					print ARRAY_SHAPEIT "$com -e $dirtemp/$rounded/shapeit_logfiles_sungrid\n";
+					print ARRAY_SHAPEIT "$com -o $dirtemp/$rounded/shapeit_logfiles_sungrid\n";
+					if($less_num_samp =~  m/YES/i)
+					{	
+						$temp = "$SHAPEIT ".'`cat  '."$dirtemp/$rounded/$input_shapeit_jobids".' |head -${PBS_ARRAYID} |tail -1|awk -F \'___\' \'{print $1}\'`'."\n";
+						print ARRAY_SHAPEIT "$temp\n";
+						$temp = "$SHAPEIT ".'`cat  '."$dirtemp/$rounded/$input_shapeit_jobids".' |head -${PBS_ARRAYID} |tail -1|awk -F \'___\' \'{print $2}\'`'."\n";
+						print ARRAY_SHAPEIT "$temp\n";
+						
+					}
+					else
+					{
+						$temp = "$SHAPEIT ".'`cat  '."$dirtemp/$rounded/$input_shapeit_jobids".' |head -${PBS_ARRAYID} |tail -1`'."\n";
+						print ARRAY_SHAPEIT "$temp\n";
+							
+					}
+					$temp='gzip '.'`cat  '."$dirtemp/$rounded/$input_shapeit_jobids_gunzip".' |head -${PBS_ARRAYID} |tail -1`'.'snps_chr*.haps';
+					print ARRAY_SHAPEIT "$temp\n";
+					$temp = 'echo ${PBS_ARRAYID} >>'."$dirtemp/$rounded/shapeit_check_jobs\n";
+					print ARRAY_SHAPEIT "$temp\n";
+				}
+				else
+				{
+					#multi threaded code starts
+					$thread=0;
+					if($shapeit_states_param =~ m/thread/)
+					{
+							if($shapeit_states_param =~ m/thread\s*(.\d*?)\s*/)
+							{
+									$thread=$1;
+							}
+					}
+					print ARRAY_SHAPEIT 'for SGE_TASK_ID in {1..'.$count_shapeit_jobs.'}'."\n";
+					print ARRAY_SHAPEIT 'do'."\n";
+					$temp = 'tmp='.$local_temp.'/'.$username.'/`expr $RANDOM \* $RANDOM`';
+					print ARRAY_SHAPEIT "$temp\n";
+					$temp = 'mkdir -p $tmp';
+					print ARRAY_SHAPEIT "$temp\n";
+					$temp = 'cd $tmp';
+					print ARRAY_SHAPEIT "$temp\n";
+					if($less_num_samp =~  m/YES/i)
+					{	
+						$temp = 'k=`cat  '."$dirtemp/$rounded/$input_shapeit_jobids".' |head -$SGE_TASK_ID |tail -1`';
+						print ARRAY_SHAPEIT "$temp\n";
+						$temp = 'ks1=`echo  $k|awk -F "___" \'{print $1}\'`';
+						print ARRAY_SHAPEIT "$temp\n";
+						$temp = "$SHAPEIT ".'$ks1 '."\n";
+						print ARRAY_SHAPEIT "$temp";
+						$temp = 'align=`echo $ks1|tr \' \' \'\n\'|grep alignments`'."\n";
+						print ARRAY_SHAPEIT "$temp\n";
+						$temp = 'touch $align.snp.strand.exclude'."\n";
+						print ARRAY_SHAPEIT "$temp\n";
+						$temp = 'ks2=`echo  $k|awk -F "___" \'{print $2}\'`';
+						print ARRAY_SHAPEIT "$temp\n";
+						$temp = "$SHAPEIT ".'$ks2 '."\n";
+						print ARRAY_SHAPEIT "$temp";
+					}
+					else
+					{
+						$temp = 'k=`cat  '."$dirtemp/$rounded/$input_shapeit_jobids".' |head -$SGE_TASK_ID |tail -1`';
+						print ARRAY_SHAPEIT "$temp\n";
+						$temp = "$SHAPEIT ".'$k '."\n";
+						print ARRAY_SHAPEIT "$temp";
+					}
+					$temp='gzip snps_chr*.haps';
+					print ARRAY_SHAPEIT "$temp\n";
+					print ARRAY_SHAPEIT "wait\n";
+					$temp = 'k1'.'=`cat  '."$dirtemp/$rounded/$input_shapeit_jobids_gunzip".' |head -$SGE_TASK_ID |tail -1`';
+					print ARRAY_SHAPEIT "$temp\n";
+					$temp = 'mv snps_chr* $k1';
+					print ARRAY_SHAPEIT "$temp\n";
+					$temp = 'rm $tmp/*';
+					print ARRAY_SHAPEIT "$temp\n";
+					$temp = 'rmdir $tmp';
+					print ARRAY_SHAPEIT "$temp\n";
+					$temp = 'echo $SGE_TASK_ID >>'."$dirtemp/$rounded/shapeit_check_jobs\n";
+					print ARRAY_SHAPEIT "$temp\n";
+					print ARRAY_SHAPEIT 'done'."\n";
+				}
+				#submitting and storing the job id
+				if($envr =~ m/SGE/i)
+				{
+					system("$QSUB $dirtemp/$rounded/ArrayJob_shapeit.csh > $dirtemp/$rounded/jobid_shapeit");
+					
+					#readin job id from submit_shapeit
+					open(ARRAY_SHAPEIT,"$dirtemp/$rounded/jobid_shapeit") or die "unable to open file $dirtemp/$rounded/jobid_shapeit\n";
+					$shapeit = <ARRAY_SHAPEIT>;
+					print "$shapeit\n";
+					@shapeit =split(" ",$shapeit);
+					@shapeit1 =split(/\./,$shapeit[2]);
+					print "JOB ID $shapeit1[0]\n";
+					$job_id_shapeit = $shapeit1[0];
+				}
+				elsif($envr =~ m/PBS/i)
+				{
+					system(" $QSUB $dirtemp/$rounded/ArrayJob_shapeit.csh > $dirtemp/$rounded/jobid_shapeit");
+					#readin job id from submit_shapeit
+					open(ARRAY_SHAPEIT,"$dirtemp/$rounded/jobid_shapeit") or die "unable to open file $dirtemp/$rounded/jobid_shapeit\n";
+					$shapeit = <ARRAY_SHAPEIT>;
+					print "$shapeit\n";
+					@shapeit1 =split(/\./,$shapeit);
+					#$shapeit1[0]=~ s/\[\]//g;
+					print "JOB ID $shapeit1[0]\n";
+					$job_id_shapeit = $shapeit1[0];
+				}
+				else
+				{
+					system("$SH $dirtemp/$rounded/ArrayJob_shapeit.csh > $dirtemp/$rounded/shapeit_logfiles_sungrid/ArrayJob_shapeit.csh.MANUAL");
+				}
+				
+				if($envr =~ m/SGE/i || $envr =~ m/PBS/i)
+				{
+					#die $job_id_shapeit."\n";
+					#making the array job to wait
+					open(ARRAY_SHAPEIT,">$dirtemp/$rounded/ArrayJob_shapeit_wait.csh") or die "unable to create the array job wait file shape it \n";
+					if($envr =~ m/SGE/i)
+					{
+						$com = '#!';
+						print ARRAY_SHAPEIT "$com $SH\n";
+						$com = '#$';
+						print ARRAY_SHAPEIT "$com -q $shapeit_queue\n";
+						print ARRAY_SHAPEIT "$com -l h_vmem=$shapeit_mem\n";
+						print ARRAY_SHAPEIT "$com -M $email\n";
+						print ARRAY_SHAPEIT "$com -m a\n";
+						print ARRAY_SHAPEIT "$com -V\n";
+						print ARRAY_SHAPEIT "$com -cwd\n";
+						$com = '#$';
+						print ARRAY_SHAPEIT "$com -e $dirtemp/$rounded/\n";
+						print ARRAY_SHAPEIT "$com -o $dirtemp/$rounded/\n";
+						print ARRAY_SHAPEIT "cp $dirtemp/$rounded/jobid_shapeit $dirtemp/$rounded/waiting.txt\n";
+						$sys = "$QSUB -hold_jid $job_id_shapeit $dirtemp/$rounded/ArrayJob_shapeit_wait.csh\n";
+						print $sys."\n";
+						system($sys);	
+					}
+					elsif($envr =~ m/PBS/i)
+					{
+						$com = '#!';
+						print ARRAY_SHAPEIT "$com $SH\n";
+						$com = '#PBS';
+						print ARRAY_SHAPEIT "$com -M $email\n";
+						print ARRAY_SHAPEIT "$com -m a\n";
+						for($p=0;$p<@pbs_param;$p++)
+						{
+							print ARRAY_SHAPEIT "$com $pbs_param[$p]\n";
+						}
+						print ARRAY_SHAPEIT "$com -V\n";
+						print ARRAY_SHAPEIT "$com -e $dirtemp/$rounded/\n";
+						print ARRAY_SHAPEIT "$com -o $dirtemp/$rounded/\n";
+						system("rm $dirtemp/$rounded/waiting.txt");
+						print ARRAY_SHAPEIT "cp $dirtemp/$rounded/jobid_shapeit $dirtemp/$rounded/waiting.txt\n";
+						$sys = "$QSUB -W depend=afterokarray:$job_id_shapeit $dirtemp/$rounded/ArrayJob_shapeit_wait.csh\n";
+						print $sys."\n";
+						system($sys);
+					
+					}
+					$flag = 1;
+					while($flag > 0)
+					{
+						#print "in the loop\n";
+						if($flag%1000000000  == 0)
+							{
+									$flag = 1;
+									print "waiting for the shapeit array job to complete\n";
+							}
+						$flag++;
+
+						if(-e "$dirtemp/$rounded/waiting.txt")	
+						{
+								$flag =0;
+						}
+					}
+					if(-e "$dirtemp/$rounded/waiting.txt")
+					{
+							system("rm $dirtemp/$rounded/waiting.txt");
+					}
+				}
 			}
-			
 			
 			
 			#checking all the jobs of shape it are sucessful
 			$flag = 1;
 			$check_order_sample = 0;
-			
+			my @failed_chr;
 			for($i=0;$i<@check_chr;$i++)
 			{
 				$j = $check_chr[$i];
@@ -618,6 +858,8 @@ if(uc($restart_impute) ne "POST")
 				if(!((-e "$dirtemp/$rounded/$j/snps_chr$j.haps.gz") && (-e "$dirtemp/$rounded/$j/snps_chr$j.sample") && $count_shapeit > 0 ))
 				{
 					print "Shape it job not successful for chr$j\n";
+					system("rm  $dirtemp/$rounded/$j/snps_chr$j.haps.gz $dirtemp/$rounded/$j/snps_chr$j.sample");
+					push(@failed_chr,$j);
 					$flag =2;
 				} 
 				#mainly to compare sample order of input to sample order after shapeit jobs are done
@@ -653,7 +895,8 @@ if(uc($restart_impute) ne "POST")
 			}
 			if($flag ==2)
 			{
-				die "shape it jobs failed\n";
+				$failed_chr=join(" ",@failed_chr);
+				die "shape it jobs failed for chrs $failed_chr\n";
 			}
 			for($i=0;$i<@check_chr;$i++)
 			{
@@ -669,13 +912,16 @@ if(uc($restart_impute) ne "POST")
 			}
 			undef(@check_chr);
 			undef(%hash_sampleorder);
-			system("rm $dirtemp/$rounded/shapeit_logfiles_sungrid/*");
-			system("rmdir $dirtemp/$rounded/shapeit_logfiles_sungrid/");
+			#system("rm $dirtemp/$rounded/shapeit_logfiles_sungrid/*");
+			#system("rmdir $dirtemp/$rounded/shapeit_logfiles_sungrid/");
+			system("gzip $dirtemp/$rounded/shapeit_logfiles_sungrid/*");
+			system("mv $dirtemp/$rounded/shapeit_logfiles_sungrid/  $dirtemp/$rounded/archive_logfiles_sungrid/");
 		}
 
 		else
 		{
 			$sys = "tar -C $dirtemp/$rounded -xzf $haps";
+			print $sys."\n";
 			system($sys);
 		}
 
@@ -695,97 +941,98 @@ if(uc($restart_impute) ne "POST")
 				undef(@array);
 				#print "$ls[$i]\n";
 		}
+		$ENV{TMPDIR} = "$dirtemp/$rounded/";
 		@check_chr = sort {$a <=> $b} @check_chr;
 		print "@check_chr\n";
 		#checking whether the haps files with original files
 		system("$PLINK --bfile $dirtemp/$rounded/processed_beagle_input --transpose --recode --out $dirtemp/$rounded/processed_beagle_input");	
-		#shape it QC file for comparing haps file with observed data
-		open(SHAPE_CHECK,">$dirtemp/$rounded/shapeit_QC") or die "not able to write shapeit_QC\n";
-		print SHAPE_CHECK "CHR MARKER NUM_MISMATCH_SAMP\n";
-		$totalnum_markers=0;
-		$shapeqc_num_markers=0;
-		for($i=0;$i<@check_chr;$i++)
-		{	
-			$j = $check_chr[$i];
-			open(HAP_CHECK,"gunzip -c $dirtemp/$rounded/$j/snps_chr$j.haps.gz |") or die "no haps gzip $j file found\n";
-			open(WRHAP_CHECK,"|gzip >  $dirtemp/$rounded/$j/check_snps_chr$j.haps.gz") or die " not able to write file temp_snps_chr$j.haps.gz\n";
-			$temp_ch="'^".$j." '";
-			open(INPUT_CHECK,"grep -P $temp_ch $dirtemp/$rounded/processed_beagle_input.tped |") or die "no file processed_beagle_input.tped file found\n";
-			while($ch_input=<INPUT_CHECK>)
-			{
-				chomp($ch_input);
-				$ch_hap=<HAP_CHECK>;
-				chomp($ch_hap);
-				@ch_input=split(" ",$ch_input);
-				@ch_hap=split(" ",$ch_hap);
-				shift(@ch_input);
-				$in_rsid=shift(@ch_input);
-				shift(@ch_input);
-				$in_pos=shift(@ch_input);
-				print WRHAP_CHECK shift(@ch_hap);
-				$hp_rsid=shift(@ch_hap);
-				$hp_pos=shift(@ch_hap);
-				$hp_a1=shift(@ch_hap);
-				$hp_a2=shift(@ch_hap);
-				print WRHAP_CHECK " $hp_rsid $hp_pos $hp_a1 $hp_a2";
-				$num_hap_check=0;
-				if($hp_rsid ne $in_rsid || $in_pos ne $hp_pos ||@ch_hap ne @ch_input)
-				{
-					die "chr $j haps file marker not equal to input marker $hp_rsid ne $in_rsid || $in_pos ne $hp_pos\n";
-				}
-				$ch_input=join(" ",@ch_input);
-				$ch_input=~ s/0/3/g;
-				$ch_input=~ s/$hp_a2/1/g;
-				$ch_input=~ s/$hp_a1/0/g;
-				
-				@ch_input=split(" ",$ch_input);
-				$totalnum_markers++;
-				for($k=0;$k<@ch_input;$k++)
-				{
-					$a3=$ch_hap[$k];
-					$a1=$ch_input[$k++];
-					$a2=$ch_input[$k];
-					$a4=$ch_hap[$k];
-					if(($a1 == 3 && $a2 == 3) || "$a1 $a2" eq "$a3 $a4" || "$a2 $a1" eq "$a3 $a4")
-					{
-						print WRHAP_CHECK " $a3 $a4";
-					}
-					else
-					{
-						print WRHAP_CHECK " $a1 $a2";
-						$num_hap_check++;	
-						#print "INPUT CHECK sucess $a1 $a2 $a3 $a4\n";	
-					}
-					
-				}
-				print WRHAP_CHECK "\n";
-				if($num_hap_check > 0)
-				{
-					$shapeqc_num_markers++;
-					print SHAPE_CHECK $j." ".$in_rsid." ".$num_hap_check."\n";
-				}
-			}
-			close(WRHAP_CHECK);
-			close(HAP_CHECK);
-			close(INPUT_CHECK);	
-			#die "check $line\n";
-			#system("mv $dirtemp/$rounded/$j/snps_chr$j.haps.gz $dirtemp/$rounded/$j/ori_snps_chr$j.haps.gz");
-			system("mv $dirtemp/$rounded/$j/check_snps_chr$j.haps.gz $dirtemp/$rounded/$j/snps_chr$j.haps.gz");
-		}
-		close(SHAPE_CHECK);
-		# if($shapeqc_num_markers/$totalnum_markers > 0.05)
-		# {
-			# die "$shapeqc_num_markers of observed markers out of $totalnum_markers got changed by the shapeit tool.Please look at the file $dirtemp/$rounded/shapeit_QC\n";
-		# }
 		
-		#die;
+		if($less_num_samp ne "YES")
+		{
+		
+=head		
+			#shape it QC file for comparing haps file with observed data
+			open(SHAPE_CHECK,">$dirtemp/$rounded/shapeit_QC") or die "not able to write shapeit_QC\n";
+			print SHAPE_CHECK "CHR MARKER NUM_MISMATCH_SAMP\n";
+			$totalnum_markers=0;
+			$shapeqc_num_markers=0;
+			for($i=0;$i<@check_chr;$i++)
+			{	
+				$j = $check_chr[$i];
+				open(HAP_CHECK,"gunzip -c $dirtemp/$rounded/$j/snps_chr$j.haps.gz |") or die "no haps gzip $j file found\n";
+				open(WRHAP_CHECK,"|gzip >  $dirtemp/$rounded/$j/check_snps_chr$j.haps.gz") or die " not able to write file temp_snps_chr$j.haps.gz\n";
+				$temp_ch="'^".$j." '";
+				open(INPUT_CHECK,"grep -P $temp_ch $dirtemp/$rounded/processed_beagle_input.tped |") or die "no file processed_beagle_input.tped file found\n";
+				while($ch_input=<INPUT_CHECK>)
+				{
+					chomp($ch_input);
+					$ch_hap=<HAP_CHECK>;
+					chomp($ch_hap);
+					@ch_input=split(" ",$ch_input);
+					@ch_hap=split(" ",$ch_hap);
+					shift(@ch_input);
+					$in_rsid=shift(@ch_input);
+					shift(@ch_input);
+					$in_pos=shift(@ch_input);
+					print WRHAP_CHECK shift(@ch_hap);
+					$hp_rsid=shift(@ch_hap);
+					$hp_pos=shift(@ch_hap);
+					$hp_a1=shift(@ch_hap);
+					$hp_a2=shift(@ch_hap);
+					print WRHAP_CHECK " $hp_rsid $hp_pos $hp_a1 $hp_a2";
+					$num_hap_check=0;
+					if($hp_rsid ne $in_rsid || $in_pos ne $hp_pos ||@ch_hap ne @ch_input)
+					{
+						die "chr $j haps file marker not equal to input marker $hp_rsid ne $in_rsid || $in_pos ne $hp_pos\n";
+					}
+					$ch_input=join(" ",@ch_input);
+					$ch_input=~ s/0/3/g;
+					$ch_input=~ s/$hp_a2/1/g;
+					$ch_input=~ s/$hp_a1/0/g;
+					
+					@ch_input=split(" ",$ch_input);
+					$totalnum_markers++;
+					for($k=0;$k<@ch_input;$k++)
+					{
+						$a3=$ch_hap[$k];
+						$a1=$ch_input[$k++];
+						$a2=$ch_input[$k];
+						$a4=$ch_hap[$k];
+						if(($a1 == 3 && $a2 == 3) || "$a1 $a2" eq "$a3 $a4" || "$a2 $a1" eq "$a3 $a4")
+						{
+							print WRHAP_CHECK " $a3 $a4";
+						}
+						else
+						{
+							print WRHAP_CHECK " $a1 $a2";
+							$num_hap_check++;	
+							#print "INPUT CHECK sucess $a1 $a2 $a3 $a4\n";	
+						}
+						
+					}
+					print WRHAP_CHECK "\n";
+					if($num_hap_check > 0)
+					{
+						$shapeqc_num_markers++;
+						print SHAPE_CHECK $j." ".$in_rsid." ".$num_hap_check."\n";
+					}
+				}
+				close(WRHAP_CHECK);
+				close(HAP_CHECK);
+				close(INPUT_CHECK);	
+				system("mv $dirtemp/$rounded/$j/check_snps_chr$j.haps.gz $dirtemp/$rounded/$j/snps_chr$j.haps.gz");
+			}
+			close(SHAPE_CHECK);
+=cut			
+		}
+
 		#taring the directories
 		system("mkdir $dirtemp/$rounded/SHAPEIT");
 		if(@check_chr <1)
 		{
 			die "no chromsomes in the analysis left after shape it\n";
 		}
-		
+		system("chmod -R 755 $dirtemp/$rounded/");
 		for($i=0;$i<@check_chr;$i++)
 		{	
 			$j = $check_chr[$i];
@@ -822,7 +1069,8 @@ if(uc($restart_impute) ne "POST")
 				$sys="rmdir $dirtemp/$rounded/$j";
 				system($sys);
 			}
-			system("rm $dirtemp/$rounded/*");
+			#system("rm $dirtemp/$rounded/*");
+			system("find $dirtemp/$rounded/ -maxdepth 1 -type f -delete");
 			exit 0;
 		}
 
@@ -831,7 +1079,7 @@ if(uc($restart_impute) ne "POST")
 		system("wait");
 		system("mv $dirtemp/$rounded/processed_beagle_input.tped $dirtemp/$rounded/unprocessed_beagle_input.tped");
 		system("gzip $dirtemp/$rounded/unprocessed_beagle_input.tped");
-		$command_sys = "$PERL $dir/bin/process_fwdstnd_beagle_input.pl -f $dirtemp/$rounded/unprocessed_beagle_input.tped.gz -h $impute_ref  -n $dirtemp/$rounded/processed_beagle_input.tped -e $dirtemp/$rounded/excluded_no_hapmap_processed_beagle_input.tped.gz -a $dirtemp/$rounded/ambi_hapmap_processed_beagle_input.tped.gz -u $dirtemp/$rounded/unsure_differentallele.tped.gz  -i $forward_ind -v $ref_keyword ";
+		$command_sys = "$PERL $dir/bin/process_fwdstnd_beagle_input.pl -f $dirtemp/$rounded/unprocessed_beagle_input.tped.gz -h $impute_ref  -n $dirtemp/$rounded/processed_beagle_input.tped -e $dirtemp/$rounded/excluded_no_hapmap_processed_beagle_input.tped.gz -a $dirtemp/$rounded/ambi_hapmap_processed_beagle_input.tped.gz -u $dirtemp/$rounded/unsure_differentallele.tped.gz  -i $forward_ind  -l $less_num_samp";
 		print $command_sys."\n";
 		system($command_sys);
 		#die;
@@ -895,7 +1143,7 @@ if(uc($restart_impute) ne "POST")
 		for($i=0;$i<@check_chr;$i++)
 		{
 			print "\n\n\n\n\nDEALING WITH CHR $check_chr[$i]\n\n\n\n";
-			open(BIM,"gunzip -c $dirtemp/$rounded/$check_chr[$i]/snps_chr$check_chr[$i].haps.gz|") or die "$dirtemp/$rounded/$check_chr[$i]/snps_chr$check_chr[$i].haps.gz file not exists\n";
+			open(BIM,"gunzip -c $dirtemp/$rounded/$check_chr[$i]/imp_ref_snps_chr$check_chr[$i].haps.gz|") or die "$dirtemp/$rounded/$check_chr[$i]/imp_ref_snps_chr$check_chr[$i].haps.gz file not exists\n";
 			$line = <BIM>;
 			@array = split(" ",$line);
 			$start = $array[2];
@@ -929,9 +1177,9 @@ if(uc($restart_impute) ne "POST")
 					$stop_window[$j] = $start_window[$j]+ $impute_window -1;
 				}
 			}
-			#print "@start_window\n@stop_window\n";
+			print "@start_window\n@stop_window\n";
 			#counting the number of input data markers in each window
-			open(BIM,"gunzip -c $dirtemp/$rounded/$check_chr[$i]/snps_chr$check_chr[$i].haps.gz|") or die "$dirtemp/$rounded/$check_chr[$i]/snps_chr$check_chr[$i].haps.gz file not exists\n";
+			open(BIM,"gunzip -c $dirtemp/$rounded/$check_chr[$i]/imp_ref_snps_chr$check_chr[$i].haps.gz|") or die "$dirtemp/$rounded/$check_chr[$i]/imp_ref_snps_chr$check_chr[$i].haps.gz file not exists\n";
 			$j = 0;
 			while($line = <BIM>)
 			{
@@ -949,16 +1197,17 @@ if(uc($restart_impute) ne "POST")
 					}
 				}
 			}
-			#print "$num\n";
+			#print "@count_snp_window_indata\n";
+			
 			#counting the number of reference data marers in each window
 			if($check_chr[$i] ==23)
 			{
-				$file = $ref_keyword."_chrX_nonPAR_impute.legend.gz";
+				$file =$ref_meta{"chr$check_chr[$i]".'_'."legend"};
 				open(BIM,"gunzip -c $impute_ref/$file|") or die "no file found $impute_ref/$file\n";
 			}
 			else
 			{
-				$file = $ref_keyword."_chr$check_chr[$i]".'_impute.legend.gz';;
+				$file =$ref_meta{"chr$check_chr[$i]".'_'."legend"};
 				open(BIM,"gunzip -c $impute_ref/$file|") or die "no file found $impute_ref/$file\n";
 			}
 			$line = <BIM>;
@@ -995,45 +1244,46 @@ if(uc($restart_impute) ne "POST")
 			}
 			print "\n\n raw counts of windows\n";
 			for($j=0;$j<@count_snp_window_indata;$j++)
-				{
-						print "Start : $start_window[$j] Stop : $stop_window[$j] Data : $count_snp_window_indata[$j] Reference : $count_snp_window_reference[$j]\n";
+			{
+				print "Start : $start_window[$j] Stop : $stop_window[$j] Data : $count_snp_window_indata[$j] Reference : $count_snp_window_reference[$j]\n";
 			}
-			#die;
+			print "start_window ".@start_window." ".@start_window."\n";
+			print "stop_window @stop_window ".@stop_window."\n";
+			print "count_snp_window_indata ".@count_snp_window_indata." count_snp_window_reference ".@count_snp_window_reference."\n";
+			
 			#creating zeros for windows count zero
 			for($j=0;$j<@count_snp_window_indata;$j++)
 			{
-				#print "Start : $start_window[$j] Stop : $stop_window[$j] Data : $count_snp_window_indata[$j] Reference : $count_snp_window_reference[$j]\n";
-				#checking for minimum 200 count snps
-				# if($chr_start_input eq "YES")
-				# {
-					# $cutoff=5;
-				# }
-				# else
-				# {
-					# $cutoff = 5;
-				#	$cutoff = 200;
-				# }
 				if($count_snp_window_indata[$j] < $cutoff ||  $count_snp_window_reference[$j] < $cutoff)
 				{
-						$stop_window[$j]  = 0;
-						$start_window[$j+1] = 0;
+						
 						if($j == @count_snp_window_indata -1)
 						{
 							$start_window[$j] = 0;
 							$stop_window[$j-1]  = 0;
 						}
+						else
+						{
+							$stop_window[$j]  = 0;
+							$start_window[$j+1] = 0;
+						}
 				}
 			}
 			print "\n\n\n\n\n\n";
-			#print "\n\n temp counts of windows\n";
 			for($j=0;$j<@count_snp_window_indata;$j++)
-				{
-				#		print "Start : $start_window[$j] Stop : $stop_window[$j] Data : $count_snp_window_indata[$j] Reference : $count_snp_window_reference[$j]\n";
-				}
+			{
+				print "Start : $start_window[$j] Stop : $stop_window[$j] Data : $count_snp_window_indata[$j] Reference : $count_snp_window_reference[$j]\n";
+			}
 
 			$k = -1;
-			#$start_window_new[0] = $start_window[0];
-			#merging windows based on zeros
+			print "start_window @start_window ".@start_window."\n";
+			print "stop_window @stop_window ".@stop_window."\n";
+			print "count_snp_window_indata ".@count_snp_window_indata." count_snp_window_reference ".@count_snp_window_reference."\n";
+			
+			if(@start_window != @stop_window)
+			{
+				die "Decrease the cutoff minimum number of markers in the window ('WINDOW_CUTOFF_NUM_MARKERS' in config file) & edges ('EDGE_CUTOFF_NUM_MARKERS' in config file)\n";
+			}
 			for($j=0;$j<@count_snp_window_indata;$j++)
 			{
 				if($start_window[$j] != 0 && $stop_window[$j] != 0)
@@ -1073,9 +1323,14 @@ if(uc($restart_impute) ne "POST")
 			#start:extending windows start and stop according to reference
 			print "\n\n\n\n\n\n";
 			print "\n finalized windows and counts\n";
-			
+			print "start_window_new ".@start_window_new." stop_window_new ".@stop_window_new." count_snp_window_indata_new ".@count_snp_window_indata_new." count_snp_window_reference_new ".@count_snp_window_reference_new."\n";
+			for($j=0;$j<@count_snp_window_indata_new;$j++)
+			{
+				print "Start : $start_window_new[$j] Stop : $stop_window_new[$j] Data : $count_snp_window_indata_new[$j] Reference : $count_snp_window_reference_new[$j]\n";
+			}
+			#die;
 			#opening the inputfile
-			open(BIM,"gunzip -c $dirtemp/$rounded/$check_chr[$i]/snps_chr$check_chr[$i].haps.gz|") or die "$dirtemp/$rounded/$check_chr[$i]/snps_chr$check_chr[$i].haps.gz file not exists\n";	
+			open(BIM,"gunzip -c $dirtemp/$rounded/$check_chr[$i]/imp_ref_snps_chr$check_chr[$i].haps.gz|") or die "$dirtemp/$rounded/$check_chr[$i]/imp_ref_snps_chr$check_chr[$i].haps.gz file not exists\n";	
 			$line = <BIM>;
 			@array = split(" ",$line);
 			undef(@edge);
@@ -1131,7 +1386,7 @@ if(uc($restart_impute) ne "POST")
 			#checking the edges for minimum cutoff
 			
 			#opening the inputfile in the reverse order
-			open(BIM,"gunzip -c $dirtemp/$rounded/$check_chr[$i]/snps_chr$check_chr[$i].haps.gz|tac|") or die "$dirtemp/$rounded/$check_chr[$i]/snps_chr$check_chr[$i].haps.gz file not exists\n";	
+			open(BIM,"gunzip -c $dirtemp/$rounded/$check_chr[$i]/imp_ref_snps_chr$check_chr[$i].haps.gz|tac|") or die "$dirtemp/$rounded/$check_chr[$i]/imp_ref_snps_chr$check_chr[$i].haps.gz file not exists\n";	
 			$line = <BIM>;
 			@array = split(" ",$line);
 			#checking for number of markers in the start  edge and if needed extended
@@ -1199,48 +1454,50 @@ if(uc($restart_impute) ne "POST")
 				{
 					$option_val = '-use_prephased_g ';
 				}
+				if($start_window_new[$j] < 1)
+				{
+					$start_window_new[$j]=1;
+				}
 				if($check_chr[$i] != 23)
 				{
-					$map = "genetic_map_chr$check_chr[$i]"."_combined_b37.txt";
-					$legend = $ref_keyword."_chr$check_chr[$i]"."_impute.legend.gz";
-					$hap = $ref_keyword."_chr$check_chr[$i]"."_impute.hap.gz";
-					if(uc($pbs) ne "YES")
+					$map =$ref_meta{"chr$check_chr[$i]".'_'."genetic"};;
+					$legend = $ref_meta{"chr$check_chr[$i]".'_'."legend"};;
+					$hap = $ref_meta{"chr$check_chr[$i]".'_'."hap"};;
+					if($envr =~ m/SGE/i)
 					{
-						#print ARRAY_IMPUTE "$option_val -m $impute_ref/$map -h $impute_ref/$hap -l $impute_ref/$legend -int $start_window_new[$j] $stop_window_new[$j] -Ne 20000  -buffer $impute_edge -known_haps_g $dirtemp/$rounded/$check_chr[$i]/snps_chr$check_chr[$i].haps.gz -o $dirtemp/$rounded/$check_chr[$i]/impute_out_chr$check_chr[$i].window$j\n";
-						print ARRAY_IMPUTE "$option_val -m $impute_ref/$map -h $impute_ref/$hap -l $impute_ref/$legend -int $start_window_new[$j] $stop_window_new[$j] -Ne 20000  -buffer $edge[$j] -known_haps_g $dirtemp/$rounded/$check_chr[$i]/snps_chr$check_chr[$i].haps.gz -o impute_out_chr$check_chr[$i].window$j\n";
-						#print GUNZIP_IMPUTE_WRBUFF "gzip $dirtemp/$rounded/$check_chr[$i]/impute_out_chr$check_chr[$i].window$j*\n";
+						print ARRAY_IMPUTE "$option_val -m $impute_ref/$map -h $impute_ref/$hap -l $impute_ref/$legend -int $start_window_new[$j] $stop_window_new[$j] -Ne 20000  -buffer $edge[$j] -known_haps_g $dirtemp/$rounded/$check_chr[$i]/imp_ref_snps_chr$check_chr[$i].haps.gz -o impute_out_chr$check_chr[$i].window$j\n";
 						print GUNZIP_IMPUTE_WRBUFF "$dirtemp/$rounded/$check_chr[$i]/\n";
 					}
-					else
+					elsif($envr =~ m/PBS/i)
 					{
-						#print ARRAY_IMPUTE "$option_val -m $impute_ref/$map -h $impute_ref/$hap -l $impute_ref/$legend -int $start_window_new[$j] $stop_window_new[$j] -Ne 20000  -buffer $impute_edge -known_haps_g $dirtemp/$rounded/$check_chr[$i]/snps_chr$check_chr[$i].haps.gz -o $dirtemp/$rounded/$check_chr[$i]/impute_out_chr$check_chr[$i].window$j\n";
-						print ARRAY_IMPUTE "$option_val -m $impute_ref/$map -h $impute_ref/$hap -l $impute_ref/$legend -int $start_window_new[$j] $stop_window_new[$j] -Ne 20000  -buffer $edge[$j] -known_haps_g $dirtemp/$rounded/$check_chr[$i]/snps_chr$check_chr[$i].haps.gz -o $dirtemp/$rounded/$check_chr[$i]/impute_out_chr$check_chr[$i].window$j\n";
-						#print GUNZIP_IMPUTE_WRBUFF "gzip $dirtemp/$rounded/$check_chr[$i]/impute_out_chr$check_chr[$i].window$j*\n";
+						print ARRAY_IMPUTE "$option_val -m $impute_ref/$map -h $impute_ref/$hap -l $impute_ref/$legend -int $start_window_new[$j] $stop_window_new[$j] -Ne 20000  -buffer $edge[$j] -known_haps_g $dirtemp/$rounded/$check_chr[$i]/imp_ref_snps_chr$check_chr[$i].haps.gz -o $dirtemp/$rounded/$check_chr[$i]/impute_out_chr$check_chr[$i].window$j\n";
 						print GUNZIP_IMPUTE_WRBUFF "$dirtemp/$rounded/$check_chr[$i]/impute_out_chr$check_chr[$i].window$j\n";
-					
-					}	
+					}
+					else
+					{	
+						print ARRAY_IMPUTE "$option_val -m $impute_ref/$map -h $impute_ref/$hap -l $impute_ref/$legend -int $start_window_new[$j] $stop_window_new[$j] -Ne 20000  -buffer $edge[$j] -known_haps_g $dirtemp/$rounded/$check_chr[$i]/imp_ref_snps_chr$check_chr[$i].haps.gz -o impute_out_chr$check_chr[$i].window$j\n";
+						print GUNZIP_IMPUTE_WRBUFF "$dirtemp/$rounded/$check_chr[$i]/\n";
+					}
 				}
 				else
 				{
-					$map = "genetic_map_chrX_nonPAR_combined_b37.txt";
-					$legend = $ref_keyword."_chrX_nonPAR_impute.legend.gz";
-					$hap = $ref_keyword."_chrX_nonPAR_impute.hap.gz";
-					if(uc($pbs) ne "YES")
+					$map =$ref_meta{"chr$check_chr[$i]".'_'."genetic"};;
+					$legend = $ref_meta{"chr$check_chr[$i]".'_'."legend"};;
+					$hap = $ref_meta{"chr$check_chr[$i]".'_'."hap"};;
+					if($envr =~ m/SGE/i)
 					{			
-						#$option_val =~ s/-use_prephased_g//g;
-						#print ARRAY_IMPUTE "$option_val -chrX -m $impute_ref/$map -h $impute_ref/$hap -l $impute_ref/$legend -int $start_window_new[$j] $stop_window_new[$j] -Ne 20000  -buffer $impute_edge -known_haps_g $dirtemp/$rounded/$check_chr[$i]/snps_chr$check_chr[$i].haps.gz -sample_known_haps_g $dirtemp/$rounded/$check_chr[$i]/snps_chr$check_chr[$i].sample -o $dirtemp/$rounded/$check_chr[$i]/impute_out_chr$check_chr[$i].window$j\n";
-						print ARRAY_IMPUTE "$option_val -chrX -m $impute_ref/$map -h $impute_ref/$hap -l $impute_ref/$legend -int $start_window_new[$j] $stop_window_new[$j] -Ne 20000  -buffer $edge[$j] -known_haps_g $dirtemp/$rounded/$check_chr[$i]/snps_chr$check_chr[$i].haps.gz -sample_known_haps_g $dirtemp/$rounded/$check_chr[$i]/snps_chr$check_chr[$i].sample -o impute_out_chr$check_chr[$i].window$j\n";
-						#print GUNZIP_IMPUTE_WRBUFF "gzip $dirtemp/$rounded/$check_chr[$i]/impute_out_chr$check_chr[$i].window$j*\n";
+						print ARRAY_IMPUTE "$option_val -chrX -m $impute_ref/$map -h $impute_ref/$hap -l $impute_ref/$legend -int $start_window_new[$j] $stop_window_new[$j] -Ne 20000  -buffer $edge[$j] -known_haps_g $dirtemp/$rounded/$check_chr[$i]/imp_ref_snps_chr$check_chr[$i].haps.gz -sample_known_haps_g $dirtemp/$rounded/$check_chr[$i]/snps_chr$check_chr[$i].sample -o impute_out_chr$check_chr[$i].window$j\n";
 						print GUNZIP_IMPUTE_WRBUFF "$dirtemp/$rounded/$check_chr[$i]/\n";
+					}
+					elsif($envr =~ m/PBS/i)
+					{
+						print ARRAY_IMPUTE "$option_val -chrX -m $impute_ref/$map -h $impute_ref/$hap -l $impute_ref/$legend -int $start_window_new[$j] $stop_window_new[$j] -Ne 20000  -buffer $edge[$j] -known_haps_g $dirtemp/$rounded/$check_chr[$i]/imp_ref_snps_chr$check_chr[$i].haps.gz -sample_known_haps_g $dirtemp/$rounded/$check_chr[$i]/snps_chr$check_chr[$i].sample -o $dirtemp/$rounded/$check_chr[$i]/impute_out_chr$check_chr[$i].window$j\n";
+						print GUNZIP_IMPUTE_WRBUFF "$dirtemp/$rounded/$check_chr[$i]/impute_out_chr$check_chr[$i].window$j\n";
 					}
 					else
 					{
-						#$option_val =~ s/-use_prephased_g//g;
-						#print ARRAY_IMPUTE "$option_val -chrX -m $impute_ref/$map -h $impute_ref/$hap -l $impute_ref/$legend -int $start_window_new[$j] $stop_window_new[$j] -Ne 20000  -buffer $impute_edge -known_haps_g $dirtemp/$rounded/$check_chr[$i]/snps_chr$check_chr[$i].haps.gz -sample_known_haps_g $dirtemp/$rounded/$check_chr[$i]/snps_chr$check_chr[$i].sample -o $dirtemp/$rounded/$check_chr[$i]/impute_out_chr$check_chr[$i].window$j\n";
-						print ARRAY_IMPUTE "$option_val -chrX -m $impute_ref/$map -h $impute_ref/$hap -l $impute_ref/$legend -int $start_window_new[$j] $stop_window_new[$j] -Ne 20000  -buffer $edge[$j] -known_haps_g $dirtemp/$rounded/$check_chr[$i]/snps_chr$check_chr[$i].haps.gz -sample_known_haps_g $dirtemp/$rounded/$check_chr[$i]/snps_chr$check_chr[$i].sample -o $dirtemp/$rounded/$check_chr[$i]/impute_out_chr$check_chr[$i].window$j\n";
-						#print GUNZIP_IMPUTE_WRBUFF "gzip $dirtemp/$rounded/$check_chr[$i]/impute_out_chr$check_chr[$i].window$j*\n";
-						print GUNZIP_IMPUTE_WRBUFF "$dirtemp/$rounded/$check_chr[$i]/impute_out_chr$check_chr[$i].window$j\n";
-					
+						print ARRAY_IMPUTE "$option_val -chrX -m $impute_ref/$map -h $impute_ref/$hap -l $impute_ref/$legend -int $start_window_new[$j] $stop_window_new[$j] -Ne 20000  -buffer $edge[$j] -known_haps_g $dirtemp/$rounded/$check_chr[$i]/imp_ref_snps_chr$check_chr[$i].haps.gz -sample_known_haps_g $dirtemp/$rounded/$check_chr[$i]/snps_chr$check_chr[$i].sample -o impute_out_chr$check_chr[$i].window$j\n";
+						print GUNZIP_IMPUTE_WRBUFF "$dirtemp/$rounded/$check_chr[$i]/\n";
 					}
 				}
 			}
@@ -1256,11 +1513,6 @@ if(uc($restart_impute) ne "POST")
 		}
 
 		#submit the impute jobs
-		#open(ARRAY_IMPUTE,"$dir/bin/ArrayJob_impute.csh") or die "no file exists ArrayJob_impute.csh\n";
-		#@impute = <ARRAY_IMPUTE>;
-		#$impute =join("",@impute);
-		#@impute =();
-		#@impute = split('zzz',$impute);
 		system("mkdir $dirtemp/$rounded/impute_logfiles_sungrid");
 		$input_impute_jobids="ArrayJob_file_impute";
 		$input_impute_jobids_gunzip="Gunzip_file_impute";
@@ -1297,12 +1549,7 @@ if(uc($restart_impute) ne "POST")
 		$input_impute_jobids_gunzip="Gunzip_file_impute_restart";
 	}
 
-	#should remove this
-	#$input_impute_jobids="ArrayJob_file_impute";
-	#$input_impute_jobids_gunzip="Gunzip_file_impute";
-	#$counter_jobs = 2; #fake number
-	#print "$counter_jobs\n";
-	print "wc -l $dirtemp/$rounded/$input_impute_jobids\n";
+	#print "wc -l $dirtemp/$rounded/$input_impute_jobids\n";
 	$count_impute_jobs = `wc -l $dirtemp/$rounded/$input_impute_jobids`;
 	$count_impute_jobs =~  s/ .*//g;
 	chomp($count_impute_jobs);
@@ -1316,7 +1563,7 @@ if(uc($restart_impute) ne "POST")
 	}
 	#die;
 	system("touch $dirtemp/$rounded/impute_check_jobs");
-	if(uc($pbs) ne "YES")
+	if($envr =~ m/SGE/i)
 	{
 		$com = '#!';
 		print ARRAY_SHAPEIT "$com $SH\n";
@@ -1339,7 +1586,8 @@ if(uc($restart_impute) ne "POST")
 		print ARRAY_SHAPEIT "date\n";
 		print ARRAY_SHAPEIT "$temp\n";
 		print ARRAY_SHAPEIT 'cleanup () {'."\n";
-		print ARRAY_SHAPEIT '/bin/rm -rf $tmp'."\n";
+		print ARRAY_SHAPEIT 'rm  $tmp/*'."\n";
+		print ARRAY_SHAPEIT 'rmdir $tmp'."\n";
 		print ARRAY_SHAPEIT '}'."\n";
 		print ARRAY_SHAPEIT "trap 'cleanup' USR1 USR2 EXIT\n";
 		$temp = 'mkdir -p $tmp';
@@ -1362,14 +1610,16 @@ if(uc($restart_impute) ne "POST")
 		print ARRAY_SHAPEIT "$temp\n";
 		$temp = 'mv impute_out_*.gz $k1';
 		print ARRAY_SHAPEIT "$temp\n";
-		$temp = 'rm -rf $tmp';
+		$temp = 'rm  $tmp/*';
+		print ARRAY_SHAPEIT "$temp\n";
+		$temp = 'rmdir $tmp';
 		print ARRAY_SHAPEIT "$temp\n";
 		#$temp = "cp $dirtemp/$rounded/ArrayJob_file_shapeit ".'`cat  '."$dirtemp/$rounded/$input_impute_jobids_gunzip".' |head -$SGE_TASK_ID |tail -1`'."/waiting.txt\n";
 		$temp = 'echo $SGE_TASK_ID >>'."$dirtemp/$rounded/impute_check_jobs\n";
 		print ARRAY_SHAPEIT "$temp\n";
 		print ARRAY_SHAPEIT "date\n";
 	}
-	else
+	elsif($envr =~ m/PBS/i)
 	{
 		$com = '#!';
 		print ARRAY_SHAPEIT "$com $SH\n";
@@ -1398,7 +1648,44 @@ if(uc($restart_impute) ne "POST")
 		$temp = 'echo ${PBS_ARRAYID} >>'."$dirtemp/$rounded/impute_check_jobs\n";
 		print ARRAY_SHAPEIT "$temp\n";
 		print ARRAY_SHAPEIT "date\n";
-	}	
+	}
+	else
+	{
+		print ARRAY_SHAPEIT 'for SGE_TASK_ID in {1..'.$count_impute_jobs.'}'."\n";
+		print ARRAY_SHAPEIT 'do'."\n";
+		$temp = 'tmp='.$local_temp.'/'.$username.'/`expr $RANDOM \* $RANDOM`';
+		print ARRAY_SHAPEIT "date\n";
+		print ARRAY_SHAPEIT "$temp\n";
+		$temp = 'mkdir -p $tmp';
+		print ARRAY_SHAPEIT "$temp\n";
+		$temp = 'cd $tmp';
+		print ARRAY_SHAPEIT "$temp\n";
+		print ARRAY_SHAPEIT 't1=`pwd`'."\n";
+		print ARRAY_SHAPEIT 't2=`uname -n`'."\n";
+		print ARRAY_SHAPEIT 't3="$t1 $t2"'."\n";
+		print ARRAY_SHAPEIT 'echo $t3 >> '."$dirtemp/$rounded/impute_system\n";
+		$temp = 'k=`cat  '."$dirtemp/$rounded/$input_impute_jobids".' |head -$SGE_TASK_ID |tail -1`';
+		print ARRAY_SHAPEIT "$temp\n";
+		$temp = "$IMPUTE ".'$k -seed 123456789 '."\n";
+		print ARRAY_SHAPEIT "$temp\n";
+		#$temp = '$k1'."\n";
+		$temp = 'gzip impute_out_*';
+		print ARRAY_SHAPEIT "$temp\n";
+		print ARRAY_SHAPEIT "wait\n";
+		$temp = 'k1'.'=`cat  '."$dirtemp/$rounded/$input_impute_jobids_gunzip".' |head -$SGE_TASK_ID |tail -1`';
+		print ARRAY_SHAPEIT "$temp\n";
+		$temp = 'mv impute_out_*.gz $k1';
+		print ARRAY_SHAPEIT "$temp\n";
+		$temp = 'rm  $tmp/*';
+		print ARRAY_SHAPEIT "$temp\n";
+		$temp = 'rmdir $tmp';
+		print ARRAY_SHAPEIT "$temp\n";
+		#$temp = "cp $dirtemp/$rounded/ArrayJob_file_shapeit ".'`cat  '."$dirtemp/$rounded/$input_impute_jobids_gunzip".' |head -$SGE_TASK_ID |tail -1`'."/waiting.txt\n";
+		$temp = 'echo $SGE_TASK_ID >>'."$dirtemp/$rounded/impute_check_jobs\n";
+		print ARRAY_SHAPEIT "$temp\n";
+		print ARRAY_SHAPEIT "date\n";
+		print ARRAY_SHAPEIT 'done'."\n";
+	}
 	#print ARRAY_SHAPEIT $impute;
 	close(ARRAY_SHAPEIT);
 	#close(ARRAY_IMPUTE);
@@ -1406,7 +1693,7 @@ if(uc($restart_impute) ne "POST")
 	#die;
 		if($counter_jobs >0)
 		{
-			if(uc($pbs) ne "YES")
+			if($envr =~ m/SGE/i)
 			{
 				#submitting and storing the job id
 				system("$QSUB $dirtemp/$rounded/ArrayJob_impute.csh &> $dirtemp/$rounded/jobid_impute");
@@ -1424,7 +1711,7 @@ if(uc($restart_impute) ne "POST")
 						system("rm $dirtemp/$rounded/waiting.txt");
 				}
 			}
-			else
+			elsif($envr =~ m/PBS/i)
 			{
 				system(" $QSUB $dirtemp/$rounded/ArrayJob_impute.csh &> $dirtemp/$rounded/jobid_impute");
 					#readin job id from submit_shapeit
@@ -1436,79 +1723,90 @@ if(uc($restart_impute) ne "POST")
 				print "JOB ID $impute1[0]\n";
 				$job_id_imputeit = $impute1[0];
 			}
-			if(-e "$dirtemp/$rounded/waiting.txt")
-			{
-				system("rm $dirtemp/$rounded/waiting.txt");
-			}
-			if(uc($pbs) ne "YES")
-			{
-				open(ARRAY_SHAPEIT,">$dirtemp/$rounded/ArrayJob_shapeit_wait.csh") or die "unable to create the array job wait file shape it \n";
-				$com = '#!';
-				print ARRAY_SHAPEIT "$com $SH\n";
-				$com = '#$';
-				print ARRAY_SHAPEIT "$com -q $impute_queue\n";
-				print ARRAY_SHAPEIT "$com -l h_vmem=$impute_mem\n";
-				print ARRAY_SHAPEIT "$com -M $email\n";
-				print ARRAY_SHAPEIT "$com -m a\n";
-				print ARRAY_SHAPEIT "$com -V\n";
-				print ARRAY_SHAPEIT "$com -cwd\n";
-				print ARRAY_SHAPEIT "$com -e $dirtemp/$rounded/\n";
-				print ARRAY_SHAPEIT "$com -o $dirtemp/$rounded/\n";
-				
-				print ARRAY_SHAPEIT "cp $dirtemp/$rounded/jobid_impute $dirtemp/$rounded/waiting.txt\n";
-				$sys = "$QSUB -hold_jid $job_id_imputeit $dirtemp/$rounded/ArrayJob_shapeit_wait.csh\n";
-				
-				print $sys."\n";
-				system($sys);
-			}
 			else
-			{	open(ARRAY_SHAPEIT,">$dirtemp/$rounded/ArrayJob_shapeit_wait.csh") or die "unable to create the array job wait file shape it \n";
-				$com = '#!';
-				print ARRAY_SHAPEIT "$com $SH\n";
-				$com = '#PBS';
-				for($p=0;$p<@pbs_param;$p++)
-				{
-					print ARRAY_SHAPEIT "$com $pbs_param[$p]\n";
-				}
-				#print ARRAY_SHAPEIT "$com -l walltime=01:05:00\n";
-				#print ARRAY_SHAPEIT "$com -l nodes=1:ppn=1\n";
-				print ARRAY_SHAPEIT "$com -M $email\n";
-				print ARRAY_SHAPEIT "$com -m a\n";
-				#print ARRAY_SHAPEIT "$com -A normal\n";
-				print ARRAY_SHAPEIT "$com -V\n";
-				#print ARRAY_SHAPEIT "$com -A bf0\n";
-				print ARRAY_SHAPEIT "$com -e $dirtemp/$rounded/\n";
-				print ARRAY_SHAPEIT "$com -o $dirtemp/$rounded/\n";
-				print ARRAY_SHAPEIT "cp $dirtemp/$rounded/jobid_impute $dirtemp/$rounded/waiting.txt\n";
-				$sys = "$QSUB -W depend=afterokarray:$job_id_imputeit $dirtemp/$rounded/ArrayJob_shapeit_wait.csh\n";
-				print $sys."\n";
-				system($sys);
+			{
+				#die;
+				system("$SH $dirtemp/$rounded/ArrayJob_impute.csh > $dirtemp/$rounded/impute_logfiles_sungrid/ArrayJob_impute.csh.MANUAL");
+			}
 			
-			}		
-			$flag = 1;
-			while($flag > 0)
+			if($envr =~ m/SGE/i || $envr =~ m/PBS/i)
 			{
-					if($flag%1000000000  == 0)
-					{
-							$flag = 1;
-							print "waiting for the shapeit array job to complete\n";
-					}
-					$flag++;
-					#if(-e "$dirtemp/$rounded/waiting.txt")
-					#$countImpute=`wc -l $dirtemp/$rounded/impute_check_jobs`;
-					#chomp($countImpute);
-					#@countImpute=split(" ",$countImpute);
-					#$countImpute=~ s/ \w+//g;
-					#if($countImpute[0] eq $count_impute_jobs)
-					if(-e "$dirtemp/$rounded/waiting.txt")
-					{
-							$flag =0;
-					}
-			}
-			if(-e "$dirtemp/$rounded/waiting.txt")
-			{
+				if(-e "$dirtemp/$rounded/waiting.txt")
+				{
 					system("rm $dirtemp/$rounded/waiting.txt");
-			}
+				}
+				if($envr =~ m/SGE/i)
+				{
+					open(ARRAY_SHAPEIT,">$dirtemp/$rounded/ArrayJob_shapeit_wait.csh") or die "unable to create the array job wait file shape it \n";
+					$com = '#!';
+					print ARRAY_SHAPEIT "$com $SH\n";
+					$com = '#$';
+					print ARRAY_SHAPEIT "$com -q $impute_queue\n";
+					print ARRAY_SHAPEIT "$com -l h_vmem=$impute_mem\n";
+					print ARRAY_SHAPEIT "$com -M $email\n";
+					print ARRAY_SHAPEIT "$com -m a\n";
+					print ARRAY_SHAPEIT "$com -V\n";
+					print ARRAY_SHAPEIT "$com -cwd\n";
+					print ARRAY_SHAPEIT "$com -e $dirtemp/$rounded/\n";
+					print ARRAY_SHAPEIT "$com -o $dirtemp/$rounded/\n";
+					
+					print ARRAY_SHAPEIT "cp $dirtemp/$rounded/jobid_impute $dirtemp/$rounded/waiting.txt\n";
+					$sys = "$QSUB -hold_jid $job_id_imputeit $dirtemp/$rounded/ArrayJob_shapeit_wait.csh\n";
+					
+					print $sys."\n";
+					system($sys);
+				}
+				elsif($envr =~ m/PBS/i)
+				{	open(ARRAY_SHAPEIT,">$dirtemp/$rounded/ArrayJob_shapeit_wait.csh") or die "unable to create the array job wait file shape it \n";
+					$com = '#!';
+					print ARRAY_SHAPEIT "$com $SH\n";
+					$com = '#PBS';
+					for($p=0;$p<@pbs_param;$p++)
+					{
+						print ARRAY_SHAPEIT "$com $pbs_param[$p]\n";
+					}
+					#print ARRAY_SHAPEIT "$com -l walltime=01:05:00\n";
+					#print ARRAY_SHAPEIT "$com -l nodes=1:ppn=1\n";
+					print ARRAY_SHAPEIT "$com -M $email\n";
+					print ARRAY_SHAPEIT "$com -m a\n";
+					#print ARRAY_SHAPEIT "$com -A normal\n";
+					print ARRAY_SHAPEIT "$com -V\n";
+					#print ARRAY_SHAPEIT "$com -A bf0\n";
+					print ARRAY_SHAPEIT "$com -e $dirtemp/$rounded/\n";
+					print ARRAY_SHAPEIT "$com -o $dirtemp/$rounded/\n";
+					system("rm $dirtemp/$rounded/waiting.txt");
+					print ARRAY_SHAPEIT "cp $dirtemp/$rounded/jobid_impute $dirtemp/$rounded/waiting.txt\n";
+					$sys = "$QSUB -W depend=afterokarray:$job_id_imputeit $dirtemp/$rounded/ArrayJob_shapeit_wait.csh\n";
+					print $sys."\n";
+					system($sys);
+				
+				}
+				
+				$flag = 1;
+				while($flag > 0)
+				{
+						if($flag%1000000000  == 0)
+						{
+								$flag = 1;
+								print "waiting for the shapeit array job to complete\n";
+						}
+						$flag++;
+						#if(-e "$dirtemp/$rounded/waiting.txt")
+						#$countImpute=`wc -l $dirtemp/$rounded/impute_check_jobs`;
+						#chomp($countImpute);
+						#@countImpute=split(" ",$countImpute);
+						#$countImpute=~ s/ \w+//g;
+						#if($countImpute[0] eq $count_impute_jobs)
+						if(-e "$dirtemp/$rounded/waiting.txt")
+						{
+								$flag =0;
+						}
+				}
+				if(-e "$dirtemp/$rounded/waiting.txt")
+				{
+						system("rm $dirtemp/$rounded/waiting.txt");
+				}
+			}	
 	}
 
 
@@ -1528,7 +1826,7 @@ if(uc($restart_impute) ne "POST")
 		@array = split(" ",$_);
 		@array1 = split(/\//,$array[@array-3]);
 		$chr = $array1[@array1-2];
-		if(uc($pbs) ne "YES")
+		if($envr !~ m/PBS/i)
 		{
 			$array1[@array1-1] = $array[@array-1];
 			$array[@array-1] = join('/',@array1);
@@ -1564,14 +1862,17 @@ if(uc($restart_impute) ne "POST")
 
 
 	system("gzip $dirtemp/$rounded/*.tped");
-	system("rm $dirtemp/$rounded/impute_logfiles_sungrid/*");
-	system("rmdir $dirtemp/$rounded/impute_logfiles_sungrid/");
+	#system("rm $dirtemp/$rounded/impute_logfiles_sungrid/*");
+	#system("rmdir $dirtemp/$rounded/impute_logfiles_sungrid/");
+	system("gzip $dirtemp/$rounded/impute_logfiles_sungrid/*");
+	system("mv $dirtemp/$rounded/impute_logfiles_sungrid/  $dirtemp/$rounded/archive_logfiles_sungrid/");
 }
 open(ARRAY_IMPUTE,"$dirtemp/$rounded/ArrayJob_file_impute") or die "unable to find file $dirtemp/$rounded/ArrayJob_file_impute\n";
 $prevchr ="";
 $combined_impute_res = "zcat";
 undef(@check_chr);
 #creating tped file for indicator combining the snps in the imputation and ambi
+$ENV{TMPDIR} = "$dirtemp/$rounded/";
 system("zcat $dirtemp/$rounded/processed_beagle_input.tped.gz $dirtemp/$rounded/ambi_hapmap_processed_beagle_input.tped.gz  |sort -k1,1n -k4,4n -T $dirtemp/$rounded/ |gzip > $dirtemp/$rounded/ind.tped.gz");
 open(WRSH,">$dirtemp/$rounded/file_post") or die "not able to write file $dirtemp/$rounded/file_post\n"; 
 while(<ARRAY_IMPUTE>)
@@ -1584,7 +1885,7 @@ while(<ARRAY_IMPUTE>)
 	#$file = "$array[@array-3]";
 	@array1 = split(/\//,$array[@array-3]);
 	$chr = $array1[@array1-2];
-	if(uc($pbs) ne "YES")
+	if($envr !~ m/PBS/i)
 	{
 		$array1[@array1-1] = $array[@array-1];
 		$file = join('/',@array1);
@@ -1625,7 +1926,7 @@ while(<ARRAY_IMPUTE>)
 		if(!(-e "$dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob.gz"))
 		{
 			print WRPOST "$sys\n";
-			$sys="gunzip -c $dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob.gz|awk -F ' ' '{if(\$5!=0)print \$0}' |gzip > $dirtemp/$rounded/$prevchr/Combined_impute_results_4_prob.gz";
+			$sys="gunzip -c $dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob.gz|$PERL -e '".'$prev="";while(<STDIN>){split / /;if($_[1] eq $prev && length($_[3])==1 && length($_[4])==1){next;}else{print $_};$prev=$_[1];}'."' |gzip > $dirtemp/$rounded/$prevchr/Combined_impute_results_4_prob.gz";
 			print WRPOST "$sys\n";
 			$sys = "mv 	$dirtemp/$rounded/$prevchr/Combined_impute_results_4_prob.gz $dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob.gz";
 			print WRPOST "$sys\n";
@@ -1636,11 +1937,11 @@ while(<ARRAY_IMPUTE>)
 		{
 			if($prevchr ==23)
 			{
-				$filey= $ref_keyword."_chrX_nonPAR_impute.legend.gz";
+				$filey = $ref_meta{"chr$prevchr".'_'."legend"};
 			}
 			else
 			{
-				$filey = $ref_keyword."_chr$prevchr".'_impute.legend.gz';;
+				$filey = $ref_meta{"chr$prevchr".'_'."legend"};
 			}	
 			$sys="count_ref=`gunzip -c $impute_ref/$filey|wc -l`";
 			print WRPOST "$sys\n";
@@ -1655,10 +1956,23 @@ while(<ARRAY_IMPUTE>)
 		if(!(-e "$dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob_ambi_out.gz"))
 		{
 			print WRPOST "$sys\n";
+			print WRPOST 'if [ $? -ne 0 ]'."\n";
+			print WRPOST 'then'."\n";
+			$sys="echo \" something wrong with command $sys\"\n rm  $dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob_ambi_out.gz\n exit 1\n";
+			print WRPOST "$sys\n";
+			print WRPOST 'fi'."\n";
+			$sys = "$PERL $dir/bin/perl_prob2dosage.pl  $dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob_ambi_out.gz   |gzip > $dirtemp/$rounded/$prevchr/dosage.gz ";
+			print WRPOST "$sys\n";
+			print WRPOST 'if [ $? -ne 0 ]'."\n";
+			print WRPOST 'then'."\n";
+			$sys="echo \" something wrong with command $sys\"\n rm  $dirtemp/$rounded/$prevchr/dosage.gz\n exit 1\n";
+			print WRPOST "$sys\n";
+			print WRPOST 'fi'."\n";
+
 		}
 		if(!(-e "$dirtemp/$rounded/$prevchr/beagle_r2.gz"))
 		{
-			if(uc($pbs) ne "YES")
+			if($envr !~ m/PBS/i)
 			{
 				$sys = "gunzip -c $dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob_ambi_out.gz|cut -d ' ' -f2- |$JAVA -Xmx3000m -jar $GPROBS |gzip > $dirtemp/$rounded/$prevchr/beagle_r2.gz";
 			}
@@ -1675,11 +1989,17 @@ while(<ARRAY_IMPUTE>)
 			print WRPOST "$sys\n";
 		}
 		
-		$sys = "$PERL $dir/bin/perl_create_ind.pl -i $dirtemp/$rounded/ind.tped.gz -a $dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob_ambi_out.gz -r $dirtemp/$rounded/$prevchr/beagle_r2.gz -o $dirtemp/$rounded/$prevchr/final.dosage.gz -c $prevchr -m $dirtemp/$rounded/$prevchr/final.map.gz|gzip   > $dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob_ind.gz";
+		$sys = "$PERL $dir/bin/perl_create_ind.pl -i $dirtemp/$rounded/ind.tped.gz -a $dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob_ambi_out.gz -r $dirtemp/$rounded/$prevchr/beagle_r2.gz -o $dirtemp/$rounded/$prevchr/final.2probs.gz -c $prevchr -m $dirtemp/$rounded/$prevchr/final.map.gz|gzip   > $dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob_ind.gz";
 		
 		if(!(-e "$dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob_ind.gz"))
 		{
 			print WRPOST "$sys\n";
+			print WRPOST 'if [ $? -ne 0 ]'."\n";
+			print WRPOST 'then'."\n";
+			$sys="echo \" something wrong with command $sys\"\n rm  $dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob_ind.gz\n exit 1\n";
+			print WRPOST "$sys\n";
+			print WRPOST 'fi'."\n";
+
 		}
 		$sys = "rm $dirtemp/$rounded/$prevchr/impute_out_chr$prevchr.window*";
 		print WRPOST "$sys\n";
@@ -1718,7 +2038,7 @@ if(-e "$dirtemp/$rounded/$prevchr/impute_out_chr$prevchr.window0.gz")
 if(!(-e "$dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob.gz"))
 {
 	print WRPOST "$sys\n";
-	$sys="gunzip -c $dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob.gz|awk -F ' ' '{if(\$5!=0)print \$0}' |gzip > $dirtemp/$rounded/$prevchr/Combined_impute_results_4_prob.gz";
+	$sys="gunzip -c $dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob.gz|$PERL -e '".'$prev="";while(<STDIN>){split / /;if($_[1] eq $prev && length($_[3])==1 && length($_[4])==1){next;}else{print $_};$prev=$_[1];}'."' |gzip > $dirtemp/$rounded/$prevchr/Combined_impute_results_4_prob.gz";
 	print WRPOST "$sys\n";
 	$sys = "mv 	$dirtemp/$rounded/$prevchr/Combined_impute_results_4_prob.gz $dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob.gz";
 	print WRPOST "$sys\n";
@@ -1729,11 +2049,11 @@ if($chr_start_input ne "YES")
 {
 	if($prevchr ==23)
 	{
-		$filey= $ref_keyword."_chrX_nonPAR_impute.legend.gz";
+		$filey = $ref_meta{"chr$prevchr".'_'."legend"};
 	}
 	else
 	{
-		$filey = $ref_keyword."_chr$prevchr".'_impute.legend.gz';;
+		$filey = $ref_meta{"chr$prevchr".'_'."legend"};
 	}	
 	$sys="count_ref=`gunzip -c $impute_ref/$filey|wc -l`";
 	print WRPOST "$sys\n";
@@ -1744,19 +2064,33 @@ if($chr_start_input ne "YES")
 }	
 $combined_impute_res = "zcat";
 $sys = "$PERL $dir/bin/perl_check_ambi_snp.pl -a $dirtemp/$rounded/ambi_hapmap_processed_beagle_input.tped.gz  -c $prevchr -d $dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob.gz -n $dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob_ambi_out.gz -m $dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob_indels_out.gz";
+
 if(!(-e "$dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob_ambi_out.gz"))
 {
 	print WRPOST "$sys\n";
+	print WRPOST 'if [ $? -ne 0 ]'."\n";
+	print WRPOST 'then'."\n";
+	$sys="echo \" something wrong with command $sys\"\n rm  $dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob_ambi_out.gz\n exit 1\n";
+	print WRPOST "$sys\n";
+	print WRPOST 'fi'."\n";
+	
+	$sys = "$PERL $dir/bin/perl_prob2dosage.pl  $dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob_ambi_out.gz   |gzip > $dirtemp/$rounded/$prevchr/dosage.gz ";
+	print WRPOST "$sys\n";
+	print WRPOST 'if [ $? -ne 0 ]'."\n";
+	print WRPOST 'then'."\n";
+	$sys="echo \" something wrong with command $sys\"\n rm  $dirtemp/$rounded/$prevchr/dosage.gz\n exit 1\n";
+	print WRPOST "$sys\n";
+	print WRPOST 'fi'."\n";
 }
 if(!(-e "$dirtemp/$rounded/$prevchr/beagle_r2.gz"))
 {
-	if(uc($pbs) ne "YES")
+	if($envr !~ m/PBS/i)
 	{
-		$sys = "gunzip -c $dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob_ambi_out.gz|cut -d ' ' -f2- |$JAVA -Xmx3000m -jar $GPROBS |gzip > $dirtemp/$rounded/$prevchr/beagle_r2.gz";
+		$sys = "gunzip -c $dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob_ambi_out.gz|cut -d ' ' -f2- |$JAVA -Xmx5000m -jar $GPROBS |gzip > $dirtemp/$rounded/$prevchr/beagle_r2.gz";
 	}
 	else
 	{
-		$sys = "gunzip -c $dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob_ambi_out.gz|cut -d ' ' -f2- |$JAVA  -Xmx3000m -jar $GPROBS |gzip > $dirtemp/$rounded/$prevchr/beagle_r2.gz";
+		$sys = "gunzip -c $dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob_ambi_out.gz|cut -d ' ' -f2- |$JAVA  -Xmx5000m -jar $GPROBS |gzip > $dirtemp/$rounded/$prevchr/beagle_r2.gz";
 	}
 	print WRPOST "$sys\n";
 	$sys="combine=3";
@@ -1767,10 +2101,16 @@ if(!(-e "$dirtemp/$rounded/$prevchr/beagle_r2.gz"))
 	print WRPOST "$sys\n";
 }
 
-$sys = "$PERL $dir/bin/perl_create_ind.pl -i $dirtemp/$rounded/ind.tped.gz -a $dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob_ambi_out.gz -r $dirtemp/$rounded/$prevchr/beagle_r2.gz -o $dirtemp/$rounded/$prevchr/final.dosage.gz -c $prevchr -m $dirtemp/$rounded/$prevchr/final.map.gz|gzip   > $dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob_ind.gz";
+$sys = "$PERL $dir/bin/perl_create_ind.pl -i $dirtemp/$rounded/ind.tped.gz -a $dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob_ambi_out.gz -r $dirtemp/$rounded/$prevchr/beagle_r2.gz -o $dirtemp/$rounded/$prevchr/final.2probs.gz -c $prevchr -m $dirtemp/$rounded/$prevchr/final.map.gz|gzip   > $dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob_ind.gz";
 if(!(-e "$dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob_ind.gz"))
 {
 	print WRPOST "$sys\n";
+	print WRPOST 'if [ $? -ne 0 ]'."\n";
+	print WRPOST 'then'."\n";
+	$sys="echo \" something wrong with command $sys\"\n rm  $dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob_ind.gz\n exit 1\n";
+	print WRPOST "$sys\n";
+	print WRPOST 'fi'."\n";
+	
 }
 $sys = "rm $dirtemp/$rounded/$prevchr/impute_out_chr$prevchr.window*";
 print WRPOST "$sys\n";
@@ -1781,7 +2121,7 @@ $count_post_jobs=@check_chr;
 #running post process for all the chromsomesin the form of array job
 system("mkdir $dirtemp/$rounded/post_logfiles_sungrid");
 open(ARRAY_SHAPEIT,">$dirtemp/$rounded/ArrayJob_post.csh") or die "unable to create the array job file\n";
-if(uc($pbs) ne "YES")
+if($envr =~ m/SGE/i)
 {
 	#print ARRAY_SHAPEIT $shapeit;
 	$com = '#!';
@@ -1801,7 +2141,7 @@ if(uc($pbs) ne "YES")
 	print ARRAY_SHAPEIT "$temp\n";
 	print ARRAY_SHAPEIT "$SH \$k\n";	
 }
-else
+elsif($envr =~ m/PBS/i)
 {
 	$com = '#!';
 	print ARRAY_SHAPEIT "$com $SH\n";
@@ -1824,13 +2164,20 @@ else
 	print ARRAY_SHAPEIT "$temp\n";
 	print ARRAY_SHAPEIT "$SH \$k\n";
 }	
-
+else
+{
+	print ARRAY_SHAPEIT 'for SGE_TASK_ID in {1..'.$count_post_jobs.'}'."\n";
+    print ARRAY_SHAPEIT 'do'."\n";
+	$temp = 'k=`cat  '."$dirtemp/$rounded/file_post".' |head -$SGE_TASK_ID |tail -1`';
+	print ARRAY_SHAPEIT "$temp\n";
+	print ARRAY_SHAPEIT "$SH \$k\n";	
+	print ARRAY_SHAPEIT 'done'."\n";
+}
 #submitting and storing the job id
 
-if(uc($pbs) ne "YES")
+if($envr =~ m/SGE/i)
 {
 	system("$QSUB $dirtemp/$rounded/ArrayJob_post.csh > $dirtemp/$rounded/jobid_shapeit");
-	
 	#readin job id from submit_shapeit
 	open(ARRAY_SHAPEIT,"$dirtemp/$rounded/jobid_shapeit") or die "unable to open file $dirtemp/$rounded/jobid_shapeit\n";
 	$shapeit = <ARRAY_SHAPEIT>;
@@ -1840,10 +2187,10 @@ if(uc($pbs) ne "YES")
 	print "JOB ID $shapeit1[0]\n";
 	$job_id_shapeit = $shapeit1[0];
 }
-else
+elsif($envr =~ m/PBS/i)
 {
 	system(" $QSUB $dirtemp/$rounded/ArrayJob_post.csh > $dirtemp/$rounded/jobid_shapeit");
-		#readin job id from submit_shapeit
+	#readin job id from submit_shapeit
 	open(ARRAY_SHAPEIT,"$dirtemp/$rounded/jobid_shapeit") or die "unable to open file $dirtemp/$rounded/jobid_shapeit\n";
 	$shapeit = <ARRAY_SHAPEIT>;
 	print "$shapeit\n";
@@ -1852,76 +2199,83 @@ else
 	print "JOB ID $shapeit1[0]\n";
 	$job_id_shapeit = $shapeit1[0];
 }
-#making the array job to wait
-open(ARRAY_SHAPEIT,">$dirtemp/$rounded/ArrayJob_post_wait.csh") or die "unable to create the array job wait file shape it \n";
-if(uc($pbs) ne "YES")
-{
-	$com = '#!';
-	print ARRAY_SHAPEIT "$com $SH\n";
-	$com = '#$';
-	print ARRAY_SHAPEIT "$com -q $shapeit_queue\n";
-	print ARRAY_SHAPEIT "$com -l h_vmem=$shapeit_mem\n";
-	print ARRAY_SHAPEIT "$com -M $email\n";
-	print ARRAY_SHAPEIT "$com -m a\n";
-	print ARRAY_SHAPEIT "$com -V\n";
-	print ARRAY_SHAPEIT "$com -cwd\n";
-	print ARRAY_SHAPEIT "$com -e $dirtemp/$rounded/\n";
-	print ARRAY_SHAPEIT "$com -o $dirtemp/$rounded/\n";
-	print ARRAY_SHAPEIT "cp $dirtemp/$rounded/jobid_shapeit $dirtemp/$rounded/waiting.txt\n";
-	$sys = "$QSUB -hold_jid $job_id_shapeit $dirtemp/$rounded/ArrayJob_post_wait.csh\n";
-	print $sys."\n";
-	system($sys);	
-}
 else
 {
-	$com = '#!';
-	print ARRAY_SHAPEIT "$com $SH\n";
-	$com = '#PBS';
-	for($p=0;$p<@pbs_param;$p++)
-	{
-		print ARRAY_SHAPEIT "$com $pbs_param[$p]\n";
-	}
-	#print ARRAY_SHAPEIT "$com -l walltime=01:05:00\n";
-	#print ARRAY_SHAPEIT "$com -l nodes=1:ppn=1\n"; 
-	print ARRAY_SHAPEIT "$com -M $email\n";
-	print ARRAY_SHAPEIT "$com -m a\n";
-	#print ARRAY_SHAPEIT "$com -A normal\n";
-	print ARRAY_SHAPEIT "$com -V\n";
-	#print ARRAY_SHAPEIT "$com -A bf0\n";
-	print ARRAY_SHAPEIT "$com -e $dirtemp/$rounded/\n";
-	print ARRAY_SHAPEIT "$com -o $dirtemp/$rounded/\n";
-	print ARRAY_SHAPEIT "cp $dirtemp/$rounded/jobid_shapeit $dirtemp/$rounded/waiting.txt\n";
-	$sys = "$QSUB -W depend=afterokarray:$job_id_shapeit $dirtemp/$rounded/ArrayJob_post_wait.csh\n";
-	print $sys."\n";
-	system($sys);
-
+	system("$SH $dirtemp/$rounded/ArrayJob_post.csh > $dirtemp/$rounded/post_logfiles_sungrid/ArrayJob_post.csh.MANUAL");
 }
-$flag = 1;
-while($flag > 0)
+if($envr =~ m/SGE/i || $envr =~ m/PBS/i)
 {
-	#print "in the loop\n";
-	if($flag%1000000000 == 0)
-		{
-				$flag = 1;
-				print "waiting for the shapeit array job to complete\n";
-		}
-	$flag++;
-
-	if(-e "$dirtemp/$rounded/waiting.txt")	
+	#making the array job to wait
+	open(ARRAY_SHAPEIT,">$dirtemp/$rounded/ArrayJob_post_wait.csh") or die "unable to create the array job wait file shape it \n";
+	if($envr =~ m/SGE/i)
 	{
-			$flag =0;
+		$com = '#!';
+		print ARRAY_SHAPEIT "$com $SH\n";
+		$com = '#$';
+		print ARRAY_SHAPEIT "$com -q $shapeit_queue\n";
+		print ARRAY_SHAPEIT "$com -l h_vmem=$shapeit_mem\n";
+		print ARRAY_SHAPEIT "$com -M $email\n";
+		print ARRAY_SHAPEIT "$com -m a\n";
+		print ARRAY_SHAPEIT "$com -V\n";
+		print ARRAY_SHAPEIT "$com -cwd\n";
+		print ARRAY_SHAPEIT "$com -e $dirtemp/$rounded/\n";
+		print ARRAY_SHAPEIT "$com -o $dirtemp/$rounded/\n";
+		print ARRAY_SHAPEIT "cp $dirtemp/$rounded/jobid_shapeit $dirtemp/$rounded/waiting.txt\n";
+		$sys = "$QSUB -hold_jid $job_id_shapeit $dirtemp/$rounded/ArrayJob_post_wait.csh\n";
+		print $sys."\n";
+		system($sys);	
 	}
-}		
-#print "successfully completed\n";
-if(-e "$dirtemp/$rounded/waiting.txt")
-{
-		system("rm $dirtemp/$rounded/waiting.txt");
+	elsif($envr =~ m/PBS/i)
+	{
+		$com = '#!';
+		print ARRAY_SHAPEIT "$com $SH\n";
+		$com = '#PBS';
+		for($p=0;$p<@pbs_param;$p++)
+		{
+			print ARRAY_SHAPEIT "$com $pbs_param[$p]\n";
+		}
+		#print ARRAY_SHAPEIT "$com -l walltime=01:05:00\n";
+		#print ARRAY_SHAPEIT "$com -l nodes=1:ppn=1\n"; 
+		print ARRAY_SHAPEIT "$com -M $email\n";
+		print ARRAY_SHAPEIT "$com -m a\n";
+		#print ARRAY_SHAPEIT "$com -A normal\n";
+		print ARRAY_SHAPEIT "$com -V\n";
+		#print ARRAY_SHAPEIT "$com -A bf0\n";
+		print ARRAY_SHAPEIT "$com -e $dirtemp/$rounded/\n";
+		print ARRAY_SHAPEIT "$com -o $dirtemp/$rounded/\n";
+		print ARRAY_SHAPEIT "cp $dirtemp/$rounded/jobid_shapeit $dirtemp/$rounded/waiting.txt\n";
+		$sys = "$QSUB -W depend=afterokarray:$job_id_shapeit $dirtemp/$rounded/ArrayJob_post_wait.csh\n";
+		print $sys."\n";
+		system($sys);
+
+	}
+	$flag = 1;
+	while($flag > 0)
+	{
+		#print "in the loop\n";
+		if($flag%1000000000 == 0)
+			{
+					$flag = 1;
+					print "waiting for the shapeit array job to complete\n";
+			}
+		$flag++;
+
+		if(-e "$dirtemp/$rounded/waiting.txt")	
+		{
+				$flag =0;
+		}
+	}		
+	#print "successfully completed\n";
+	if(-e "$dirtemp/$rounded/waiting.txt")
+	{
+			system("rm $dirtemp/$rounded/waiting.txt");
+	}
 }
 $k=0;
 for($chr=0;$chr<@check_chr;$chr++)
 {
 	$prevchr=$check_chr[$chr];
-	if(!((-e "$dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob.gz" ) && (-e "$dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob_ambi_out.gz") && (-e "$dirtemp/$rounded/$prevchr/beagle_r2.gz") && (-e "$dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob_ind.gz") && (-e "$dirtemp/$rounded/$prevchr/final.dosage.gz")))
+	if(!((-e "$dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob.gz" ) && (-e "$dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob_ambi_out.gz") && (-e "$dirtemp/$rounded/$prevchr/beagle_r2.gz") && (-e "$dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob_ind.gz") && (-e "$dirtemp/$rounded/$prevchr/final.2probs.gz")))
 	{	
 		$k=1;
 		print "some thing wrong with post processing chromosome $prevchr\n"; 
@@ -1936,9 +2290,12 @@ else
 {
 	system("mkdir $dirtemp/$rounded/SHAPEIT_OUTPUT");
 	system("mv $dirtemp/$rounded/shapeit_jobs.tar.gz $dirtemp/$rounded/SHAPEIT_OUTPUT");
-	system("rm $dirtemp/$rounded/post_logfiles_sungrid/*");
-	system("rm $dirtemp/$rounded/*");
-	system("rmdir rm $dirtemp/$rounded/post_logfiles_sungrid");
+	#system("rm $dirtemp/$rounded/post_logfiles_sungrid/*");
+	#system("rm $dirtemp/$rounded/*");
+	#system("rmdir $dirtemp/$rounded/post_logfiles_sungrid");
+	system("gzip $dirtemp/$rounded/post_logfiles_sungrid/*");
+	system("mv $dirtemp/$rounded/post_logfiles_sungrid/  $dirtemp/$rounded/archive_logfiles_sungrid/");
+	system("find $dirtemp/$rounded/ -maxdepth 1 -type f -delete");
 	for($chr=0;$chr<@check_chr;$chr++)
 	{
 		$prevchr=$check_chr[$chr];
