@@ -617,7 +617,7 @@ if(uc($restart_impute) ne "POST")
 							chomp($count_shapeit);
 							$count_shapeit =~ s/\s.+//g;
 							#print "count_shapeit $count_shapeit\n";
-							if($count_shapeit < 3)
+							if($count_shapeit < 2)
 							{
 								system("chmod 755 $file.gz");
 								system("rm $file.gz");
@@ -795,6 +795,22 @@ if(uc($restart_impute) ne "POST")
 					print ARRAY_SHAPEIT "$temp\n";
 					if($less_num_samp =~  m/YES/i)
 					{	
+					
+			#			$temp = 'k=`cat  '."$dirtemp/$rounded/$input_shapeit_jobids".' |head -$SGE_TASK_ID |tail -1`';
+			#			print ARRAY_SHAPEIT "$temp\n";
+			#			$temp = 'ks1=`echo  $k|awk -F "___" \'{print $1}\'`';
+			#			print ARRAY_SHAPEIT "$temp\n";
+			#			$temp = "$SHAPEIT ".'$ks1 '."\n";
+			#			print ARRAY_SHAPEIT "$temp";
+			#			$temp = 'align=`echo $ks1|tr \' \' \'\n\'|grep alignments`'."\n";
+			#			print ARRAY_SHAPEIT "$temp\n";
+			#			$temp = 'touch $align.snp.strand.exclude'."\n";
+			#			print ARRAY_SHAPEIT "$temp\n";
+			#			$temp = 'ks2=`echo  $k|awk -F "___" \'{print $2}\'`';
+			#			print ARRAY_SHAPEIT "$temp\n";
+			#			$temp = "$SHAPEIT ".'$ks2 '."\n";
+			#			print ARRAY_SHAPEIT "$temp";
+						
 						$temp = 'k=`cat  '."$dirtemp/$rounded/$input_shapeit_jobids".' |head -$SGE_TASK_ID |tail -1`';
 						print ARRAY_SHAPEIT "$temp\n";
 						$temp = 'ks1=`echo  $k|awk -F "___" \'{print $1}\'`';
@@ -805,10 +821,15 @@ if(uc($restart_impute) ne "POST")
 						print ARRAY_SHAPEIT "$temp\n";
 						$temp = 'touch $align.snp.strand.exclude'."\n";
 						print ARRAY_SHAPEIT "$temp\n";
-						$temp = 'ks2=`echo  $k|awk -F "___" \'{print $2}\'`';
+						$temp = 'ks3=`echo  $k|awk -F "___" \'{print $2}\'`';
+						print ARRAY_SHAPEIT "$temp\n";
+						$temp = '$ks3 '."\n";
+						print ARRAY_SHAPEIT "$temp";
+						$temp = 'ks2=`echo  $k|awk -F "___" \'{print $3}\'`';
 						print ARRAY_SHAPEIT "$temp\n";
 						$temp = "$SHAPEIT ".'$ks2 '."\n";
 						print ARRAY_SHAPEIT "$temp";
+					
 					}
 					else
 					{
@@ -943,7 +964,7 @@ if(uc($restart_impute) ne "POST")
 				$count_shapeit =`gunzip -c  $dirtemp/$rounded/$j/snps_chr$j.haps.gz| wc -l `;
 				chomp($count_shapeit);
 				$count_shapeit =~ s/\s.+//g;
-				if(!((-e "$dirtemp/$rounded/$j/snps_chr$j.haps.gz") && (-e "$dirtemp/$rounded/$j/snps_chr$j.sample") && $count_shapeit > 2 ))
+				if(!((-e "$dirtemp/$rounded/$j/snps_chr$j.haps.gz") && (-e "$dirtemp/$rounded/$j/snps_chr$j.sample") && $count_shapeit > 1 ))
 				{
 					print "Shape it job not successful for chr$j\n";
 					system("rm  $dirtemp/$rounded/$j/snps_chr$j.haps.gz $dirtemp/$rounded/$j/snps_chr$j.sample");
@@ -1282,6 +1303,7 @@ if(uc($restart_impute) ne "POST")
 		open(GUNZIP_IMPUTE_WRBUFF,">$dirtemp/$rounded/Gunzip_file_impute")or die "unable to write the file Gunzip_file_shapeit\n";
 		#calculating window sizes for all chrs
 		#die "test @check_chr\n";
+		my @problem;
 		for($i=0;$i<@check_chr;$i++)
 		{
 			print "\n\n\n\n\nDEALING WITH CHR $check_chr[$i]\n\n\n\n";
@@ -1289,9 +1311,23 @@ if(uc($restart_impute) ne "POST")
 			$line = <BIM>;
 			@array = split(" ",$line);
 			$start = $array[2];
+			$num_markers_chr=0;
 			while($line = <BIM>)
 			{
+				$num_markers_chr++;
 				$line1 = $line;
+			}
+			if($num_markers_chr == 0)
+			{
+				print "File $dirtemp/$rounded/$check_chr[$i]/imp_ref_snps_chr$check_chr[$i].haps.gz has zero markers.i.e. no markers are present on the reference for imputataion,so remove the chromosome from input file and re submit the job\n";
+				push(@problem,"CHR:$check_chr[$i] File $dirtemp/$rounded/$check_chr[$i]/imp_ref_snps_chr$check_chr[$i].haps.gz has zero markers.i.e. no markers are present on the reference for imputataion,so remove the chromosome from input file and re submit the job");
+				next;
+			}
+			if($num_markers_chr < $cutoff)
+			{
+				print "Number of markers in the haps file $dirtemp/$rounded/$check_chr[$i]/imp_ref_snps_chr$check_chr[$i].haps.gz on the reference are less than number of markers window size cutoff $cutoff specified in the run info, so decrease the  count for parameter WINDOW_CUTOFF_NUM_MARKERS in the runinfo and if necesary decrease the EDGE_CUTOFF_NUM_MARKERS\n";
+				push(@problem,"CHR:$check_chr[$i] Number of markers in the haps file $dirtemp/$rounded/$check_chr[$i]/imp_ref_snps_chr$check_chr[$i].haps.gz on the reference are less than number of markers window size cutoff $cutoff specified in the run info, so decrease the  count for parameter WINDOW_CUTOFF_NUM_MARKERS in the runinfo and if necesary decrease the EDGE_CUTOFF_NUM_MARKERS");
+				next;
 			}
 			@array = split(" ",$line1);
 			$stop = $array[2];
@@ -1424,7 +1460,10 @@ if(uc($restart_impute) ne "POST")
 			
 			if(@start_window != @stop_window)
 			{
-				die "Decrease the cutoff minimum number of markers in the window ('WINDOW_CUTOFF_NUM_MARKERS' in config file) & edges ('EDGE_CUTOFF_NUM_MARKERS' in config file)\n";
+				print "Decrease the cutoff minimum number of markers in the window ('WINDOW_CUTOFF_NUM_MARKERS' in config file) & edges ('EDGE_CUTOFF_NUM_MARKERS' in config file)\n";
+				push(@problem,"CHR:$check_chr[$i] Decrease the cutoff minimum number of markers in the window ('WINDOW_CUTOFF_NUM_MARKERS' in config file) & edges ('EDGE_CUTOFF_NUM_MARKERS' in config file)");
+				next;
+			
 			}
 			for($j=0;$j<@count_snp_window_indata;$j++)
 			{
@@ -1653,7 +1692,12 @@ if(uc($restart_impute) ne "POST")
 			undef(@count_snp_window_reference_new);
 			undef(@count_snp_window_reference);
 		}
-
+		
+		if(@problem > 0)
+		{
+			$pnu=join("\n",@problem);
+			die "$pnu\nSee above messages and fix them\n";
+		}
 		#submit the impute jobs
 		system("mkdir $dirtemp/$rounded/impute_logfiles_sungrid");
 		$input_impute_jobids="ArrayJob_file_impute";
@@ -2461,6 +2505,8 @@ else
 }
 #copying the readme file to the output directory
 system("cp $dir/bin/READ_ME_result $dirtemp/$rounded/");
+
+print "Ezimputer run got completed.Here are the output files $dirtemp/$rounded/.For output file description look for the file $dir/bin/READ_ME_result\n";
 ##############################################################SUBROUTINES######################################################
 sub uniqsnps {
         shift(@_);

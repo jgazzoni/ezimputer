@@ -26,7 +26,7 @@ $dir = join("/",@DR_array);
 );
 if($include_pop eq ""  || $refdir eq "" || $outdir eq "" )
 {
-	die "missing arguments\n USAGE : perl Filter_1000genome_reference_by_maf.pl  -INCLUDE_POP <POPULATIONS TO BE INCLUDE IN THE NEW REFERENCE>  -REF_GENOME_DIR <Reference Genome Directory> -OUTPUT_DIR <OUTPUT DIR>\n";
+	die "missing arguments\n USAGE : perl Filter_1000genome_reference_by_maf_parallel.pl  -INCLUDE_POP <POPULATIONS TO BE INCLUDE IN THE NEW REFERENCE>  -REF_GENOME_DIR <Reference Genome Directory> -OUTPUT_DIR <OUTPUT DIR> -POPULATION <POPULATIONS TO BE FILTERED> -INCHR <CHROMOSOME TO BE PROCESSED>\n";
 }
 @include_pop=split(',',$include_pop);
 if($pop eq "")
