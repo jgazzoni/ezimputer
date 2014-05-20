@@ -31,12 +31,16 @@ $file=$outputfile.'.tfam';
 open(WRTFAM,">$file") or die "not able to write tfam file found $file\n";
 $file=$outputfile.'.tped';
 open(WRTPED,">$file") or die "not able to write tped file found $file\n";
+print "\n\n\n\n\n";
+
+print "Chekcing for duplicate sample id's.If found then '_incrementalnumber' will be added to the sample ID and making mother and father id to '0'\n";
 while(<TFAM>)
 {
 	chomp($_);
 	@tfam=split(" ",$_);
 	if(exists($sample{$tfam[1]}))
 	{
+		print "Duplicate sample found so modifying the sample id $tfam[1] to $tfam[1]__$sample{$tfam[1]}\n";
 		$tfam[1] ="$tfam[1]__$sample{$tfam[1]}";
 		$sample{$tfam[1]}++;	
 	}
@@ -51,6 +55,8 @@ while(<TFAM>)
 }
 close(TFAM);
 close(WRTFAM);
+print "\n\n\n\n\n";
+print "Chekcing for duplicate rsids and positions.If duplicate rsid is found then '_duplicatenumber' will be added to rsid name.If duplicate position is found then it will be excluded\n";
 undef(%sample);
 while(<TPED>)
 {
