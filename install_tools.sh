@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # This script will install all anciliary tools for ezimputer
-# usage: install_tools.sh path_to_ezimputer_install_without_a_slash_at_the_end
+# usage: install_tools.sh path_to_ezimputer_install
 #
 #DETAILED DESCRIPTION TO DOWNLOAD THE TOOLS
 
@@ -10,6 +10,7 @@ then
 
 
 export EZIMPUTER=$1
+EZIMPUTER=`echo $EZIMPUTER|sed 's/\/$//g'`
 echo "$EZIMPUTER"
 
 #Create main tools directory
@@ -147,7 +148,7 @@ mkdir $EZIMPUTER/EXTERNALTOOLS/SHAPEIT
 #Change to SHAPEIT directory
 cd $EZIMPUTER/EXTERNALTOOLS/SHAPEIT
 #Download SHAPEIT tool package
-timeout 20 wget http://www.shapeit.fr/script/get.php?id=16
+timeout 20 wget  https://mathgen.stats.ox.ac.uk/genetics_software/shapeit/shapeit.v2.r778.RHELS_5.4.static.tar.gz
 if [ $? -eq 124 ]
     then
     echo "timeout occured while downloading shapeit tool, so copying the tool from local source"
@@ -157,9 +158,9 @@ fi
 
 
 #Untar the downloaded package
- tar -zxvf shapeit.v2.r727.linux.x64.tar.gz
+ tar -zxvf shapeit.*.tar.gz
 #Try SHAPEIT
-$EZIMPUTER/EXTERNALTOOLS/SHAPEIT/shapeit.v2.r727.linux.x64 
+$EZIMPUTER/EXTERNALTOOLS/SHAPEIT/shapeit
 
 if [ $? -eq 0 ]
     then
@@ -173,9 +174,10 @@ then
 	echo "Following tools not installed properly"
 	echo $tools_installed
 fi
+chmod -R 755 $EZIMPUTER/EXTERNALTOOLS/
 else
 
-echo "usage: install_tools.sh path_to_ezimputer_install_without_trailing_slash"
+echo "usage: install_tools.sh <path_to_ezimputer_install>"
 fi
 
 #Once you are done with downloading next step is to create the tool info config file (here). 

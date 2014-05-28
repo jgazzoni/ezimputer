@@ -4,15 +4,16 @@
 # installed. perl, python, java, and sun grid engine (SGE) or portable Batch System PBS.
 #
 # To use this script, 
-# bash make_tool_info.pl full_path_for_ezimputer_without_a_slash_at_the_end
+# bash make_tool_info.pl full_path_for_ezimputer
 #
 if [ "$#" -eq 1 ]
 then
 EZIMPUTER=$1
+EZIMPUTER=`echo $EZIMPUTER|sed 's/\/$//g'`
 PLINK="${EZIMPUTER}/EXTERNALTOOLS/PLINK/plink-1.07-x86_64/plink"
 STRUCTURE="${EZIMPUTER}/EXTERNALTOOLS/STRUCTURE/console/structure"
 STRUCTURE_PARAM="${EZIMPUTER}/EXTERNALTOOLS/STRUCTURE/console/extraparams"
-SHAPEIT="${EZIMPUTER}/EXTERNALTOOLS/SHAPEIT/shapeit.v2.r727.linux.x64"
+SHAPEIT="${EZIMPUTER}/EXTERNALTOOLS/SHAPEIT/shapeit"
 IMPUTE="${EZIMPUTER}/EXTERNALTOOLS/IMPUTE/impute_v2.3.0_x86_64_static/impute2"
 CHECK_STRAND="${EZIMPUTER}/EXTERNALTOOLS/CHECK_STRAND/check_strands_16May11/check_strands.py"
 GPROBS="${EZIMPUTER}/EXTERNALTOOLS/GPROBS/gprobsmetrics.jar"
@@ -77,11 +78,11 @@ if [[ !  -f $CHECK_STRAND ]]
     echo "no CHECK_STRAND found $CHECK_STRAND"
     exit 1	
 fi
-if [[ !  -x $CHECK_STRAND ]]
-    then
-    echo "CHECK_STRAND found but it is not executable $CHECK_STRAND"
-    exit 1
-fi
+#if [[ !  -x $CHECK_STRAND ]]
+#    then
+#    echo "CHECK_STRAND found but it is not executable $CHECK_STRAND"
+#    exit 1
+#fi
 #GPROBS
 if [[ !  -f $GPROBS ]]
     then
@@ -142,5 +143,5 @@ echo "JAVA=${JAVA}"
 echo "QSUB=${QSUB}"
 echo "SH=${SH}"
 else
-    echo "usage:  make_tool_info.sh path_to_ezimputer_install_without_a_slash_at_the_end"
+    echo "usage:  make_tool_info.sh <path_to_ezimputer_install>"
 fi
