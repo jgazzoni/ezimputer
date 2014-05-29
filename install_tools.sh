@@ -32,6 +32,7 @@ wget http://faculty.washington.edu/sguy/beagle/strand_switching/check_strands_16
 tar -zxvf check_strands_16May11.tar.gz
 #change directory
 cd check_strands_16May11
+chmod +xr $EZIMPUTER/EXTERNALTOOLS/CHECK_STRAND/check_strands_16May11/check_strands.py
 python $EZIMPUTER/EXTERNALTOOLS/CHECK_STRAND/check_strands_16May11/check_strands.py
 if [ $? -ne 0 ]
     then
@@ -53,6 +54,7 @@ unzip plink-1.07-x86_64.zip
 #The plink binary is now in $EZIMPUTER/EXTERNALTOOLS/PLINK/plink-1.07-x86_64/plink
 # when you enter the path in the too info file, you must replace the value of
 # $EZIMPUTER with the actual path, e.g.
+chmod +xr $EZIMPUTER/EXTERNALTOOLS/PLINK/plink-1.07-x86_64/plink
 testp=`$EZIMPUTER/EXTERNALTOOLS/PLINK/plink-1.07-x86_64/plink | grep -c 'Purcell'`
 if [ $testp -eq 0 ]
     then
@@ -73,7 +75,7 @@ wget http://pritchardlab.stanford.edu/structure_software/release_versions/v2.3.4
 #uncompress the  package
 tar -zxvf structure_linux_console.tar.gz
 cd console/
-
+chmod +xr $EZIMPUTER/EXTERNALTOOLS/STRUCTURE/console/structure
 #Test the new executable
 echo "$EZIMPUTER/EXTERNALTOOLS/STRUCTURE/console/structure"
 testnew=`$EZIMPUTER/EXTERNALTOOLS/STRUCTURE/console/structure | grep -c 'STRUCTURE'`
@@ -97,6 +99,7 @@ wget http://mathgen.stats.ox.ac.uk/impute/impute_v2.3.0_x86_64_static.tgz
 tar -zxvf impute_v2.3.0_x86_64_static.tgz
 #change directory 
 cd impute_v2.3.0_x86_64_static
+chmod +xr impute2
 #Try Impute
 itest=`./impute2 | grep -c 'IMPUTE'`
 #You should be able to see
@@ -132,6 +135,7 @@ mkdir $EZIMPUTER/EXTERNALTOOLS/GPROBS
 cd $EZIMPUTER/EXTERNALTOOLS/GPROBS
 #Download GPROBS package
 wget http://faculty.washington.edu/browning/beagle_utilities/gprobsmetrics.jar
+chmod +xr $EZIMPUTER/EXTERNALTOOLS/GPROBS/gprobsmetrics.jar
 java -jar $EZIMPUTER/EXTERNALTOOLS/GPROBS/gprobsmetrics.jar  -h
 if [ $? -ne 0 ]
     then
@@ -160,6 +164,7 @@ fi
 #Untar the downloaded package
  tar -zxvf shapeit.*.tar.gz
 #Try SHAPEIT
+chmod +xr $EZIMPUTER/EXTERNALTOOLS/SHAPEIT/shapeit
 $EZIMPUTER/EXTERNALTOOLS/SHAPEIT/shapeit
 
 if [ $? -eq 0 ]
