@@ -624,17 +624,17 @@ if($MODULES_NEEDED =~ m/QC_REQUIRED/)
 	close(WR_QC_TOOL);
 	#print "$sys\n";
 	#system($sys);
-	open(ARRAY_SHAPEIT,"$IMP2_OUT_DIR/QC_Submit.csh")  or die "no file found $IMP2_OUT_DIR/QC_Submit.csh\n";
+	open(ARRAY_SHAPEIT,">$IMP2_OUT_DIR/QC_Submit.csh")  or die "no file found $IMP2_OUT_DIR/QC_Submit.csh\n";
 	$sys="$PERL $dir/QC_fwd_structure.pl -run_config $IMP2_OUT_DIR/qcfwdstruc_run.cfg -tool_config $IMP2_OUT_DIR/qcfwdstruc_tool.cfg";
 	print ARRAY_SHAPEIT "$sys\n";
 	close(ARRAY_SHAPEIT);
 	system("sh $IMP2_OUT_DIR/QC_Submit.csh");
 	
 	$NFWSTRND=`wc -l $IMP2_OUT_DIR/qcfwdstruc/processed_input.tped | cut -d' ' -f1`;
-    $NIGNORED=`wc -l $IMP2_OUT_DIR/qcfwdstruc/markers.ignored | cut -d' ' -f1`;
-    $NNOFLIP=`awk '{print \$2}' $IMP2_OUT_DIR/qcfwdstruc/fwdStrandResults_input.ind | grep '0' | wc -l | cut -d' ' -f1`;
-    $NFLIP=`awk '{print \$2}' $IMP2_OUT_DIR/qcfwdstruc/fwdStrandResults_input.ind | grep '1' | wc -l | cut -d' ' -f1`;
-    $NNOREF=`awk '{print \$2}' $IMP2_OUT_DIR/qcfwdstruc/fwdStrandResults_input.ind | grep '2' | wc -l | cut -d' ' -f1`;
+    	$NIGNORED=`wc -l $IMP2_OUT_DIR/qcfwdstruc/markers.ignored | cut -d' ' -f1`;
+    	$NNOFLIP=`awk '{print \$2}' $IMP2_OUT_DIR/qcfwdstruc/fwdStrandResults_input.ind | grep '0' | wc -l | cut -d' ' -f1`;
+    	$NFLIP=`awk '{print \$2}' $IMP2_OUT_DIR/qcfwdstruc/fwdStrandResults_input.ind | grep '1' | wc -l | cut -d' ' -f1`;
+    	$NNOREF=`awk '{print \$2}' $IMP2_OUT_DIR/qcfwdstruc/fwdStrandResults_input.ind | grep '2' | wc -l | cut -d' ' -f1`;
 	chomp($NFWSTRND);
 	chomp($NIGNORED);
 	chomp($NNOFLIP);
