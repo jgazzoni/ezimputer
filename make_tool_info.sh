@@ -10,13 +10,13 @@ if [ "$#" -eq 1 ]
 then
 EZIMPUTER=$1
 EZIMPUTER=`echo $EZIMPUTER|sed 's/\/$//g'`
-PLINK="${EZIMPUTER}/EXTERNALTOOLS/PLINK/plink-1.07-x86_64/plink"
-STRUCTURE="${EZIMPUTER}/EXTERNALTOOLS/STRUCTURE/console/structure"
-STRUCTURE_PARAM="${EZIMPUTER}/EXTERNALTOOLS/STRUCTURE/console/extraparams"
-SHAPEIT="${EZIMPUTER}/EXTERNALTOOLS/SHAPEIT/shapeit"
-IMPUTE="${EZIMPUTER}/EXTERNALTOOLS/IMPUTE/impute_v2.3.0_x86_64_static/impute2"
-CHECK_STRAND="${EZIMPUTER}/EXTERNALTOOLS/CHECK_STRAND/check_strands_16May11/check_strands.py"
-GPROBS="${EZIMPUTER}/EXTERNALTOOLS/GPROBS/gprobsmetrics.jar"
+PLINK="${EZIMPUTER}/PLINK/plink-1.07-x86_64/plink"
+STRUCTURE="${EZIMPUTER}/STRUCTURE/console/structure"
+STRUCTURE_PARAM="${EZIMPUTER}/STRUCTURE/console/extraparams"
+SHAPEIT="${EZIMPUTER}/SHAPEIT/shapeit"
+IMPUTE="${EZIMPUTER}/IMPUTE/impute_v2.3.0_x86_64_static/impute2"
+CHECK_STRAND="${EZIMPUTER}/CHECK_STRAND/check_strands_16May11/check_strands.py"
+GPROBS="${EZIMPUTER}/GPROBS/gprobsmetrics.jar"
 PERL=`which perl`
 PYTHON=`which python`
 JAVA=`which java`
@@ -143,5 +143,5 @@ echo "JAVA=${JAVA}"
 echo "QSUB=${QSUB}"
 echo "SH=${SH}"
 else
-    echo "usage:  make_tool_info.sh <path_to_ezimputer_install>"
+    echo "usage:  make_tool_info.sh <path_to_install_directory>"
 fi

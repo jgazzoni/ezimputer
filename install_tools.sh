@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # This script will install all anciliary tools for ezimputer
-# usage: install_tools.sh path_to_ezimputer_install
+# usage: install_tools.sh path_to_install_directory
 #
 #DETAILED DESCRIPTION TO DOWNLOAD THE TOOLS
 
@@ -11,29 +11,31 @@ then
 
 export EZIMPUTER=$1
 EZIMPUTER=`echo $EZIMPUTER|sed 's/\/$//g'`
-echo "$EZIMPUTER"
+echo "INSTALL DIRECTORY SPECIFIED: $EZIMPUTER"
 
 #Create main tools directory
-mkdir $EZIMPUTER/EXTERNALTOOLS
+mkdir -p $EZIMPUTER
+mkdir $EZIMPUTER/LOG
 #Change directory
-cd  $EZIMPUTER/EXTERNALTOOLS
+cd $EZIMPUTER
 
 tools_installed=""
 tools_installed_ind=1
 
 #CHECK_STRAND
 #Create main CHECK_STRAND directory
-mkdir $EZIMPUTER/EXTERNALTOOLS/CHECK_STRAND
+mkdir $EZIMPUTER/CHECK_STRAND
 #Change to CHECK_STRAND directory
-cd $EZIMPUTER/EXTERNALTOOLS/CHECK_STRAND
+cd $EZIMPUTER/CHECK_STRAND
 #Download CHECK_STRAND package
 wget http://faculty.washington.edu/sguy/beagle/strand_switching/check_strands_16May11.tar.gz
 #uncompress the package
 tar -zxvf check_strands_16May11.tar.gz
 #change directory
 cd check_strands_16May11
-chmod +xr $EZIMPUTER/EXTERNALTOOLS/CHECK_STRAND/check_strands_16May11/check_strands.py
-python $EZIMPUTER/EXTERNALTOOLS/CHECK_STRAND/check_strands_16May11/check_strands.py
+chmod +xr $EZIMPUTER/CHECK_STRAND/check_strands_16May11/check_strands.py
+python $EZIMPUTER/CHECK_STRAND/check_strands_16May11/check_strands.py > $EZIMPUTER/LOG/CHECK_STRAND.log 2>&1 
+python $EZIMPUTER/CHECK_STRAND/check_strands_16May11/check_strands.py
 if [ $? -ne 0 ]
     then
     echo "Unable to download beagle utils or python is not set to the path"
@@ -44,18 +46,19 @@ fi
 
 #PLINK 
 #Create main plink directory
-mkdir $EZIMPUTER/EXTERNALTOOLS/PLINK
+mkdir $EZIMPUTER/PLINK
 #Change to plink main directory
-cd $EZIMPUTER/EXTERNALTOOLS/PLINK
+cd $EZIMPUTER/PLINK
 #Download the plink package
 wget http://pngu.mgh.harvard.edu/~purcell/plink/dist/plink-1.07-x86_64.zip
 #Uncompresszip files
 unzip plink-1.07-x86_64.zip
-#The plink binary is now in $EZIMPUTER/EXTERNALTOOLS/PLINK/plink-1.07-x86_64/plink
+#The plink binary is now in $EZIMPUTER/PLINK/plink-1.07-x86_64/plink
 # when you enter the path in the too info file, you must replace the value of
 # $EZIMPUTER with the actual path, e.g.
-chmod +xr $EZIMPUTER/EXTERNALTOOLS/PLINK/plink-1.07-x86_64/plink
-testp=`$EZIMPUTER/EXTERNALTOOLS/PLINK/plink-1.07-x86_64/plink | grep -c 'Purcell'`
+chmod +xr $EZIMPUTER/PLINK/plink-1.07-x86_64/plink
+$EZIMPUTER/PLINK/plink-1.07-x86_64/plink > $EZIMPUTER/LOG/PLINK.log 2>&1 
+testp=`$EZIMPUTER/PLINK/plink-1.07-x86_64/plink | grep -c 'Purcell'`
 if [ $testp -eq 0 ]
     then
     echo "Error during plink installation"
@@ -66,19 +69,20 @@ fi
 
 #STRUCTURE
 #Create main STRUCTURE directory
-mkdir $EZIMPUTER/EXTERNALTOOLS/STRUCTURE
+mkdir $EZIMPUTER/STRUCTURE
 #Change to STRUCTURE directory
-cd $EZIMPUTER/EXTERNALTOOLS/STRUCTURE
+cd $EZIMPUTER/STRUCTURE
 #Download the STRUCTURE tool
 wget http://pritchardlab.stanford.edu/structure_software/release_versions/v2.3.4/release/structure_linux_console.tar.gz
 
 #uncompress the  package
 tar -zxvf structure_linux_console.tar.gz
 cd console/
-chmod +xr $EZIMPUTER/EXTERNALTOOLS/STRUCTURE/console/structure
+chmod +xr $EZIMPUTER/STRUCTURE/console/structure
 #Test the new executable
-echo "$EZIMPUTER/EXTERNALTOOLS/STRUCTURE/console/structure"
-testnew=`$EZIMPUTER/EXTERNALTOOLS/STRUCTURE/console/structure | grep -c 'STRUCTURE'`
+echo "$EZIMPUTER/STRUCTURE/console/structure"
+$EZIMPUTER/STRUCTURE/console/structure > $EZIMPUTER/LOG/STRUCTURE.log 2>&1 
+testnew=`$EZIMPUTER/STRUCTURE/console/structure | grep -c 'STRUCTURE'`
 if [ $testnew -eq 0 ] 
 then
 	echo "installation of STRUCTURE failed after compilation\n";
@@ -90,9 +94,9 @@ fi
 
 #IMPUTE
 #Create main IMPUTE directory
-mkdir $EZIMPUTER/EXTERNALTOOLS/IMPUTE
+mkdir $EZIMPUTER/IMPUTE
 #Change to IMPUTE directory
-cd $EZIMPUTER/EXTERNALTOOLS/IMPUTE
+cd $EZIMPUTER/IMPUTE
 #Download IMPUTE tool package
 wget http://mathgen.stats.ox.ac.uk/impute/impute_v2.3.0_x86_64_static.tgz
 #Untar the downloaded package
@@ -100,6 +104,7 @@ tar -zxvf impute_v2.3.0_x86_64_static.tgz
 #change directory 
 cd impute_v2.3.0_x86_64_static
 chmod +xr impute2
+./impute2 > $EZIMPUTER/LOG/IMPUTE.log 2>&1 
 #Try Impute
 itest=`./impute2 | grep -c 'IMPUTE'`
 #You should be able to see
@@ -130,13 +135,14 @@ fi
 
 #(1)GPROBS
 #Create main GPROBS directory
-mkdir $EZIMPUTER/EXTERNALTOOLS/GPROBS
+mkdir $EZIMPUTER/GPROBS
 #Change to GPROBS directory
-cd $EZIMPUTER/EXTERNALTOOLS/GPROBS
+cd $EZIMPUTER/GPROBS
 #Download GPROBS package
 wget http://faculty.washington.edu/browning/beagle_utilities/gprobsmetrics.jar
-chmod +xr $EZIMPUTER/EXTERNALTOOLS/GPROBS/gprobsmetrics.jar
-java -jar $EZIMPUTER/EXTERNALTOOLS/GPROBS/gprobsmetrics.jar  -h
+chmod +xr $EZIMPUTER/GPROBS/gprobsmetrics.jar
+java -jar $EZIMPUTER/GPROBS/gprobsmetrics.jar  -h >$EZIMPUTER/LOG/GPROBS.log 2>&1 
+java -jar $EZIMPUTER/GPROBS/gprobsmetrics.jar  -h
 if [ $? -ne 0 ]
     then
     echo "Unable to download gprobs or java is not set to the path"
@@ -148,9 +154,9 @@ fi
 
 #SHAPEIT
 #Create main SHAPEIT directory
-mkdir $EZIMPUTER/EXTERNALTOOLS/SHAPEIT
+mkdir $EZIMPUTER/SHAPEIT
 #Change to SHAPEIT directory
-cd $EZIMPUTER/EXTERNALTOOLS/SHAPEIT
+cd $EZIMPUTER/SHAPEIT
 #Download SHAPEIT tool package
 timeout 20 wget  https://mathgen.stats.ox.ac.uk/genetics_software/shapeit/shapeit.v2.r778.RHELS_5.4.static.tar.gz
 if [ $? -eq 124 ]
@@ -164,8 +170,9 @@ fi
 #Untar the downloaded package
  tar -zxvf shapeit.*.tar.gz
 #Try SHAPEIT
-chmod +xr $EZIMPUTER/EXTERNALTOOLS/SHAPEIT/shapeit
-$EZIMPUTER/EXTERNALTOOLS/SHAPEIT/shapeit
+chmod +xr $EZIMPUTER/SHAPEIT/shapeit
+ $EZIMPUTER/SHAPEIT/shapeit >$EZIMPUTER/LOG/SHAPEIT.log 2>&1 
+$EZIMPUTER/SHAPEIT/shapeit
 
 if [ $? -eq 0 ]
     then
@@ -176,13 +183,13 @@ fi
 
 if [ $tools_installed_ind -eq 0 ]
 then
-	echo "Following tools not installed properly"
+	echo "Following tools not installed properly.Check the LOG directory in the install directory for more information"
 	echo $tools_installed
 fi
-chmod -R 755 $EZIMPUTER/EXTERNALTOOLS/
+chmod -R 755 $EZIMPUTER/
 else
 
-echo "usage: install_tools.sh <path_to_ezimputer_install>"
+echo "usage: install_tools.sh <path_to_install_directory>"
 fi
 
 #Once you are done with downloading next step is to create the tool info config file (here). 
