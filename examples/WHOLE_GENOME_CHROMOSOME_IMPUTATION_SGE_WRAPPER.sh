@@ -1,9 +1,10 @@
+#!/bin/bash
 #Set your ezimputer program directory
-set -x
+#set -x
 
 if [ "$#" -ne 2 ]
 then
-	echo "usage:  WHOLE_GENOME_CHROMOSOME_IMPUTATION_SGE_WRAPPER.sh <path_to_ezimputer_install> <path_to_process_dir>"
+	echo "usage:./WHOLE_GENOME_CHROMOSOME_IMPUTATION_SGE_WRAPPER.sh <path_to_ezimputer_install> <path_to_process_dir>"
 	exit 1
 else
 	export EZIMPUTER=$1
@@ -76,8 +77,8 @@ echo "DBSNP_DIR=/data2/bsi/RandD/Arraybased_RND/Easy_imputer_test/DBDIR"  >> $EX
 echo "IMPUTE_REF=$EXAMPLES/impute_ref/ALL_1000G_phase1integrated_v3_impute"  >> $EXAMPLES/Wrapper_run_info.config
 echo "IMPUTEREF_VERSION=ALL_1000G_phase1integrated_v3_impute"  >> $EXAMPLES/Wrapper_run_info.config
 echo "BEAGLE_REF_DB=/data2/bsi/RandD/Arraybased_RND/Easy_imputer_test/DBDIR/BEAGLE/"  >> $EXAMPLES/Wrapper_run_info.config
-echo "EMAIL=prodduturi.naresh@mayo.edu"  >> $EXAMPLES/Wrapper_run_info.config
-echo "USERNAME=m081429"  >> $EXAMPLES/Wrapper_run_info.config
+echo "EMAIL=email"  >> $EXAMPLES/Wrapper_run_info.config
+echo "USERNAME=username"  >> $EXAMPLES/Wrapper_run_info.config
 echo "DEAL_AMBIGUOUS=YES"  >> $EXAMPLES/Wrapper_run_info.config
 echo "ENVR=MANUAL"  >> $EXAMPLES/Wrapper_run_info.config
 perl  $EZIMPUTER/Wrapper.pl  -wrapper_config $EXAMPLES/Wrapper_run_info.config -tool_config $TOOLINFO
