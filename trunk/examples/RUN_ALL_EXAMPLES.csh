@@ -1,6 +1,7 @@
+#!/bin/bash
 #sh should be in the path to execute this script
 #This script will install all anciliary tools for ezimputer and run all the example scripts for you
-set -x
+#set -x
 if [ "$#" -ne 2 ]
 then
 	echo "usage:sh  RUN_ALL_EXAMPLES.csh <path_to_ezimputer_install> <path_to_ezimputer_example_scripts>"

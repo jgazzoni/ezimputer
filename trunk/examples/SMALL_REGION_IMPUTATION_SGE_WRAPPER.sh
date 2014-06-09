@@ -1,11 +1,12 @@
+#!/bin/bash
 # This assumes you already created a tool_info.config file in the main directory where you installed the tools.
-set -x
+#set -x
 #export EZIMPUTER=/data5/bsi/RandD/Workflow/temp/hugues_test_shapeit/ezimputer/new_ref_ezimputer
 #replace the path for example with your working directory
 #export EXAMPLES=/data5/bsi/RandD/Workflow/temp/hugues_test_shapeit/ezimputer/new_ref_ezimputer/test
 if [ "$#" -ne 2 ]
 then
-	echo "usage:  SMALL_REGION_IMPUTATION_SGE_WRAPPER.sh <path_to_ezimputer_install> <path_to_process_dir>"
+	echo "usage:  ./SMALL_REGION_IMPUTATION_SGE_WRAPPER.sh <path_to_ezimputer_install> <path_to_process_dir>"
 	exit 1
 else
 	export EZIMPUTER=$1
@@ -58,8 +59,8 @@ echo "IMP2_OUT_DIR=$EXAMPLES/SMALL_REGION"  >> $EXAMPLES/small_region_Wrapper_ru
 echo "MODULES_NEEDED=IMPUTE"  >> $EXAMPLES/small_region_Wrapper_run_info.config
 echo "IMPUTE_REF=$EXAMPLES/impute_ref/ALL_1000G_phase1integrated_v3_impute"  >> $EXAMPLES/small_region_Wrapper_run_info.config
 echo "IMPUTEREF_VERSION=ALL_1000G_phase1integrated_v3_impute"  >> $EXAMPLES/small_region_Wrapper_run_info.config
-echo "EMAIL=prodduturi.naresh@mayo.edu"  >> $EXAMPLES/small_region_Wrapper_run_info.config
-echo "USERNAME=m081429"  >> $EXAMPLES/small_region_Wrapper_run_info.config
+echo "EMAIL=email"  >> $EXAMPLES/small_region_Wrapper_run_info.config
+echo "USERNAME=username"  >> $EXAMPLES/small_region_Wrapper_run_info.config
 echo "DEAL_AMBIGUOUS=YES"  >> $EXAMPLES/small_region_Wrapper_run_info.config
 echo "ENVR=MANUAL"  >> $EXAMPLES/small_region_Wrapper_run_info.config
 echo "CHR_START_INPUT=YES"  >> $EXAMPLES/small_region_Wrapper_run_info.config
