@@ -2,7 +2,7 @@
 #Purpose: To perform QC,ForwardStarnd & Structure
 #Date: 01-04-2013
 #####################################################################################################################################################
-#!/usr/bin/env perl
+#!/usr/bin/perl
 use Getopt::Long;
 &Getopt::Long::GetOptions(
 'run_config=s'      => \$config,
@@ -14,7 +14,7 @@ if($config eq "" || $toolconfig eq "")
 	
 	die "Retry with : perl QC_fwd_structure.pl -run_config <PATH TO THE RUN CONFIG FILE> -tool_config <PATH TO THE TOOL INFO CONFIG FILE>\n";
 }
-#to know the path of this script to grab working directory location
+#to know the path of this script 
 use Cwd 'abs_path';
 $line = abs_path($0);
 chomp $line;

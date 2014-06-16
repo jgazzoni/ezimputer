@@ -2,7 +2,7 @@
 #Purpose: To recreate the new 1000 genome reference with maf base filtering
 #Date: 11-09-2012
 #####################################################################################################################################################
-#!/usr/bin/env perl
+#!/usr/bin/perl
 
 #get current directory
 use Cwd 'abs_path';

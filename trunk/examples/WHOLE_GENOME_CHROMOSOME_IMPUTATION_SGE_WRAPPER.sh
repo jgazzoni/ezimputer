@@ -1,24 +1,48 @@
-#!/bin/bash
+#!/bin/sh
 #Set your ezimputer program directory
 #set -x
 
-if [ "$#" -ne 2 ]
+if [ "$#" -ne 3 ]
 then
-	echo "usage:./WHOLE_GENOME_CHROMOSOME_IMPUTATION_SGE_WRAPPER.sh <path_to_ezimputer_install> <path_to_process_dir>"
+	SCRIPT=$(readlink -f "$0")
+	echo "usage:$SCRIPT <path_to_ezimputer_install> <path_to_example_process_dir>  <path to the tool info file>"
 	exit 1
 else
 	export EZIMPUTER=$1
 	export EXAMPLES=$2
+	export TOOLINFO=$3
 	mkdir -p $EXAMPLES
 fi
 EZIMPUTER=`echo $EZIMPUTER|sed 's/\/$//g'`
 EXAMPLES=`echo $EXAMPLES|sed 's/\/$//g'`
+
+if [ -f $TOOLINFO ]
+then
+	echo "$TOOLINFO file exists."
+else
+	echo "TOOLINFO file $TOOLINFO not found."
+fi
+file=$EZIMPUTER/Phase_Impute_by_parallel_proc.pl
+if [ -f $file ]
+then
+	echo "directory $EZIMPUTER  exists."
+else
+	echo "directory not exists or EZIMPUTER scripts not found in the directory $EZIMPUTER"
+fi
+
+
 #export EZIMPUTER=/data5/bsi/RandD/Workflow/temp/hugues_test_shapeit/ezimputer/new_ref_ezimputer
 #replace the path for example with your working directory
 #export EXAMPLES=/data5/bsi/RandD/Workflow/temp/hugues_test_shapeit/ezimputer/new_ref_ezimputer/test1
 #get the hapmap data
 # Here you would replace this script with command to get your own data.
 cd $EXAMPLES
+
+PERL=`grep 'PERL=' $TOOLINFO | cut -d '=' -f2`
+
+echo $PERL
+#convert the plink file format to transpose
+PLINK=`grep 'PLINK='  $TOOLINFO | cut -d '=' -f2 `
 
 wget http://hapmap.ncbi.nlm.nih.gov/downloads/genotypes/hapmap3_r3/plink_format/hapmap3_r3_b36_fwd.consensus.qc.poly.map.gz
 wget http://hapmap.ncbi.nlm.nih.gov/downloads/genotypes/hapmap3_r3/plink_format/hapmap3_r3_b36_fwd.consensus.qc.poly.ped.gz
@@ -35,23 +59,22 @@ else
    exit 1
 fi
 
+
+
+
 #download & prepare external tools
 # Skip this if you have already installed the tools.. and set TOOLINFO to the path/name of your tool_info.config file
 ###$EZIMPUTER/install_tools.sh $EZIMPUTER
 ###make tool_info.config file
-$SH $EZIMPUTER/make_tool_info.sh $EZIMPUTER > $EXAMPLES/tool_info.config
-if [ $? -ne 0 ]
-then
-	echo "Some thing wrong with the script $EZIMPUTER/make_tool_info.sh. check for $EXAMPLES/tool_info.config!"
-	exit 1
-fi
-export TOOLINFO=$EXAMPLES/tool_info.config
+#$SH $EZIMPUTER/make_tool_info.sh $EZIMPUTER > $EXAMPLES/tool_info.config
+#if [ $? -ne 0 ]
+#then
+#	echo "Some thing wrong with the script $EZIMPUTER/make_tool_info.sh. check for $EXAMPLES/tool_info.config!"
+#	exit 1
+#fi
+#export TOOLINFO=$EXAMPLES/tool_info.config
 
 
-PERL=`grep 'PERL=' $TOOLINFO | cut -d '=' -f2`
-
-#convert the plink file format to transpose
-PLINK=`grep 'PLINK='  $TOOLINFO | cut -d '=' -f2 `
 
 #Extract the top 50 samples 
 cut -f1-6 -d ' ' $EXAMPLES/hapmap3_r3_b36_fwd.consensus.qc.poly.ped|head -50   > $EXAMPLES/hapmap3_r3_b36_fwd.consensus.qc.poly_50.keep 

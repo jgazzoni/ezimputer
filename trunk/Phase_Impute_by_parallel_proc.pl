@@ -1,4 +1,9 @@
-#!/usr/bin/env perl
+#####################################################################################################################################################
+#Purpose: To perform Phasing & Imputation
+#Date: 01-04-2013
+#####################################################################################################################################################
+
+#!/usr/bin/perl
 
 #get current directory
 use Cwd 'abs_path';
@@ -422,7 +427,7 @@ if(uc($restart_impute) ne "POST")
 
 		}	
 		#checking for the chr23 exists
-		open(CHECK,"$dirtemp/$rounded/processed_beagle_input.bim") or die "no file exists\n";
+		open(CHECK,"$dirtemp/$rounded/processed_beagle_input.bim") or die "no processed_beagle_input.bim file exists $dirtemp/$rounded/processed_beagle_input.bim\n";
 		while(<CHECK>)
 		{
 			@array = split("\t",$_);
@@ -1027,34 +1032,37 @@ if(uc($restart_impute) ne "POST")
 							#system("mv $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.rescued.tmp $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.rescued");
 							undef(%notrescue);
 						}	
-					}	
-					open(SAMPLEORDER,"$dirtemp/$rounded/$j/snps_chr$j.fam") or die "no file exists\n";
-					if($check_order_sample == 0)
-					{
-						
+					}
+					if($restart_impute =~ m/NO/i ||  $restart_impute =~ m/NA/i )
+					{	
+						open(SAMPLEORDER,"$dirtemp/$rounded/$j/snps_chr$j.fam") or die "no file exists $dirtemp/$rounded/$j/snps_chr$j.fam\n";
+						if($check_order_sample == 0)
+						{
+							
+							while(<SAMPLEORDER>)
+							{
+								chomp($_);
+								@sampleorder = split(" ",$_);
+								$hash_sampleorder{$sampleorder[1]} =$check_order_sample++;
+							}
+						}
+						$check_order_sample = 0;
+						open(SAMPLEORDER,"$dirtemp/$rounded/$j/snps_chr$j.sample") or die "no file exists $dirtemp/$rounded/$j/snps_chr$j.sample\n";
+						$line = <SAMPLEORDER>;
+						$line = <SAMPLEORDER>;
 						while(<SAMPLEORDER>)
 						{
 							chomp($_);
 							@sampleorder = split(" ",$_);
-							$hash_sampleorder{$sampleorder[1]} =$check_order_sample++;
-						}
+							if((!exists($hash_sampleorder{$sampleorder[1]})) || $hash_sampleorder{$sampleorder[1]} != $check_order_sample)
+							{
+								die "shapeit order doesnot match with input data\n";
+							}
+							$check_order_sample++;
+						}	
 					}
-					$check_order_sample = 0;
-					open(SAMPLEORDER,"$dirtemp/$rounded/$j/snps_chr$j.sample") or die "no file exists\n";
-					$line = <SAMPLEORDER>;
-					$line = <SAMPLEORDER>;
-					while(<SAMPLEORDER>)
-					{
-						chomp($_);
-						@sampleorder = split(" ",$_);
-						if((!exists($hash_sampleorder{$sampleorder[1]})) || $hash_sampleorder{$sampleorder[1]} != $check_order_sample)
-						{
-							die "shapeit order doesnot match with input data\n";
-						}
-						$check_order_sample++;
-					}	
-					
 				}
+				
 			}
 			if($flag ==2)
 			{
@@ -1557,7 +1565,8 @@ if(uc($restart_impute) ne "POST")
 						$line = <BIM>;
 						if($line !~ /\w/)
 						{
-							die "all the lines in the input file are already read but the edge_cutoff $edge_cutoff notmet\n";
+							#die "all the lines in the input file are already read but the edge_cutoff $edge_cutoff notmet\n";
+							$edge[$j] =2000;
 						}
 						@array = split(" ",$line);
 					}
@@ -1607,7 +1616,8 @@ if(uc($restart_impute) ne "POST")
 						$line = <BIM>;
 						if($line !~ /\w/)
 						{
-							die "all the lines in the input file are already read but the edge_cutoff $edge_cutoff notmet\n";
+							#die "all the lines in the input file are already read but the edge_cutoff $edge_cutoff notmet\n";
+							$edge[$j] =2000;
 						}
 						@array = split(" ",$line);
 					}
