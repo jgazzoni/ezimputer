@@ -1,8 +1,8 @@
 #####################################################################################################################################################
-#Purpose: To recreate the new 1000 genome reference with maf base filtering
+#Purpose: To recreate the new 1000 genome reference with maf based filtering (Parallel version per chr)
 #Date: 11-09-2012
 #####################################################################################################################################################
-
+#!/usr/bin/perl
 use Getopt::Long;
 
 

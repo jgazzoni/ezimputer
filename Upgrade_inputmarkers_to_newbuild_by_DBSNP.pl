@@ -4,7 +4,7 @@
 #inputfile : build36 tped file
 #outputfile: new build37 tped file & left over build 36 tped file
 #####################################################################################################################################################
-#!/usr/bin/env perl
+#!/usr/bin/perl
 use Getopt::Long;
 #reading input arguments
 &Getopt::Long::GetOptions(

@@ -2,7 +2,7 @@
 #Purpose: To download impute reference files
 #Date: 01-08-2013
 #####################################################################################################################################################
-#!/usr/bin/env perl
+#!/usr/bin/perl
 #get current directory
 use Cwd 'abs_path';
 $line = abs_path($0);

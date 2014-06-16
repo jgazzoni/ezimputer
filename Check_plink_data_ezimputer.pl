@@ -1,9 +1,10 @@
 #####################################################################################################################################################
 #Purpose: To prepare the dataset for ezimputer QC & Imputer scripts
 #Date: 11-09-2012
-#inputfile : build36 tped file
-#outputfile: new build37 tped file & left over build 36 tped file
+#inputfile : plink file
+#outputfile: input ezimputer plink file
 #####################################################################################################################################################
+#!/usr/bin/perl
 use Getopt::Long;
 #reading input arguments
 &Getopt::Long::GetOptions(

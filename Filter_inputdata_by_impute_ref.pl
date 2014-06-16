@@ -4,7 +4,7 @@
 #inputfile : Input tped file
 #outputfile: Output tped file
 #####################################################################################################################################################
-#!/usr/bin/env perl
+#!/usr/bin/perl
 
 #get current directory
 use Cwd 'abs_path';
