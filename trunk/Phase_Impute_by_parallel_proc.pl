@@ -685,7 +685,7 @@ if(uc($restart_impute) ne "POST")
 					$temp = 'tmp='.$local_temp.'/'.$username.'/`expr $RANDOM \* $RANDOM`';
 					print ARRAY_SHAPEIT "$temp\n";
 					print ARRAY_SHAPEIT 'cleanup () {'."\n";
-					print ARRAY_SHAPEIT 'rm $tmp/*'."\n";
+					print ARRAY_SHAPEIT 'rm -f $tmp/*'."\n";
 					print ARRAY_SHAPEIT 'rmdir --ignore-fail-on-non-empty $tmp/'."\n";
 					print ARRAY_SHAPEIT '}'."\n";
 					print ARRAY_SHAPEIT "trap 'cleanup' USR1 USR2 EXIT\n";
@@ -732,7 +732,7 @@ if(uc($restart_impute) ne "POST")
 					print ARRAY_SHAPEIT "$temp\n";
 					$temp = 'mv snps_chr* $k1';
 					print ARRAY_SHAPEIT "$temp\n";
-					$temp = 'rm $tmp/*';
+					$temp = 'rm -f $tmp/*';
 					print ARRAY_SHAPEIT "$temp\n";
 					$temp = 'rmdir --ignore-fail-on-non-empty $tmp/';
 					print ARRAY_SHAPEIT "$temp\n";
@@ -850,7 +850,7 @@ if(uc($restart_impute) ne "POST")
 					print ARRAY_SHAPEIT "$temp\n";
 					$temp = 'mv snps_chr* $k1';
 					print ARRAY_SHAPEIT "$temp\n";
-					$temp = 'rm $tmp/*';
+					$temp = 'rm -f $tmp/*';
 					print ARRAY_SHAPEIT "$temp\n";
 					$temp = 'rmdir --ignore-fail-on-non-empty $tmp';
 					print ARRAY_SHAPEIT "$temp\n";
@@ -1782,7 +1782,7 @@ if(uc($restart_impute) ne "POST")
 		print ARRAY_SHAPEIT "date\n";
 		print ARRAY_SHAPEIT "$temp\n";
 		print ARRAY_SHAPEIT 'cleanup () {'."\n";
-		print ARRAY_SHAPEIT 'rm  $tmp/*'."\n";
+		print ARRAY_SHAPEIT 'rm  -f $tmp/*'."\n";
 		print ARRAY_SHAPEIT 'rmdir --ignore-fail-on-non-empty $tmp'."\n";
 		print ARRAY_SHAPEIT '}'."\n";
 		print ARRAY_SHAPEIT "trap 'cleanup' USR1 USR2 EXIT\n";
@@ -1806,7 +1806,7 @@ if(uc($restart_impute) ne "POST")
 		print ARRAY_SHAPEIT "$temp\n";
 		$temp = 'mv impute_out_*.gz $k1';
 		print ARRAY_SHAPEIT "$temp\n";
-		$temp = 'rm  $tmp/*';
+		$temp = 'rm  -f $tmp/*';
 		print ARRAY_SHAPEIT "$temp\n";
 		$temp = 'rmdir --ignore-fail-on-non-empty $tmp';
 		print ARRAY_SHAPEIT "$temp\n";
@@ -1872,7 +1872,7 @@ if(uc($restart_impute) ne "POST")
 		print ARRAY_SHAPEIT "$temp\n";
 		$temp = 'mv impute_out_*.gz $k1';
 		print ARRAY_SHAPEIT "$temp\n";
-		$temp = 'rm  $tmp/*';
+		$temp = 'rm  -f $tmp/*';
 		print ARRAY_SHAPEIT "$temp\n";
 		$temp = 'rmdir --ignore-fail-on-non-empty $tmp';
 		print ARRAY_SHAPEIT "$temp\n";
@@ -2505,7 +2505,7 @@ else
 	#system("rmdir $dirtemp/$rounded/post_logfiles_sungrid");
 	system("gzip $dirtemp/$rounded/post_logfiles_sungrid/*");
 	system("mv $dirtemp/$rounded/post_logfiles_sungrid/  $dirtemp/$rounded/archive_logfiles_sungrid/");
-	system("find $dirtemp/$rounded/ -maxdepth 1 -type f -delete");
+	system("find $dirtemp/$rounded/ -maxdepth 1 -type f -delete 2> /dev/null");
 	for($chr=0;$chr<@check_chr;$chr++)
 	{
 		$prevchr=$check_chr[$chr];
