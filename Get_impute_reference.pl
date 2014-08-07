@@ -40,8 +40,13 @@ chdir($outdir);
 @download=split(/\//,$downloadlink);
 $file=pop(@download);
 #download the reference files
-system("wget $downloadlink");
-
+$sys="wget ".'--quiet '." $downloadlink";
+$exitcode=system($sys);
+#system($sys);
+if($exitcode != 0)
+{
+	die "command $sys failed\nexitcode $exitcode\ncheck log file $outdir/wget_ref.log";
+}
 #checking if the file exists
 if(!(-e $file))
 {

@@ -4,8 +4,8 @@ Following tools are required   to run this package
 (1)	PLINK v1.07
 (2)	STRUCTURE v2.3.4
 (3)	STRUCTURE_PARAM
-(4)	SHAPEIT v2.3.4
-(5)	IMPUTE v2.3.4
+(4)	SHAPEIT v2.r790
+(5)	IMPUTE v2.3.1
 (6)	CHECK_STRAND
 (7)	GPROBS
 

@@ -63,7 +63,7 @@ for(my $chr=23;$chr>0;$chr--)
 {
 	if(exists($ref_meta{"chr$chr".'_'."genetic"}))
 	{
-		print "chr$chr".'_'."genetic"." ".$ref_meta{"chr$chr".'_'."genetic"}."\n";
+		#print "chr$chr".'_'."genetic"." ".$ref_meta{"chr$chr".'_'."genetic"}."\n";
 	}
 	else
 	{
@@ -71,7 +71,7 @@ for(my $chr=23;$chr>0;$chr--)
 	}
 	if(exists($ref_meta{"chr$chr".'_'."hap"}))
 	{
-			print "chr$chr".'_'."hap"." ".$ref_meta{"chr$chr".'_'."hap"}."\n";
+			#print "chr$chr".'_'."hap"." ".$ref_meta{"chr$chr".'_'."hap"}."\n";
 	}
 	else
 	{
@@ -79,7 +79,7 @@ for(my $chr=23;$chr>0;$chr--)
 	}
 	if(exists($ref_meta{"chr$chr".'_'."legend"}))
 	{
-			print "chr$chr".'_'."legend"." ".$ref_meta{"chr$chr".'_'."legend"}."\n";
+			#print "chr$chr".'_'."legend"." ".$ref_meta{"chr$chr".'_'."legend"}."\n";
 	}
 	else
 	{
@@ -88,7 +88,7 @@ for(my $chr=23;$chr>0;$chr--)
 }
 if(exists($ref_meta{"sample"}))
 {
-	print "sample"." ".$ref_meta{"sample"}."\n";
+	#print "sample"." ".$ref_meta{"sample"}."\n";
 }
 else
 {

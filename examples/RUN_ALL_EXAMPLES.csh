@@ -9,7 +9,7 @@ then
 	EZIMPUTER=`dirname $SCRIPT`
 	EZIMPUTER=`echo $EZIMPUTER|rev|tr '/' " "|cut -f2- -d ' '|rev|tr " " '/'`
 	echo "If you just downloaded the tool and did not move any directory then just execute"
-	echo "sh $SCRIPT  $EZIMPUTER <PATH TO EXAMPLESDIR> <PATH TO TOOL INFO FILE>"
+	echo "sh $SCRIPT  $EZIMPUTER <PATH TO DIR TO RUN THE EXAMPLES> <PATH TO TOOL INFO FILE>"
 	exit 1
 else
 	export EZIMPUTER=$1
@@ -63,7 +63,12 @@ echo " "
 #running the WHOLECHROMSOME EXAMPLE
 echo "running the whole chromosome example in the directory  $EZIMPUTER/test "
 echo "executing $SH $EZIMPUTER/examples/WHOLE_GENOME_CHROMOSOME_IMPUTATION_SGE_WRAPPER.sh  $EZIMPUTER $EXAMPLES_DIR $TOOLINFO"
-$SH $EZIMPUTER/examples/WHOLE_GENOME_CHROMOSOME_IMPUTATION_SGE_WRAPPER.sh  $EZIMPUTER $EXAMPLES_DIR $TOOLINFO 
+$SH $EZIMPUTER/examples/WHOLE_GENOME_CHROMOSOME_IMPUTATION_SGE_WRAPPER.sh  $EZIMPUTER $EXAMPLES_DIR $TOOLINFO
+if [ $? -ne 0 ]
+then
+	echo "Example script $EZIMPUTER/examples/WHOLE_GENOME_CHROMOSOME_IMPUTATION_SGE_WRAPPER.sh failed!"
+	exit
+fi 
 echo " "
 echo " "
 echo " "
@@ -73,6 +78,11 @@ echo " "
 echo "running the small region example in the directory  $EZIMPUTER/test "
 echo "executing $SH $EZIMPUTER/examples/SMALL_REGION_IMPUTATION_SGE_WRAPPER.sh   $EZIMPUTER $EXAMPLES_DIR $TOOLINFO"
 $SH $EZIMPUTER/examples/SMALL_REGION_IMPUTATION_SGE_WRAPPER.sh   $EZIMPUTER $EXAMPLES_DIR $TOOLINFO
+if [ $? -ne 0 ]
+then
+	echo "Example script $EZIMPUTER/examples/SMALL_REGION_IMPUTATION_SGE_WRAPPER.sh failed!"
+	exit
+fi 
 echo " "
 echo " "
 echo " "
@@ -82,3 +92,14 @@ echo " "
 echo "running the single sample example in the directory  $EZIMPUTER/test "
 echo "executing $SH $EZIMPUTER/examples/SINGLE_SAMPLE_IMPUTATION_SGE_WRAPPER.sh   $EZIMPUTER $EXAMPLES_DIR $TOOLINFO"
 $SH $EZIMPUTER/examples/SINGLE_SAMPLE_IMPUTATION_SGE_WRAPPER.sh   $EZIMPUTER $EXAMPLES_DIR $TOOLINFO
+if [ $? -ne 0 ]
+then
+	echo "Example script $EZIMPUTER/examples/SINGLE_SAMPLE_IMPUTATION_SGE_WRAPPER.sh failed!"
+	exit
+fi 
+
+echo "Here are the results for:"
+echo "WHOLECHR: $EXAMPLES_DIR/WHOLECHR/Impute_tmp/impute"
+echo "SMALL_REGION: $EXAMPLES_DIR/SMALL_REGION/Impute_tmp/impute"
+echo "SINGLE_SAMPLE: $EXAMPLES_DIR/SINGLE_SAMPLE/Impute_tmp/impute"
+echo "Result Description file: $EXAMPLES_DIR/WHOLECHR/Impute_tmp/impute/READ_ME_result"

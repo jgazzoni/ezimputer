@@ -423,7 +423,12 @@ if($NIND !~ m/^\d+$/ || $NUIND !~ m/^\d+$/)
 } 
 if($NIND != $NUIND)
 {
-	system("awk '{print \$1,\$2}' $INPUT_PLINK.fam | sort -T $SORTTMP | uniq -D > $IMP2_OUT_DIR/nonunique.ind");
+	$sys="awk '{print \$1,\$2}' $INPUT_PLINK.fam | sort -T $SORTTMP | uniq -D > $IMP2_OUT_DIR/nonunique.ind";
+	$exitcode=system("awk '{print \$1,\$2}' $INPUT_PLINK.fam | sort -T $SORTTMP | uniq -D > $IMP2_OUT_DIR/nonunique.ind");
+	if($exitcode != 0)
+	{
+		die "command $sys failed\nexitcode $exitcode\n";
+	}
     print "******************************************************************\n";
     print "*** Non-Unique Individuals Found\n";
     print " Please see $IMP2_OUT_DIR/nonunique.ind\n";
@@ -520,23 +525,25 @@ if($NUGEN > 0)
 print "\n\n\n\n\n";
 
 print "creating the plink dataset in the temp folder\n";
-$sys="$PLINK --noweb --bfile  $INPUT_PLINK  --recode --transpose --out $IMP2_OUT_DIR/$PLINKDSN";
-print "$sys\n";
+$sys="$PLINK --noweb --bfile  $INPUT_PLINK  --recode --transpose --out $IMP2_OUT_DIR/$PLINKDSN > $IMP2_OUT_DIR/$PLINKDSN.log";
+#print "$sys\n";
 system($sys);
 if(!((-e "$IMP2_OUT_DIR/$PLINKDSN.tped") && (-e "$IMP2_OUT_DIR/$PLINKDSN.tfam")))
 {
 	die "Above plink command failed.Files $IMP2_OUT_DIR/$PLINKDSN.tped or $IMP2_OUT_DIR/$PLINKDSN.tfam no found\n";
 }
-$CURRDSN="$IMP2_OUT_DIR/$PLINKDSN"."_PREPDATA";
+
+$CURRDSN="$IMP2_OUT_DIR/$PLINKDSN";
+#$CURRDSN="$IMP2_OUT_DIR/$PLINKDSN"."_PREPDATA";
 $CURRTPED="$CURRDSN.tped";
 $CURRTFAM="$CURRDSN.tfam";
-$sys="$PERL $dir/Check_plink_data_ezimputer.pl -INPUT_FILE $IMP2_OUT_DIR/$PLINKDSN -OUTPUT_FILE $CURRDSN";
-print "$sys\n";
-system($sys);
-if(!((-e "$CURRTPED") && (-e "$CURRTFAM")))
-{
-	die "Above script Check_plink_data_ezimputer.pl failed.Files $CURRTPED or $CURRTFAM no found\n";
-}
+#$sys="$PERL $dir/Check_plink_data_ezimputer.pl -INPUT_FILE $IMP2_OUT_DIR/$PLINKDSN -OUTPUT_FILE $CURRDSN";
+#print "$sys\n";
+#$exitcode=system($sys);
+#if(!($exitcode==0 && (-e "$CURRTPED") && (-e "$CURRTFAM")))
+#{
+#	die "Above script Check_plink_data_ezimputer.pl failed.Files $CURRTPED or $CURRTFAM not found\n";
+#}
 $TOTSNPS=`wc -l $CURRTPED | cut -d' ' -f1`;
 chomp($_);
 ######################################################
@@ -556,10 +563,16 @@ if($MODULES_NEEDED =~ m/UPGRADE_BUILD/)
 		$chr_before_build{$chr_before_build[$u]}=1;
 	}
 	$sys="$PERL $dir/Upgrade_inputmarkers_to_newbuild_by_DBSNP.pl   -DBSNP_DIR  $dbsnp_dir -DBSNP_DOWNLOADLINK  $dbsnp_ver -INPUT_FILE $CURRDSN.tped -REMAPPED_CURRENT_BUILD  $CURRDSN.newbuild.tped -NOTMAPPED_OLD_BUILD $CURRDSN.oldbuild.tped";
-	print "$sys\n";
-	system($sys);
+	#print "$sys\n";
+	$exitcode=system($sys);
+	if($exitcode != 0)
+	{
+		die "command $sys failed\nexitcode $exitcode\n";
+	}
 	$CURRTPED="$CURRDSN.newbuild.tped";
 	$CURRTFAM="$CURRDSN.tfam";
+	system("mv $CURRDSN.tfam $CURRDSN.newbuild.tfam");
+	$CURRTFAM="$CURRDSN.newbuild.tfam";
 	$NB37SNPS=`wc -l $CURRTPED  | cut -d' ' -f1`;                                           
     $NB36SNPS=`wc -l $CURRDSN.oldbuild.tped  | cut -d' ' -f1`;
 	chomp($NB37SNPS);
@@ -581,15 +594,43 @@ if($MODULES_NEEDED =~ m/UPGRADE_BUILD/)
 	close(TPED);
 	close(WRTPED);
 	system("mv $CURRDSN.newbuild.tped.tmp $CURRDSN.newbuild.tped");
+	$CURRDSN="$CURRDSN.newbuild";
 }
 
 print "\n\n\n\n\n\n";
 #sorting the plink files
 $sys="sort -T $IMP2_OUT_DIR -k1,1 -k4,4n $CURRTPED >$CURRTPED.sort";
- print $sys."\n";
- system($sys);
+ #print $sys."\n";
+ #system($sys);
+$exitcode=system($sys);
+if($exitcode != 0)
+{
+	die "command $sys failed\nexitcode $exitcode\n";
+}
  system("mv $CURRTPED.sort $CURRTPED");
+
+
+
+$CURRDSN_CLN="$CURRDSN.clean";
+$CURRDSN_CLN_TPED="$CURRDSN_CLN.tped";
+$CURRDSN_CLN_TFAM="$CURRDSN_CLN.tfam";
+$sys="$PERL $dir/Check_plink_data_ezimputer.pl -INPUT_FILE $CURRDSN -OUTPUT_FILE $CURRDSN_CLN";
+print "$sys\n";
+$exitcode=system($sys);
+if(!($exitcode==0 && (-e "$CURRDSN_CLN_TPED") && (-e "$CURRDSN_CLN_TFAM")))
+{
+	die "Above script Check_plink_data_ezimputer.pl failed.Files $CURRDSN_CLN_TPED or $CURRDSN_CLN_TFAM not found\n";
+}
+$TOTSNPS_BFR=`wc -l $CURRDSN.tped | cut -d' ' -f1`;
+$TOTSNPS=`wc -l $CURRDSN_CLN_TPED | cut -d' ' -f1`;
+chomp($TOTSNPS);
+print "TOTAL NUMBER OF SNPS PRESENT BEFORE CLEANING $TOTSNPS_BFR\n";
+print "TOTAL NUMBER OF SNPS PRESENT AFTER CLEANING $TOTSNPS\n";
  
+$CURRDSN="$CURRDSN_CLN";
+$CURRTPED="$CURRDSN.tped";
+$CURRTFAM="$CURRDSN.tfam";
+
 # QC, Sex Check, Forward Strand, and Structure --> does have multiple switches
 if($MODULES_NEEDED =~ m/QC_REQUIRED/)
 {
@@ -628,8 +669,12 @@ if($MODULES_NEEDED =~ m/QC_REQUIRED/)
 	$sys="$PERL $dir/QC_fwd_structure.pl -run_config $IMP2_OUT_DIR/qcfwdstruc_run.cfg -tool_config $IMP2_OUT_DIR/qcfwdstruc_tool.cfg";
 	print ARRAY_SHAPEIT "$sys\n";
 	close(ARRAY_SHAPEIT);
-	system("sh $IMP2_OUT_DIR/QC_Submit.csh");
-	
+	$sys="sh $IMP2_OUT_DIR/QC_Submit.csh";
+	$exitcode=system("sh $IMP2_OUT_DIR/QC_Submit.csh");
+	if($exitcode != 0)
+	{
+		die "command $sys failed\nexitcode $exitcode\n";
+	}
 	$NFWSTRND=`wc -l $IMP2_OUT_DIR/qcfwdstruc/processed_input.tped | cut -d' ' -f1`;
     	$NIGNORED=`wc -l $IMP2_OUT_DIR/qcfwdstruc/markers.ignored | cut -d' ' -f1`;
     	$NNOFLIP=`awk '{print \$2}' $IMP2_OUT_DIR/qcfwdstruc/fwdStrandResults_input.ind | grep '0' | wc -l | cut -d' ' -f1`;
@@ -714,7 +759,11 @@ if($MODULES_NEEDED =~ m/REF_FILTER/)
 {
 		$sys="$PERL $dir/Filter_1000genome_reference_by_maf.pl -POPULATION $pop -LMAF $lmaf -UMAF $umaf -REF_GENOME_DIR $impute_ref -OUTPUT_DIR $IMP2_OUT_DIR/refdat_filtered  -INCLUDE_POP  $include_pop ";
 		print "$sys\n";
-		system($sys);
+		$exitcode=system($sys);
+		if($exitcode != 0)
+		{
+			die "command $sys failed\nexitcode $exitcode\n";
+		}
 		$impute_ref="$IMP2_OUT_DIR/refdat_filtered";
 #this code for paralizing this step
 =head
@@ -809,5 +858,10 @@ if($MODULES_NEEDED =~ m/IMPUTE/)
 	$sys="$PERL $dir/Phase_Impute_by_parallel_proc.pl  -run_config $IMP2_OUT_DIR/Impute_run.cfg -tool_config $IMP2_OUT_DIR/Impute_tool.cfg";
 	print ARRAY_SHAPEIT "$sys\n";
 	close(ARRAY_SHAPEIT);
-	system("sh $IMP2_OUT_DIR/Impute_Submit.csh");
+	$sys="sh $IMP2_OUT_DIR/Impute_Submit.csh";
+	$exitcode=system("sh $IMP2_OUT_DIR/Impute_Submit.csh");
+	if($exitcode != 0)
+	{
+		die "command $sys failed\nexitcode $exitcode\n";
+	}
 }

@@ -5,7 +5,7 @@
 if [ "$#" -ne 3 ]
 then
 	SCRIPT=$(readlink -f "$0")
-	echo "usage:$SCRIPT <path_to_ezimputer_install> <path_to_example_process_dir>  <path to the tool info file>"
+	echo "usage:$SCRIPT <path_to_ezimputer_install> <path_to_example_process_dir to run the examples>  <path to the tool info file>"
 	exit 1
 else
 	export EZIMPUTER=$1
@@ -44,11 +44,27 @@ echo $PERL
 #convert the plink file format to transpose
 PLINK=`grep 'PLINK='  $TOOLINFO | cut -d '=' -f2 `
 
-wget http://hapmap.ncbi.nlm.nih.gov/downloads/genotypes/hapmap3_r3/plink_format/hapmap3_r3_b36_fwd.consensus.qc.poly.map.gz
-wget http://hapmap.ncbi.nlm.nih.gov/downloads/genotypes/hapmap3_r3/plink_format/hapmap3_r3_b36_fwd.consensus.qc.poly.ped.gz
-
+wget --quiet http://hapmap.ncbi.nlm.nih.gov/downloads/genotypes/hapmap3_r3/plink_format/hapmap3_r3_b36_fwd.consensus.qc.poly.map.gz
+if [ $? -ne 0 ]
+then
+	echo "Download failed http://hapmap.ncbi.nlm.nih.gov/downloads/genotypes/hapmap3_r3/plink_format/hapmap3_r3_b36_fwd.consensus.qc.poly.map.gz"
+	echo "check the log file $EXAMPLES/hapmap3_r3_b36_fwd.consensus.qc.poly.map.log"
+	exit
+fi
+wget --quiet  http://hapmap.ncbi.nlm.nih.gov/downloads/genotypes/hapmap3_r3/plink_format/hapmap3_r3_b36_fwd.consensus.qc.poly.ped.gz
+if [ $? -ne 0 ]
+then
+	echo "Download failed http://hapmap.ncbi.nlm.nih.gov/downloads/genotypes/hapmap3_r3/plink_format/hapmap3_r3_b36_fwd.consensus.qc.poly.ped.gz"
+	echo "check the log file $EXAMPLES/hapmap3_r3_b36_fwd.consensus.qc.poly.ped.log"
+	exit
+fi
 #Uncompress(gunzip) them and convert the plink files to plink transpose files (this may take ~1 hour)
 gunzip hapmap3_*.gz
+if [ $? -ne 0 ]
+then
+	echo "Download files  decompression http://hapmap.ncbi.nlm.nih.gov/downloads/genotypes/hapmap3_r3/plink_format/hapmap3_r3_b36_fwd.consensus.qc.poly.ped.gz & http://hapmap.ncbi.nlm.nih.gov/downloads/genotypes/hapmap3_r3/plink_format/hapmap3_r3_b36_fwd.consensus.qc.poly.map.gz failed"
+	exit
+fi
 
 SH=`which sh`
 if [ -x $SH ]
@@ -84,22 +100,29 @@ $PLINK --file $EXAMPLES/hapmap3_r3_b36_fwd.consensus.qc.poly  --keep $EXAMPLES/h
 mkdir $EXAMPLES/impute_ref
 
 $PERL  $EZIMPUTER/Get_impute_reference.pl  -OUT_REF_DIR  $EXAMPLES/impute_ref  -DOWNLOAD_LINK   http://mathgen.stats.ox.ac.uk/impute/ALL_1000G_phase1integrated_v3_impute.tgz 
-#cp -R /data5/bsi/refdata/genetics/1000Genomes/downloaded_data/release/20110521/impute/ALL_1000G_phase1integrated_v3_impute/ $EXAMPLES/impute_ref 
 if [ $? -ne 0 ]
 then
 	echo "Some thing wrong with the script $EZIMPUTER/Get_impute_reference.pl. Impute2 reference files not generated!"
 	exit
 fi
-
+mkdir $EXAMPLES/DBDIR
+cd $EXAMPLES/DBDIR
+wget --quiet   ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b141_GRCh37p13/database/organism_data/b141_SNPChrPosOnRef_GRCh37p13.bcp.gz
+if [ $? -ne 0 ]
+then
+	echo "Some thing wrong with the wget command ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b141_GRCh37p13/database/organism_data/b141_SNPChrPosOnRef_GRCh37p13.bcp.gz!"
+	echo "check the log file $EXAMPLES/wget_dbsnp.log"
+	exit
+fi
 #preparing run config file for the Wrapper script
 echo "INPUT_PLINK=$EXAMPLES/hapmap3_r3_b36_fwd.consensus_subset50_chr22.qc.poly"  > $EXAMPLES/Wrapper_run_info.config
 echo "IMP2_OUT_DIR=$EXAMPLES/WHOLECHR"  >> $EXAMPLES/Wrapper_run_info.config
 echo "MODULES_NEEDED=UPGRADE_BUILD,IMPUTE"  >> $EXAMPLES/Wrapper_run_info.config
-echo "DBSNP_DOWNLOADLINK=ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606/database/organism_data/b137_SNPChrPosOnRef.bcp.gz"  >> $EXAMPLES/Wrapper_run_info.config
-echo "DBSNP_DIR=/data2/bsi/RandD/Arraybased_RND/Easy_imputer_test/DBDIR"  >> $EXAMPLES/Wrapper_run_info.config
+echo "DBSNP_DOWNLOADLINK=ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b141_GRCh37p13/database/organism_data/b141_SNPChrPosOnRef_GRCh37p13.bcp.gz"  >> $EXAMPLES/Wrapper_run_info.config
+echo "DBSNP_DIR=$EXAMPLES/DBDIR"  >> $EXAMPLES/Wrapper_run_info.config
 echo "IMPUTE_REF=$EXAMPLES/impute_ref/ALL_1000G_phase1integrated_v3_impute"  >> $EXAMPLES/Wrapper_run_info.config
 echo "IMPUTEREF_VERSION=ALL_1000G_phase1integrated_v3_impute"  >> $EXAMPLES/Wrapper_run_info.config
-echo "BEAGLE_REF_DB=/data2/bsi/RandD/Arraybased_RND/Easy_imputer_test/DBDIR/BEAGLE/"  >> $EXAMPLES/Wrapper_run_info.config
+echo "BEAGLE_REF_DB=$EXAMPLES/DBDIR/BEAGLE/"  >> $EXAMPLES/Wrapper_run_info.config
 echo "EMAIL=email"  >> $EXAMPLES/Wrapper_run_info.config
 echo "USERNAME=username"  >> $EXAMPLES/Wrapper_run_info.config
 echo "DEAL_AMBIGUOUS=YES"  >> $EXAMPLES/Wrapper_run_info.config

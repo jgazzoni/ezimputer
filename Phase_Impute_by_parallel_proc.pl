@@ -320,7 +320,7 @@ for(my $chr=23;$chr>0;$chr--)
 {
 	if(exists($ref_meta{"chr$chr".'_'."genetic"}))
 	{
-		print "chr$chr".'_'."genetic"." ".$ref_meta{"chr$chr".'_'."genetic"}."\n";
+		#print "chr$chr".'_'."genetic"." ".$ref_meta{"chr$chr".'_'."genetic"}."\n";
 	}
 	else
 	{
@@ -328,7 +328,7 @@ for(my $chr=23;$chr>0;$chr--)
 	}
 	if(exists($ref_meta{"chr$chr".'_'."hap"}))
 	{
-			print "chr$chr".'_'."hap"." ".$ref_meta{"chr$chr".'_'."hap"}."\n";
+			#print "chr$chr".'_'."hap"." ".$ref_meta{"chr$chr".'_'."hap"}."\n";
 	}
 	else
 	{
@@ -336,7 +336,7 @@ for(my $chr=23;$chr>0;$chr--)
 	}
 	if(exists($ref_meta{"chr$chr".'_'."legend"}))
 	{
-			print "chr$chr".'_'."legend"." ".$ref_meta{"chr$chr".'_'."legend"}."\n";
+			#print "chr$chr".'_'."legend"." ".$ref_meta{"chr$chr".'_'."legend"}."\n";
 	}
 	else
 	{
@@ -345,7 +345,7 @@ for(my $chr=23;$chr>0;$chr--)
 }
 if(exists($ref_meta{"sample"}))
 {
-	print "sample"." ".$ref_meta{"sample"}."\n";
+	#print "sample"." ".$ref_meta{"sample"}."\n";
 }
 else
 {
@@ -368,8 +368,11 @@ if(uc($restart_impute) ne "POST")
 			
 			#copying the tfam file
 			$sys="sed 's/\t/ /g'  $tfam > $dirtemp/$rounded/unprocessed_input.tfam";
-			system($sys);
-			
+			$exitcode=system($sys);
+			if($exitcode != 0)
+			{
+				die "command $sys failed\nexitcode $exitcode\n";
+			}
 			#copying the tped file
 			if($tped =~ m/gz$/)
 			{
@@ -422,7 +425,11 @@ if(uc($restart_impute) ne "POST")
 			}
 			 	
 			#converting unprocessed_input transpose to binary format
-			system("$PLINK --tfile $dirtemp/$rounded/unprocessed_input --make-bed --out $dirtemp/$rounded/processed_beagle_input");
+			$exitcode=system("$PLINK --tfile $dirtemp/$rounded/unprocessed_input --make-bed --out $dirtemp/$rounded/processed_beagle_input > $dirtemp/$rounded/processed_beagle_input.log");
+			if($exitcode != 0)
+			{
+				die "plink command failed\nexitcode $exitcode\nPlease check the log file $dirtemp/$rounded/processed_beagle_input.log";
+			}
 			system("rm  $dirtemp/$rounded/unprocessed_input.*");
 
 		}	
@@ -435,7 +442,7 @@ if(uc($restart_impute) ne "POST")
 		}
 		foreach my $key (sort { $a <=> $b} keys %check_x) 
 		{
-			if($key[$i] <24)
+			if($key <24)
 			{
 				push(@check_chr,$key);
 			}	
@@ -477,11 +484,16 @@ if(uc($restart_impute) ne "POST")
 				{
 					$j = $check_chr[$i];
 					system("mkdir $dirtemp/$rounded/$j");
-					system("$PLINK --bfile $dirtemp/$rounded/processed_beagle_input --chr $j --make-bed  --out $dirtemp/$rounded/$j/snps_chr$j");
+					
+					$exitcode=system("$PLINK --bfile $dirtemp/$rounded/processed_beagle_input --chr $j --make-bed  --out $dirtemp/$rounded/$j/snps_chr$j > $dirtemp/$rounded/$j/snps_chr$j.log");
+					if($exitcode != 0)
+					{
+						die "plink command failed\nexitcode $exitcode\nPlease check the log file $dirtemp/$rounded/$j/snps_chr$j.log";
+					}
 					if($j == 23)
 					{
 						#print ARRAY_WRBUFF "--input-bed  $dirtemp/$rounded/$j/snps_chr$j.bed $dirtemp/$rounded/$j/snps_chr$j.bim $dirtemp/$rounded/$j/snps_chr$j.fam --input-map $impute_ref/genetic_map_chrX_nonPAR_combined_b37.txt  --output-max  $dirtemp/$rounded/$j/snps_chr$j.haps $dirtemp/$rounded/$j/snps_chr$j.sample #--seed 123456789 --states-phase\n"; 
-						if($less_num_samp ne "YES")
+						if($less_num_samp !~ m/YES/i)
 						{
 							if($envr =~ m/SGE/i)
 							{
@@ -505,21 +517,21 @@ if(uc($restart_impute) ne "POST")
 							if($envr =~ m/SGE/i)
 							{
 								$array_job = "-check -B  $dirtemp/$rounded/$j/snps_chr$j -M $impute_ref/$genetic --input-ref $impute_ref/$hap $impute_ref/$legend $impute_ref/$samp --output-log  $dirtemp/$rounded/$j/snps_chr$j.alignments";
-								$script_process_strand_shapeit2="$PERL $dir/bin/perl_checkstrand_SHAPEIT2.pl $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.rescued $dirtemp/$rounded/$j/snps_chr$j.shapeit2_excluded_markers_input";
+								$script_process_strand_shapeit2="$PERL $dir/bin/perl_checkstrand_SHAPEIT2.pl $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.rescued $dirtemp/$rounded/$j/snps_chr$j.shapeit2_excluded_markers_input $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.rescued.ids";
 								$array_job1 = "-B  $dirtemp/$rounded/$j/snps_chr$j -M $impute_ref/$genetic  --input-ref $impute_ref/$hap $impute_ref/$legend $impute_ref/$samp  -O snps_chr$j --exclude-snp $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.exclude  $shapeit_states_param --chrX --output-log $dirtemp/$rounded/shapeit_logfiles_sungrid/";
 								print ARRAY_WRBUFF "$array_job".'___'.$script_process_strand_shapeit2.'___'.$array_job1."\n";
 							}
 							elsif($envr =~ m/PBS/i)
 							{
 								$array_job = "-check -B  $dirtemp/$rounded/$j/snps_chr$j -M $impute_ref/$genetic  --input-ref $impute_ref/$hap $impute_ref/$legend $impute_ref/$samp --output-log  $dirtemp/$rounded/$j/snps_chr$j.alignments";
-								$script_process_strand_shapeit2="$PERL $dir/bin/perl_checkstrand_SHAPEIT2.pl $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.rescued $dirtemp/$rounded/$j/snps_chr$j.shapeit2_excluded_markers_input";
+								$script_process_strand_shapeit2="$PERL $dir/bin/perl_checkstrand_SHAPEIT2.pl $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.rescued $dirtemp/$rounded/$j/snps_chr$j.shapeit2_excluded_markers_input $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.rescued.ids";
 								$array_job1 = "-B  $dirtemp/$rounded/$j/snps_chr$j -M $impute_ref/$genetic  --input-ref $impute_ref/$hap $impute_ref/$legend $impute_ref/$samp -O $dirtemp/$rounded/$j/snps_chr$j --exclude-snp $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.exclude  $shapeit_states_param --chrX --output-log $dirtemp/$rounded/shapeit_logfiles_sungrid";
 								print ARRAY_WRBUFF "$array_job".'___'.$script_process_strand_shapeit2.'___'.$array_job1."\n";
 							}
 							else
 							{
 								$array_job = "-check -B  $dirtemp/$rounded/$j/snps_chr$j -M $impute_ref/$genetic --input-ref $impute_ref/$hap $impute_ref/$legend $impute_ref/$samp --output-log  $dirtemp/$rounded/$j/snps_chr$j.alignments";
-								$script_process_strand_shapeit2="$PERL $dir/bin/perl_checkstrand_SHAPEIT2.pl $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.rescued $dirtemp/$rounded/$j/snps_chr$j.shapeit2_excluded_markers_input";
+								$script_process_strand_shapeit2="$PERL $dir/bin/perl_checkstrand_SHAPEIT2.pl $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.rescued $dirtemp/$rounded/$j/snps_chr$j.shapeit2_excluded_markers_input $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.rescued.ids";
 								$array_job1 = "-B  $dirtemp/$rounded/$j/snps_chr$j -M $impute_ref/$genetic  --input-ref $impute_ref/$hap $impute_ref/$legend $impute_ref/$samp  -O snps_chr$j --exclude-snp $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.exclude  $shapeit_states_param --chrX --output-log $dirtemp/$rounded/shapeit_logfiles_sungrid/";
 								print ARRAY_WRBUFF "$array_job".'___'.$script_process_strand_shapeit2.'___'.$array_job1."\n";
 							}
@@ -527,7 +539,7 @@ if(uc($restart_impute) ne "POST")
 					}
 					else
 					{
-						if($less_num_samp ne "YES")
+						if($less_num_samp !~ m/YES/i)
 						{
 							$genetic=$ref_meta{"chr$j".'_'."genetic"};
 							if($envr =~ m/SGE/i)
@@ -555,21 +567,21 @@ if(uc($restart_impute) ne "POST")
 							if($envr =~ m/SGE/i)
 							{
 								$array_job = "-check -B  $dirtemp/$rounded/$j/snps_chr$j -M $impute_ref/$genetic  --input-ref $impute_ref/$hap $impute_ref/$legend $impute_ref/$samp --output-log  $dirtemp/$rounded/$j/snps_chr$j.alignments";
-								$script_process_strand_shapeit2="$PERL $dir/bin/perl_checkstrand_SHAPEIT2.pl $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.rescued $dirtemp/$rounded/$j/snps_chr$j.shapeit2_excluded_markers_input";
+								$script_process_strand_shapeit2="$PERL $dir/bin/perl_checkstrand_SHAPEIT2.pl $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.rescued $dirtemp/$rounded/$j/snps_chr$j.shapeit2_excluded_markers_input $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.rescued.ids";
 								$array_job1 = "-B  $dirtemp/$rounded/$j/snps_chr$j -M $impute_ref/$genetic  --input-ref $impute_ref/$hap $impute_ref/$legend $impute_ref/$samp  -O snps_chr$j --exclude-snp $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.exclude  $shapeit_states_param --output-log $dirtemp/$rounded/shapeit_logfiles_sungrid/";
 								print ARRAY_WRBUFF "$array_job".'___'.$script_process_strand_shapeit2.'___'.$array_job1."\n";
 							}
 							elsif($envr =~ m/PBS/i)
 							{
 								$array_job = "-check -B  $dirtemp/$rounded/$j/snps_chr$j -M $impute_ref/$genetic  --input-ref $impute_ref/$hap $impute_ref/$legend $impute_ref/$samp --output-log  $dirtemp/$rounded/$j/snps_chr$j.alignments";
-								$script_process_strand_shapeit2="$PERL $dir/bin/perl_checkstrand_SHAPEIT2.pl $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.rescued $dirtemp/$rounded/$j/snps_chr$j.shapeit2_excluded_markers_input";
+								$script_process_strand_shapeit2="$PERL $dir/bin/perl_checkstrand_SHAPEIT2.pl $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.rescued $dirtemp/$rounded/$j/snps_chr$j.shapeit2_excluded_markers_input $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.rescued.ids";
 								$array_job1 = "-B  $dirtemp/$rounded/$j/snps_chr$j -M $impute_ref/$genetic  --input-ref $impute_ref/$hap $impute_ref/$legend $impute_ref/$samp -O $dirtemp/$rounded/$j/snps_chr$j --exclude-snp $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.exclude  $shapeit_states_param --output-log $dirtemp/$rounded/shapeit_logfiles_sungrid";
 								print ARRAY_WRBUFF "$array_job".'___'.$script_process_strand_shapeit2.'___'.$array_job1."\n";
 							}
 							else
 							{
 								$array_job = "-check -B  $dirtemp/$rounded/$j/snps_chr$j -M $impute_ref/$genetic  --input-ref $impute_ref/$hap $impute_ref/$legend $impute_ref/$samp --output-log  $dirtemp/$rounded/$j/snps_chr$j.alignments";
-								$script_process_strand_shapeit2="$PERL $dir/bin/perl_checkstrand_SHAPEIT2.pl $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.rescued $dirtemp/$rounded/$j/snps_chr$j.shapeit2_excluded_markers_input";
+								$script_process_strand_shapeit2="$PERL $dir/bin/perl_checkstrand_SHAPEIT2.pl $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.rescued $dirtemp/$rounded/$j/snps_chr$j.shapeit2_excluded_markers_input $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.rescued.ids";
 								$array_job1 = "-B  $dirtemp/$rounded/$j/snps_chr$j -M $impute_ref/$genetic  --input-ref $impute_ref/$hap $impute_ref/$legend $impute_ref/$samp  -O snps_chr$j --exclude-snp $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.exclude  $shapeit_states_param --output-log $dirtemp/$rounded/shapeit_logfiles_sungrid/";
 								print ARRAY_WRBUFF "$array_job".'___'.$script_process_strand_shapeit2.'___'.$array_job1."\n";
 							}
@@ -604,7 +616,7 @@ if(uc($restart_impute) ne "POST")
 						$chr = $array1[@array1-2];
 						$array[2] =~ s/bim/haps/g;
 						$file=$array[2];
-						if($less_num_samp eq "YES")
+						if($less_num_samp =~  m/YES/i)
 						{	
 							$file=$array[2].".haps";
 						}
@@ -861,32 +873,46 @@ if(uc($restart_impute) ne "POST")
 				#submitting and storing the job id
 				if($envr =~ m/SGE/i)
 				{
-					system("$QSUB $dirtemp/$rounded/ArrayJob_shapeit.csh > $dirtemp/$rounded/jobid_shapeit");
-					
+					$sys="$QSUB $dirtemp/$rounded/ArrayJob_shapeit.csh > $dirtemp/$rounded/jobid_shapeit";
+					$exitcode=system("$QSUB $dirtemp/$rounded/ArrayJob_shapeit.csh > $dirtemp/$rounded/jobid_shapeit");
+					if($exitcode != 0)
+					{
+						die "command $sys failed\nexitcode $exitcode\n";
+					}
 					#readin job id from submit_shapeit
 					open(ARRAY_SHAPEIT,"$dirtemp/$rounded/jobid_shapeit") or die "unable to open file $dirtemp/$rounded/jobid_shapeit\n";
 					$shapeit = <ARRAY_SHAPEIT>;
 					print "$shapeit\n";
 					@shapeit =split(" ",$shapeit);
 					@shapeit1 =split(/\./,$shapeit[2]);
-					print "JOB ID $shapeit1[0]\n";
+					print "JOB ID extracted: $shapeit1[0]\n";
 					$job_id_shapeit = $shapeit1[0];
 				}
 				elsif($envr =~ m/PBS/i)
 				{
-					system(" $QSUB $dirtemp/$rounded/ArrayJob_shapeit.csh > $dirtemp/$rounded/jobid_shapeit");
+					$sys="$QSUB $dirtemp/$rounded/ArrayJob_shapeit.csh > $dirtemp/$rounded/jobid_shapeit";
+					$exitcode=system(" $QSUB $dirtemp/$rounded/ArrayJob_shapeit.csh > $dirtemp/$rounded/jobid_shapeit");
+					if($exitcode != 0)
+					{
+						die "command $sys failed\nexitcode $exitcode\n";
+					}
 					#readin job id from submit_shapeit
 					open(ARRAY_SHAPEIT,"$dirtemp/$rounded/jobid_shapeit") or die "unable to open file $dirtemp/$rounded/jobid_shapeit\n";
 					$shapeit = <ARRAY_SHAPEIT>;
 					print "$shapeit\n";
 					@shapeit1 =split(/\./,$shapeit);
 					#$shapeit1[0]=~ s/\[\]//g;
-					print "JOB ID $shapeit1[0]\n";
+					print "JOB ID extracted: $shapeit1[0]\n";
 					$job_id_shapeit = $shapeit1[0];
 				}
 				else
 				{
-					system("$SH $dirtemp/$rounded/ArrayJob_shapeit.csh > $dirtemp/$rounded/shapeit_logfiles_sungrid/ArrayJob_shapeit.csh.MANUAL");
+					$sys="$SH $dirtemp/$rounded/ArrayJob_shapeit.csh > $dirtemp/$rounded/shapeit_logfiles_sungrid/ArrayJob_shapeit.csh.MANUAL 2>&1";
+					$exitcode=system("$SH $dirtemp/$rounded/ArrayJob_shapeit.csh > $dirtemp/$rounded/shapeit_logfiles_sungrid/ArrayJob_shapeit.csh.MANUAL 2>&1");
+					if($exitcode != 0)
+					{
+						die "command $sys failed\nexitcode $exitcode\n";
+					}	
 				}
 				
 				if($envr =~ m/SGE/i || $envr =~ m/PBS/i)
@@ -910,8 +936,11 @@ if(uc($restart_impute) ne "POST")
 						print ARRAY_SHAPEIT "$com -o $dirtemp/$rounded/\n";
 						print ARRAY_SHAPEIT "cp $dirtemp/$rounded/jobid_shapeit $dirtemp/$rounded/waiting.txt\n";
 						$sys = "$QSUB -hold_jid $job_id_shapeit $dirtemp/$rounded/ArrayJob_shapeit_wait.csh\n";
-						print $sys."\n";
-						system($sys);	
+						$exitcode=system($sys);
+						if($exitcode != 0)
+						{
+							die "command $sys failed\nexitcode $exitcode\n";
+						}
 					}
 					elsif($envr =~ m/PBS/i)
 					{
@@ -930,8 +959,11 @@ if(uc($restart_impute) ne "POST")
 						system("rm $dirtemp/$rounded/waiting.txt");
 						print ARRAY_SHAPEIT "cp $dirtemp/$rounded/jobid_shapeit $dirtemp/$rounded/waiting.txt\n";
 						$sys = "$QSUB -W depend=afterokarray:$job_id_shapeit $dirtemp/$rounded/ArrayJob_shapeit_wait.csh\n";
-						print $sys."\n";
-						system($sys);
+						$exitcode=system($sys);
+						if($exitcode != 0)
+						{
+							die "command $sys failed\nexitcode $exitcode\n";
+						}
 					
 					}
 					$flag = 1;
@@ -987,8 +1019,13 @@ if(uc($restart_impute) ne "POST")
 						$count_rescued =~ s/\s.+//g;
 						if($count_rescued > 0)
 						{
-							system("cut -f3 $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.rescued > $dirtemp/$rounded/$j/rescued_markers.txt");
-							system("$PLINK --bfile $dirtemp/$rounded/$j/snps_chr$j --extract $dirtemp/$rounded/$j/rescued_markers.txt  --recode --transpose --out $dirtemp/$rounded/$j/rescued_markers");
+							#system("cut -f3 $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.rescued > $dirtemp/$rounded/$j/rescued_markers.txt");
+							
+							$exitcode=system("$PLINK --bfile $dirtemp/$rounded/$j/snps_chr$j --extract $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.rescued.ids  --recode --transpose --out $dirtemp/$rounded/$j/rescued_markers > $dirtemp/$rounded/$j/rescued_markers.log");
+							if($exitcode != 0)
+							{
+								die "plink command failed\nexitcode $exitcode\nPlease check the log file $dirtemp/$rounded/$j/rescued_markers.log";
+							}
 							open(RES,"$dirtemp/$rounded/$j/rescued_markers.tped") or die "no file found $dirtemp/$rounded/$j/rescued_markers.tped\n";
 							open(WRRES,">$dirtemp/$rounded/$j/rescued_markers.haps") or die "not able to wire to the file $dirtemp/$rounded/$j/rescued_markers.haps\n";
 							while(<RES>)
@@ -1015,22 +1052,27 @@ if(uc($restart_impute) ne "POST")
 							close(RES);
 							close(WRRES);
 							system("gunzip -c $dirtemp/$rounded/$j/snps_chr$j.haps.gz >> $dirtemp/$rounded/$j/rescued_markers.haps");
-							system("sort -k 3,3n -T $dirtemp/$rounded/$j/ $dirtemp/$rounded/$j/rescued_markers.haps |gzip > $dirtemp/$rounded/$j/snps_chr$j.haps.gz");
-							#system("rm $dirtemp/$rounded/$j/rescued_markers*");
-							open(NRES,"$dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.rescued") or die "no file found $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.rescued\n";
-							open(WRNRES,">$dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.rescued.tmp") or die "not able to write to the file $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.rescued.tmp1\n";
-							while(<NRES>)
+							$sys="sort -k 3,3n -T $dirtemp/$rounded/$j/ $dirtemp/$rounded/$j/rescued_markers.haps |gzip > $dirtemp/$rounded/$j/snps_chr$j.haps.gz";
+							$exitcode=system("sort -k 3,3n -T $dirtemp/$rounded/$j/ $dirtemp/$rounded/$j/rescued_markers.haps |gzip > $dirtemp/$rounded/$j/snps_chr$j.haps.gz");
+							if($exitcode != 0)
 							{
-								@a=split("\t",$_);
-								if(!exists($notrescue{$a[2]}))
-								{
-									print WRNRES $_;
-								}	
-							}	
-							close(NRES);
-							close(WRNRES);
+								die "command $sys failed\nexitcode $exitcode\n";
+							}
+							#system("rm $dirtemp/$rounded/$j/rescued_markers*");
+							#open(NRES,"$dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.rescued") or die "no file found $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.rescued\n";
+							#open(WRNRES,">$dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.rescued.tmp") or die "not able to write to the file $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.rescued.tmp1\n";
+							#while(<NRES>)
+							#{
+							#	@a=split("\t",$_);
+							#	if(!exists($notrescue{$a[2]}))
+							#	{
+							#		print WRNRES $_;
+							#	}	
+							#}	
+							#close(NRES);
+							#close(WRNRES);
 							#system("mv $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.rescued.tmp $dirtemp/$rounded/$j/snps_chr$j.alignments.snp.strand.rescued");
-							undef(%notrescue);
+							#undef(%notrescue);
 						}	
 					}
 					if($restart_impute =~ m/NO/i ||  $restart_impute =~ m/NA/i )
@@ -1064,6 +1106,7 @@ if(uc($restart_impute) ne "POST")
 				}
 				
 			}
+			
 			if($flag ==2)
 			{
 				$failed_chr=join(" ",@failed_chr);
@@ -1117,8 +1160,13 @@ if(uc($restart_impute) ne "POST")
 		@check_chr = sort {$a <=> $b} @check_chr;
 		print "@check_chr\n";
 		#checking whether the haps files with original files
-		system("$PLINK --bfile $dirtemp/$rounded/processed_beagle_input --transpose --recode --out $dirtemp/$rounded/processed_beagle_input");	
-		if($less_num_samp ne "YES")
+		
+		$exitcode=system("$PLINK --bfile $dirtemp/$rounded/processed_beagle_input --transpose --recode --out $dirtemp/$rounded/processed_beagle_input > $dirtemp/$rounded/processed_beagle_input.log");
+		if($exitcode != 0)
+		{
+			die "plink command failed\nexitcode $exitcode\nPlease check the log file $dirtemp/$rounded/processed_beagle_input.log";
+		}	
+		if($less_num_samp !~ m/YES/i)
 		{
 		
 =head		
@@ -1246,13 +1294,17 @@ if(uc($restart_impute) ne "POST")
 		}
 
 		#input plink file processing according to fwdmap file and ref file
-		system("$PLINK --bfile $dirtemp/$rounded/processed_beagle_input --transpose --recode --out $dirtemp/$rounded/processed_beagle_input");
-		system("wait");
+		#system("$PLINK --bfile $dirtemp/$rounded/processed_beagle_input --transpose --recode --out $dirtemp/$rounded/processed_beagle_input");
+		#system("wait");
 		system("mv $dirtemp/$rounded/processed_beagle_input.tped $dirtemp/$rounded/unprocessed_beagle_input.tped");
 		system("gzip $dirtemp/$rounded/unprocessed_beagle_input.tped");
-		$command_sys = "$PERL $dir/bin/process_fwdstnd_beagle_input.pl -f $dirtemp/$rounded/unprocessed_beagle_input.tped.gz -h $impute_ref  -n $dirtemp/$rounded/processed_beagle_input.tped -e $dirtemp/$rounded/excluded_no_hapmap_processed_beagle_input.tped.gz -a $dirtemp/$rounded/ambi_hapmap_processed_beagle_input.tped.gz -u $dirtemp/$rounded/unsure_differentallele.tped.gz  -i $forward_ind  -l $less_num_samp";
-		print $command_sys."\n";
-		system($command_sys);
+		$command_sys = "$PERL $dir/bin/process_fwdstnd_beagle_input.pl -f $dirtemp/$rounded/unprocessed_beagle_input.tped.gz -h $impute_ref  -n $dirtemp/$rounded/processed_beagle_input.tped -e $dirtemp/$rounded/excluded_no_hapmap_processed_beagle_input.tped.gz -a $dirtemp/$rounded/ambi_hapmap_processed_beagle_input.tped.gz -u $dirtemp/$rounded/unsure_differentallele.tped.gz  -i $forward_ind  -l $less_num_samp > $dirtemp/$rounded/process_fwdstnd_beagle_input.log";
+		#print $command_sys."\n";
+		$exitcode=system($command_sys);
+		if($exitcode != 0)
+		{
+			die "command $command_sys failed\nexitcode $exitcode\nPlease check the logfile $dirtemp/$rounded/process_fwdstnd_beagle_input.log\n";
+		}
 		#die;
 		#checking for non empty output file from processed file
 		$count_pro =`wc -l $dirtemp/$rounded/processed_beagle_input.tped`;
@@ -1890,9 +1942,13 @@ if(uc($restart_impute) ne "POST")
 		{
 			if($envr =~ m/SGE/i)
 			{
+				$sys="$QSUB $dirtemp/$rounded/ArrayJob_impute.csh &> $dirtemp/$rounded/jobid_impute";
 				#submitting and storing the job id
-				system("$QSUB $dirtemp/$rounded/ArrayJob_impute.csh &> $dirtemp/$rounded/jobid_impute");
-				
+				$exitcode=system("$QSUB $dirtemp/$rounded/ArrayJob_impute.csh &> $dirtemp/$rounded/jobid_impute");
+				if($exitcode != 0)
+				{
+					die "command $sys failed\nexitcode $exitcode\n";
+				}
 				##readin job id from submit_shapeit
 				open(ARRAY_IMPUTE,"$dirtemp/$rounded/jobid_impute") or die "unable to open file $dirtemp/$rounded/jobid_impute\n";
 				$impute = <ARRAY_IMPUTE>;
@@ -1908,7 +1964,13 @@ if(uc($restart_impute) ne "POST")
 			}
 			elsif($envr =~ m/PBS/i)
 			{
-				system(" $QSUB $dirtemp/$rounded/ArrayJob_impute.csh &> $dirtemp/$rounded/jobid_impute");
+				$sys="$QSUB $dirtemp/$rounded/ArrayJob_impute.csh &> $dirtemp/$rounded/jobid_impute";
+				#submitting and storing the job id
+				$exitcode=system(" $QSUB $dirtemp/$rounded/ArrayJob_impute.csh &> $dirtemp/$rounded/jobid_impute");
+				if($exitcode != 0)
+				{
+					die "command $sys failed\nexitcode $exitcode\n";
+				}
 					#readin job id from submit_shapeit
 				open(ARRAY_IMPUTE,"$dirtemp/$rounded/jobid_impute") or die "unable to open file $dirtemp/$rounded/jobid_impute\n";
 				$impute = <ARRAY_IMPUTE>;
@@ -2387,7 +2449,12 @@ else
 
 if($envr =~ m/SGE/i)
 {
-	system("$QSUB $dirtemp/$rounded/ArrayJob_post.csh > $dirtemp/$rounded/jobid_shapeit");
+	$sys="$QSUB $dirtemp/$rounded/ArrayJob_post.csh > $dirtemp/$rounded/jobid_shapeit";
+	$exitcode=system("$QSUB $dirtemp/$rounded/ArrayJob_post.csh > $dirtemp/$rounded/jobid_shapeit");
+	if($exitcode != 0)
+	{
+		die "command $sys failed\nexitcode $exitcode\n";
+	}
 	#readin job id from submit_shapeit
 	open(ARRAY_SHAPEIT,"$dirtemp/$rounded/jobid_shapeit") or die "unable to open file $dirtemp/$rounded/jobid_shapeit\n";
 	$shapeit = <ARRAY_SHAPEIT>;
@@ -2399,7 +2466,12 @@ if($envr =~ m/SGE/i)
 }
 elsif($envr =~ m/PBS/i)
 {
-	system(" $QSUB $dirtemp/$rounded/ArrayJob_post.csh > $dirtemp/$rounded/jobid_shapeit");
+	$sys="$QSUB $dirtemp/$rounded/ArrayJob_post.csh > $dirtemp/$rounded/jobid_shapeit";
+	$exitcode=system(" $QSUB $dirtemp/$rounded/ArrayJob_post.csh > $dirtemp/$rounded/jobid_shapeit");
+	if($exitcode != 0)
+	{
+		die "command $sys failed\nexitcode $exitcode\n";
+	}
 	#readin job id from submit_shapeit
 	open(ARRAY_SHAPEIT,"$dirtemp/$rounded/jobid_shapeit") or die "unable to open file $dirtemp/$rounded/jobid_shapeit\n";
 	$shapeit = <ARRAY_SHAPEIT>;
