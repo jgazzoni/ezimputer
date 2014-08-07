@@ -134,19 +134,19 @@ echo " "
 #IMPUTE
 echo "Checking for the Program IMPUTE2 v2.3.0 exists in your PATH variable.If this version of program doesn't exist then it will be downloaded"
 IMPUTE=`which impute2`
-checkcount=`$IMPUTE 2>&1|grep v2.3.4 |wc -l|cut -f1 -d ' '`
+checkcount=`$IMPUTE 2>&1|grep v2.3.1 |wc -l|cut -f1 -d ' '`
 if [ $checkcount -lt 1 ]; then
-	echo "IMPUTE2 version v2.3.0 does not exist.So downloading the tool"
+	echo "IMPUTE2 version v2.3.1 does not exist.So downloading the tool"
 	#Create main IMPUTE directory
 	mkdir $EZIMPUTER/IMPUTE
 	#Change to IMPUTE directory
 	cd $EZIMPUTER/IMPUTE
 	#Download IMPUTE tool package
-	wget http://mathgen.stats.ox.ac.uk/impute/impute_v2.3.0_x86_64_static.tgz
+	wget https://mathgen.stats.ox.ac.uk/impute/impute_v2.3.1_x86_64_static.tgz
 	#Untar the downloaded package
-	tar -zxvf impute_v2.3.0_x86_64_static.tgz
+	tar -zxvf impute_v2.3.1_x86_64_static.tgz
 	#change directory 
-	cd impute_v2.3.0_x86_64_static
+	cd impute_v2.3.1_x86_64_static
 	chmod +xr impute2
 	./impute2 > $EZIMPUTER/LOG/IMPUTE.log 2>&1 
 	#Try Impute
@@ -171,7 +171,7 @@ if [ $checkcount -lt 1 ]; then
 		tools_installed_ind=0
 		tools_installed=$tools_installed" IMPUTE"
 	fi
-	IMPUTE="${EZIMPUTER}/IMPUTE/impute_v2.3.0_x86_64_static/impute2"
+	IMPUTE="${EZIMPUTER}/IMPUTE/impute_v2.3.1_x86_64_static/impute2"
 fi
 
 
@@ -206,7 +206,7 @@ echo " "
 
 
 #SHAPEIT
-echo "Checking for the Program SHAPEIT v2.r778 exists in your PATH variable.If this version of program doesn't exist then it will be downloaded"
+echo "Checking for the Program SHAPEIT v2.r790 exists in your PATH variable.If this version of program doesn't exist then it will be downloaded"
 SHAPEIT=`which shapeit`
 checkcount=`$SHAPEIT --v 2>&1|grep v2.3.4 |wc -l|cut -f1 -d ' '`
 if [ $checkcount -lt 1 ]; then
@@ -216,13 +216,14 @@ if [ $checkcount -lt 1 ]; then
 	#Change to SHAPEIT directory
 	cd $EZIMPUTER/SHAPEIT
 	#Download SHAPEIT tool package
-	timeout 20 wget  https://mathgen.stats.ox.ac.uk/genetics_software/shapeit/shapeit.v2.r778.RHELS_5.4.static.tar.gz
-	if [ $? -eq 124 ]
-		then
-		echo "timeout occured while downloading shapeit tool, so copying the tool from local source"
-		cp /data5/bsi/bioinf_int/s106381.borawork/naresh_scripts/PAPER/EasyImputer_v2/bin/TOOLS/SHAPEIT2/shapeit.v2.r727.linux.x64.tar.gz .
+	 wget  https://mathgen.stats.ox.ac.uk/genetics_software/shapeit/shapeit.v2.r790.RHELS_5.4.static.tar.gz
+	#timeout 20
+	#if [ $? -eq 124 ]
+	#	then
+	#	echo "timeout occured while downloading shapeit tool, so copying the tool from local source"
+	#	cp /data5/bsi/bioinf_int/s106381.borawork/naresh_scripts/PAPER/EasyImputer_v2/bin/TOOLS/SHAPEIT2/shapeit.v2.r727.linux.x64.tar.gz .
 		
-	fi
+	#fi
 
 
 	#Untar the downloaded package

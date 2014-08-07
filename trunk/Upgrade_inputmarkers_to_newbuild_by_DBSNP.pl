@@ -49,11 +49,7 @@ print "DBSNP_DIR : $dbsnp_dir\n";
 #$file1="b".$dbsnp_ver."_SNPChrPosOnRef.bcp.gz";
 #$file2="RsMergeArch.bcp.gz";
 $hyperlink1=$dbsnp_ver;
-#for build 137 ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606/database/organism_data/b137_SNPChrPosOnRef.bcp.gz
-#for build 135 ftp://ftp.ncbi.nih.gov/snp/organisms/human_9606/database/b135_archive/organism_data/b135_SNPChrPosOnRef_37_3.bcp.gz
-
-#$hyperlink1="ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606/database/organism_data/"."b".$dbsnp_ver."_SNPChrPosOnRef.bcp.gz";
-#$hyperlink2="ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606/database/organism_data/$file2";
+#for build 141 ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b141_GRCh37p13/database/organism_data/b141_SNPChrPosOnRef_GRCh37p13.bcp.gz
 @hyperlink1 = split(/\//,$hyperlink1);
 $file1=pop(@hyperlink1);
 unless(-d "$dbsnp_dir")
@@ -76,7 +72,11 @@ if((-e $file1))
 }
 if(!(-e $file1))
 {
-	system("wget $hyperlink1"); 
+	$exitcode=system("wget $hyperlink1"); 
+	if($exitcode != 0)
+	{
+			die "command wget $hyperlink1failed\nexitcode $exitcode\n";
+	}
 	#$sys="gunzip -c $dbsnp_dir/$file1|awk '{if(NF==4)print \$0}'|gzip > $dbsnp_dir/temp.gz";
 	#system($sys);
 	#system("mv $dbsnp_dir/temp.gz $dbsnp_dir/$file1");

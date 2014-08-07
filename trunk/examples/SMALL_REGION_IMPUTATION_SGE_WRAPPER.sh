@@ -31,7 +31,7 @@ else
 	echo "directory not exists or EZIMPUTER scripts not found in the directory $EZIMPUTER"
 fi
 
-FILE=$EXAMPLES/WHOLECHR/hapmap3_r3_b36_fwd.consensus_subset50_chr22.qc.poly_PREPDATA.newbuild.tped
+FILE=$EXAMPLES/WHOLECHR/hapmap3_r3_b36_fwd.consensus_subset50_chr22.qc.poly.newbuild.tped
 if [ -f $FILE ];
 then
    echo "File $FILE exists"
@@ -52,13 +52,13 @@ fi
 #fi
 
 cd $EXAMPLES/WHOLECHR/
-cp hapmap3_r3_b36_fwd.consensus_subset50_chr22.qc.poly_PREPDATA.tfam  hapmap3_r3_b36_fwd.consensus_subset50_chr22.qc.poly_PREPDATA.newbuild.tfam
+#cp hapmap3_r3_b36_fwd.consensus_subset50_chr22.qc.poly.tfam  hapmap3_r3_b36_fwd.consensus_subset50_chr22.qc.poly.newbuild.tfam
 #extracting smalle region from whole genome
 # Before running this script, you must run the whole genome workflow example up to the QC Step to generate the fwdStrandResults_input file
 #convert the plink file format to transpose
 PLINK=`grep 'PLINK='  $TOOLINFO | cut -d '=' -f2 `
 
-$PLINK --tfile hapmap3_r3_b36_fwd.consensus_subset50_chr22.qc.poly_PREPDATA.newbuild --chr 22 --from-kb 43500 --to-kb 46000 --make-bed --out small_region_fwdStrandResults_input
+$PLINK --tfile hapmap3_r3_b36_fwd.consensus_subset50_chr22.qc.poly.newbuild --chr 22 --from-kb 43500 --to-kb 46000 --make-bed --out small_region_fwdStrandResults_input
 if [ $? -ne 0 ]
 then
 	echo "Some thing wrong with plink command.Plink Output fileset $EXAMPLES/WHOLECHR/small_region_fwdStrandResults_input not generated!"

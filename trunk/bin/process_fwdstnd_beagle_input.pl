@@ -79,7 +79,7 @@ for(my $chr=23;$chr>0;$chr--)
 {
 	if(exists($ref_meta{"chr$chr".'_'."genetic"}))
 	{
-		print "chr$chr".'_'."genetic"." ".$ref_meta{"chr$chr".'_'."genetic"}."\n";
+		#print "chr$chr".'_'."genetic"." ".$ref_meta{"chr$chr".'_'."genetic"}."\n";
 	}
 	else
 	{
@@ -87,7 +87,7 @@ for(my $chr=23;$chr>0;$chr--)
 	}
 	if(exists($ref_meta{"chr$chr".'_'."hap"}))
 	{
-			print "chr$chr".'_'."hap"." ".$ref_meta{"chr$chr".'_'."hap"}."\n";
+			#print "chr$chr".'_'."hap"." ".$ref_meta{"chr$chr".'_'."hap"}."\n";
 	}
 	else
 	{
@@ -95,7 +95,7 @@ for(my $chr=23;$chr>0;$chr--)
 	}
 	if(exists($ref_meta{"chr$chr".'_'."legend"}))
 	{
-			print "chr$chr".'_'."legend"." ".$ref_meta{"chr$chr".'_'."legend"}."\n";
+			#print "chr$chr".'_'."legend"." ".$ref_meta{"chr$chr".'_'."legend"}."\n";
 	}
 	else
 	{
@@ -104,7 +104,7 @@ for(my $chr=23;$chr>0;$chr--)
 }
 if(exists($ref_meta{"sample"}))
 {
-	print "sample"." ".$ref_meta{"sample"}."\n";
+	#print "sample"." ".$ref_meta{"sample"}."\n";
 }
 else
 {
@@ -239,7 +239,7 @@ while($line = <TBUFF>)
 			#print $plinkfile_count."\n";
 			if($hap_count  != $plinkfile_count )
 			{
-					print "NOT AN ERROR OR WARNING: number of rows in the haps file and plink file doesn't match for chr $ch :haps-$hap_count plinkfile-$plinkfile_count && less_num_samp eq $less_num_samp \n";
+					#print "NOT AN ERROR OR WARNING: number of rows in the haps file and plink file doesn't match for chr $ch :haps-$hap_count plinkfile-$plinkfile_count && less_num_samp eq $less_num_samp \n";
 			}
 
 			#$sys="mv $dir/$ch/snps_chr$ch.haps.gz  $dir/$ch/temp_snps_chr$ch.haps.gz";
@@ -255,7 +255,7 @@ while($line = <TBUFF>)
 			}
 			#opening the haps file for corresponding chr
 			undef(%low_samp);
-			if($less_num_samp eq "YES")
+			if($less_num_samp =~ m/YES/i)
 			{
 				#open(HAPS,"gunzip -c $dir/$ch/temp_snps_chr$ch.haps.gz |") or die "no haps file exists for chr $ch\n";
 				open(HAPS,"gunzip -c $dir/$ch/snps_chr$ch.haps.gz |") or die "no haps file exists for chr $ch\n";
@@ -284,7 +284,7 @@ while($line = <TBUFF>)
 	#}
 	else
 	{
-		if(!($less_num_samp eq "YES" && (!exists($low_samp{$pos}))))
+		if(!($less_num_samp =~  m/YES/i && (!exists($low_samp{$pos}))))
 		{
 			
 		

@@ -143,29 +143,40 @@ if(!(-e "$dirtemp/$rounded/temp.tped"))
 }
 if(!(-e "$dirtemp/$rounded/temp.bim"))
 {
-	system("$PLINK --tfile $dirtemp/$rounded/temp --make-bed --out $dirtemp/$rounded/temp");
+	system("$PLINK --tfile $dirtemp/$rounded/temp --make-bed --out $dirtemp/$rounded/temp > $dirtemp/$rounded/temp.log");
 }
 if($option =~ m/MISSING/i)
 {
 		print "geno: $geno mind: $mind\n";
 		#Running plink to get the missing information
 		print "\n\n\n\n\n***********Running plink to get the missing information**************\n";
-		system("$PLINK  --tfile $dirtemp/$rounded/temp --missing --out $dirtemp/$rounded/miss");
+		$exitcode=system("$PLINK  --tfile $dirtemp/$rounded/temp --missing --out $dirtemp/$rounded/miss>$dirtemp/$rounded/miss.log");
+		if($exitcode != 0)
+		{
+			die "plink command failed\nexitcode $exitcode\nPlease check the log file $dirtemp/$rounded/miss.log\n";
+		}
 		if (!(-e "$dirtemp/$rounded/miss.imiss")) {
 				die "something wrong in the plink input files --tfile $dirtemp/$rounded/temp\n";
 		}
 		 #Removing SNPs that fail in all the samples and Removing Samples with % specified missing in the config file
 		print "\n\n\n\n\n***********Removing SNPs that fail in all the samples and Removing Samples with >$mind % missing***********\n"; 
-		system("$PLINK  --bfile $dirtemp/$rounded/temp --missing --geno 0.999 --mind $mind --make-bed --out $dirtemp/$rounded/intialqc");
+		$exitcode=system("$PLINK  --bfile $dirtemp/$rounded/temp --missing --geno 0.999 --mind $mind --make-bed --out $dirtemp/$rounded/intialqc > $dirtemp/$rounded/intialqc.log");
+		if($exitcode != 0)
+		{
+			die "plink command failed\nexitcode $exitcode\nPlease check the log file $dirtemp/$rounded/intialqc.log\n";
+		}
 		if (!(-e "$dirtemp/$rounded/intialqc.fam")) {
 				die "something wrong in the plink input files --tfile $dirtemp/$rounded/temp \n";
 		}
-
 		system("rm $dirtemp/$rounded/temp.fam $dirtemp/$rounded/temp.bed $dirtemp/$rounded/temp.bim"); 
 
 		#Removingemove SNPs that failed in >=$geno % (90% for illumina and >=10% for affy) of remaining samples
 		print "\n\n\n\n\n***********Removingemove SNPs that failed in >=$geno % (90% for illumina and >=10% for affy) of remaining samples***********\n"; 
-		system("$PLINK  --bfile $dirtemp/$rounded/intialqc --missing --geno $geno --make-bed --out $dirtemp/$rounded/geno");
+		$exitcode=system("$PLINK  --bfile $dirtemp/$rounded/intialqc --missing --geno $geno --make-bed --out $dirtemp/$rounded/geno > $dirtemp/$rounded/geno.log");
+		if($exitcode != 0)
+		{
+			die "plink command failed\nexitcode $exitcode\nPlease check the log file $dirtemp/$rounded/geno.log\n";
+		}
 		if (!(-e "$dirtemp/$rounded/geno.fam")) {
 				die "something wrong in the plink command geno\n";
 		}
@@ -173,19 +184,31 @@ if($option =~ m/MISSING/i)
 
 		#Flag Samples with a lot of missing>$mind %(5% Affy and 2% Illumina
 		print "\n\n\n\n\n***********Flag Samples with a lot of missing>$mind %(5% Affy and 2% Illumina***********\n";
-		system("$PLINK --bfile $dirtemp/$rounded/geno --missing --mind $mind --make-bed --out $dirtemp/$rounded/mind");
+		$exitcode=system("$PLINK --bfile $dirtemp/$rounded/geno --missing --mind $mind --make-bed --out $dirtemp/$rounded/mind > $dirtemp/$rounded/mind.log");
+		if($exitcode != 0)
+		{
+			die "plink command failed\nexitcode $exitcode\nPlease check the log file $dirtemp/$rounded/mind.log\n";
+		}
 		if (!(-e "$dirtemp/$rounded/mind.fam")) {
 				die "something wrong in the plink command mind\n";
 		}
 		system("rm $dirtemp/$rounded/geno.*");
 		
-		system("$PLINK --bfile $dirtemp/$rounded/mind --make-bed --out $dirtemp/$rounded/temp"); 
+		$exitcode=system("$PLINK --bfile $dirtemp/$rounded/mind --make-bed --out $dirtemp/$rounded/temp>$dirtemp/$rounded/temp.log"); 
+		if($exitcode != 0)
+		{
+			die "plink command failed\nexitcode $exitcode\nPlease check the log file $dirtemp/$rounded/temp.log\n";
+		}
 		system("rm $dirtemp/$rounded/mind.bed $dirtemp/$rounded/mind.bim $dirtemp/$rounded/mind.fam $dirtemp/$rounded/mind.hh $dirtemp/$rounded/mind.log"); 
 		#system("mv $dirtemp/$rounded/miss.imiss $dirtemp/$rounded/samples.qc");
 		$sys = "$PERL $dir/bin/sexcheck.pl -i $dirtemp/$rounded/miss.imiss -v $mind -o $dirtemp/$rounded/samples.qc";
-		print "executing $sys\n";
-		system($sys);
-
+		#print "executing $sys\n";
+		$exitcode=system($sys);
+		if($exitcode != 0)
+		{
+			die "command $sys failed\nexitcode $exitcode\n";
+		}
+		
 		system("rm $dirtemp/$rounded/mind.*");
 		#system("rm $dirtemp/$rounded/miss.*");
 		
@@ -196,11 +219,17 @@ if($option =~ m/SEXCHECK/i)
 	print "\n\n\n\n\n***********Imputing the sex information to cross check with the given one	***********\n";
 	if(!(-e "$dirtemp/$rounded/miss.imiss"))
 	{
-		system("$PLINK  --tfile $dirtemp/$rounded/temp --missing --out $dirtemp/$rounded/miss");
-		#system("mv $dirtemp/$rounded/miss.imiss $dirtemp/$rounded/samples.qc");
-		#system("rm $dirtemp/$rounded/miss.*");
+		$exitcode=system("$PLINK  --tfile $dirtemp/$rounded/temp --missing --out $dirtemp/$rounded/miss > $dirtemp/$rounded/miss.log");
+		if($exitcode != 0)
+		{
+			die "plink command failed\nexitcode $exitcode\nPlease check the log file $dirtemp/$rounded/miss.log\n";
+		}
 	}
-	system("$PLINK  --bfile $dirtemp/$rounded/temp --impute-sex  --recode --transpose --out $dirtemp/$rounded/imputesex");
+	$exitcode=system("$PLINK  --bfile $dirtemp/$rounded/temp --impute-sex  --recode --transpose --out $dirtemp/$rounded/imputesex > $dirtemp/$rounded/imputesex.log");
+	if($exitcode != 0)
+	{
+		die "plink command failed\nexitcode $exitcode\nPlease check the log file $dirtemp/$rounded/imputesex.log\n";
+	}
 	if (!(-e "$dirtemp/$rounded/imputesex.tfam")) 
 	{
 			die "something wrong in the plink command impute sex\n";
@@ -210,35 +239,63 @@ if($option =~ m/SEXCHECK/i)
 
 	#replacing the plink predicted gender with original if not missing
 	$sys = "$PERL $dir/bin/perl_replace_originalsex_predicted_sex.pl $dirtemp/$rounded/sexcheck.txt $dirtemp/$rounded/temp.tfam $dirtemp/$rounded/unprocessed_input.tfam";
-	print "executing $sys\n";
-	system($sys);
-
+	#print "executing $sys\n";
+	$exitcode=system($sys);
+	if($exitcode != 0)
+	{
+		die "command $sys failed\nexitcode $exitcode\n";
+	}
 	#generating the Qc file with gender related indicators included
 
 	$sys = "$PERL $dir/bin/sexcheck.pl -i $dirtemp/$rounded/miss.imiss -d $dirtemp/$rounded/sexcheck.txt -v $mind -o $dirtemp/$rounded/samples1.qc";
-	print "executing $sys\n";
-	system($sys);
-
+	#print "executing $sys\n";
+	$exitcode=system($sys);
+	if($exitcode != 0)
+	{
+		die "command $sys failed\nexitcode $exitcode\n";
+	}
+	
 	$sys="mv $dirtemp/$rounded/samples1.qc $dirtemp/$rounded/samples.qc";
-	print "executing $sys\n";
-	system($sys);
-	system("$PLINK --tfile $dirtemp/$rounded/unprocessed_input --make-bed --out $dirtemp/$rounded/temp");  
+	#print "executing $sys\n";
+	$exitcode=system($sys);
+	if($exitcode != 0)
+	{
+		die "command $sys failed\nexitcode $exitcode\n";
+	}
+	
+	$exitcode=system("$PLINK --tfile $dirtemp/$rounded/unprocessed_input --make-bed --out $dirtemp/$rounded/temp > $dirtemp/$rounded/temp.log"); 
+	if($exitcode != 0)
+	{
+		die "plink command failed\nexitcode $exitcode\nPlease check the log file $dirtemp/$rounded/temp.log\n";
+	}	
 	system("rm $dirtemp/$rounded/imputesex.*");
 	system("rm $dirtemp/$rounded/unprocessed_input.*");
 	system("rm $dirtemp/$rounded/sexcheck.txt");
 }
 if($option =~ m/FORWARD_STRAND/i)
 {
-	system("$PLINK --bfile $dirtemp/$rounded/temp --transpose --recode --out $dirtemp/$rounded/unprocessed_input"); 
+	$exitcode=system("$PLINK --bfile $dirtemp/$rounded/temp --transpose --recode --out $dirtemp/$rounded/unprocessed_input > $dirtemp/$rounded/unprocessed_input.log");
+	if($exitcode != 0)
+	{
+		die "plink command failed\nexitcode $exitcode\nPlease check the log file $dirtemp/$rounded/unprocessed_input.log\n";
+	}	
 	#forwards strand mapping
 	$sys="$PERL $dir/bin/perl_script_fwd_strand_mapping.pl -DB $db -REF_GENOME_DIR $impute_ref -IMPUTEREF_VERSION $ref_keyword -INPUT_FILE $dirtemp/$rounded/unprocessed_input.tped -OUTPUTFILE $dirtemp/$rounded/ -TEMP $dirtemp/$rounded/temp -CHECK_STRAND $CHECK_STRAND -PYTHON $PYTHON";
-	print $sys."\n";
-	system($sys);
+	#print $sys."\n";
+	$exitcode=system($sys);
+	if($exitcode != 0)
+	{
+		die "command $sys failed\nexitcode $exitcode\n";
+	}
 	
 	if(-e "$dirtemp/$rounded/temp_input.tped")
 	{
 		system("mv $dirtemp/$rounded/temp_input.tped $dirtemp/$rounded/unprocessed_input.tped");
-		system("$PLINK --tfile $dirtemp/$rounded/unprocessed_input --make-bed --out $dirtemp/$rounded/temp");
+		$exitcode=system("$PLINK --tfile $dirtemp/$rounded/unprocessed_input --make-bed --out $dirtemp/$rounded/temp > $dirtemp/$rounded/temp.log");
+		if($exitcode != 0)
+		{
+			die "plink command failed\nexitcode $exitcode\nPlease check the log file $dirtemp/$rounded/temp.log\n";
+		}
 		system("mv $dirtemp/$rounded/temp_input.ind $outdir/fwdStrandResults_input.ind");
 		system("mv $dirtemp/$rounded/temp_input.ignored  $outdir/markers.ignored");
 	}
@@ -251,11 +308,20 @@ else
 {
 	system("cp $dirtemp/$rounded/samples.qc $outdir/sample.qc");
 }
-system("$PLINK --bfile $dirtemp/$rounded/temp --transpose --recode --out $outdir/processed_input");
+$exitcode=system("$PLINK --bfile $dirtemp/$rounded/temp --transpose --recode --out $outdir/processed_input > $outdir/processed_input.log");
+if($exitcode != 0)
+{
+	die "plink command failed\nexitcode $exitcode\nPlease check the log file $outdir/processed_input.log\n";
+}
+		
 #include Structure
 if($option =~ m/STRUCTURE/i)
 {
-	system("$PLINK --bfile $dirtemp/$rounded/temp --transpose --recode --out $dirtemp/$rounded/fwdStrandResults_unprocessed_input");
+	$exitcode=system("$PLINK --bfile $dirtemp/$rounded/temp --transpose --recode --out $dirtemp/$rounded/fwdStrandResults_unprocessed_input > $dirtemp/$rounded/fwdStrandResults_unprocessed_input.log");
+	if($exitcode != 0)
+	{
+		die "plink command failed\nexitcode $exitcode\nPlease check the log file $outdir/processed_input.log\n";
+	}
 	#extract input markers ids to snps_inputdata
 	system("cut -f2 -d ' ' $dirtemp/$rounded/fwdStrandResults_unprocessed_input.tped > $dirtemp/$rounded/snps_inputdata");
 	#extract marker reference id's to distanct_snps
@@ -264,10 +330,17 @@ if($option =~ m/STRUCTURE/i)
 	
 	system("cat $dirtemp/$rounded/snps_inputdata $dirtemp/$rounded/distanct_snps |sort -T $dirtemp/$rounded/ |uniq -d > $dirtemp/$rounded/snps_common_input_and_distainct_selected"); 
 	#extracting common markers from reference
-	system("$PLINK --bfile $dir/bin/reference --keep $dir/bin/selected_1000genome_hapmap_refknown --extract $dirtemp/$rounded/snps_common_input_and_distainct_selected --make-bed --out $dirtemp/$rounded/reference");
+	$exitcode=system("$PLINK --bfile $dir/bin/reference --keep $dir/bin/selected_1000genome_hapmap_refknown --extract $dirtemp/$rounded/snps_common_input_and_distainct_selected --make-bed --out $dirtemp/$rounded/reference > $dirtemp/$rounded/reference.log");
+	if($exitcode != 0)
+	{
+		die "plink command failed\nexitcode $exitcode\nPlease check the log file $dirtemp/$rounded/reference.log\n";
+	}
 	#extracting common markers from input
-	system("$PLINK --tfile $dirtemp/$rounded/fwdStrandResults_unprocessed_input --extract $dirtemp/$rounded/snps_common_input_and_distainct_selected --make-bed --out $dirtemp/$rounded/inputdata");
-
+	$exitcode=system("$PLINK --tfile $dirtemp/$rounded/fwdStrandResults_unprocessed_input --extract $dirtemp/$rounded/snps_common_input_and_distainct_selected --make-bed --out $dirtemp/$rounded/inputdata > $dirtemp/$rounded/inputdata.log");
+	if($exitcode != 0)
+	{
+		die "plink command failed\nexitcode $exitcode\nPlease check the log file $dirtemp/$rounded/inputdata.log\n";
+	}
 	#fliping snp in input comparing to hapmap
 	open(BUFF,"$dirtemp/$rounded/inputdata.bim") or die "no file found $dirtemp/$rounded/inputdata.bim\n";
 	open(REF,"$dirtemp/$rounded/reference.bim") or die "no file found $dirtemp/$rounded/reference.bim\n";
@@ -352,33 +425,59 @@ if($option =~ m/STRUCTURE/i)
 
 	if($flip >1 && $drop > 1)
 	{
-		system("$PLINK --bfile $dirtemp/$rounded/inputdata --exclude $dirtemp/$rounded/combined_ref_input.drop --flip $dirtemp/$rounded/combined_ref_input.missnp --make-bed --out $dirtemp/$rounded/inputdata1");
+		$exitcode=system("$PLINK --bfile $dirtemp/$rounded/inputdata --exclude $dirtemp/$rounded/combined_ref_input.drop --flip $dirtemp/$rounded/combined_ref_input.missnp --make-bed --out $dirtemp/$rounded/inputdata1 > $dirtemp/$rounded/inputdata1.log");
+		if($exitcode != 0)
+		{
+			die "plink command failed\nexitcode $exitcode\nPlease check the log file $dirtemp/$rounded/inputdata1.log\n";
+		}
 		system(" mv $dirtemp/$rounded/inputdata1.bim $dirtemp/$rounded/inputdata.bim");
 		system(" mv $dirtemp/$rounded/inputdata1.bed $dirtemp/$rounded/inputdata.bed");
 		system(" mv $dirtemp/$rounded/inputdata1.fam $dirtemp/$rounded/inputdata.fam");	
-		system("$PLINK --bfile  $dirtemp/$rounded/reference  --bmerge $dirtemp/$rounded/inputdata.bed $dirtemp/$rounded/inputdata.bim $dirtemp/$rounded/inputdata.fam --recode12 --output-missing-genotype -9 --out $dirtemp/$rounded/combined_ref_input"); 
+		$exitcode=system("$PLINK --bfile  $dirtemp/$rounded/reference  --bmerge $dirtemp/$rounded/inputdata.bed $dirtemp/$rounded/inputdata.bim $dirtemp/$rounded/inputdata.fam --recode12 --output-missing-genotype -9 --out $dirtemp/$rounded/combined_ref_input > $dirtemp/$rounded/combined_ref_input.log"); 
+		if($exitcode != 0)
+		{
+			die "plink command failed\nexitcode $exitcode\nPlease check the log file $dirtemp/$rounded/combined_ref_input.log\n";
+		}
 	}
 	elsif($flip >1)
 	{
-		system("$PLINK --bfile $dirtemp/$rounded/inputdata  --flip $dirtemp/$rounded/combined_ref_input.missnp --make-bed --out $dirtemp/$rounded/inputdata1");
+		$exitcode=system("$PLINK --bfile $dirtemp/$rounded/inputdata  --flip $dirtemp/$rounded/combined_ref_input.missnp --make-bed --out $dirtemp/$rounded/inputdata1 > $dirtemp/$rounded/inputdata1.log");
+		if($exitcode != 0)
+		{
+			die "plink command failed\nexitcode $exitcode\nPlease check the log file $dirtemp/$rounded/inputdata1.log\n";
+		}
 		system(" mv $dirtemp/$rounded/inputdata1.bim $dirtemp/$rounded/inputdata.bim");
 		system(" mv $dirtemp/$rounded/inputdata1.bed $dirtemp/$rounded/inputdata.bed");
 		system(" mv $dirtemp/$rounded/inputdata1.fam $dirtemp/$rounded/inputdata.fam");	
-		system("$PLINK --bfile  $dirtemp/$rounded/reference  --bmerge $dirtemp/$rounded/inputdata.bed $dirtemp/$rounded/inputdata.bim $dirtemp/$rounded/inputdata.fam --recode12 --output-missing-genotype -9 --out $dirtemp/$rounded/combined_ref_input"); 
-
+		$exitcode=system("$PLINK --bfile  $dirtemp/$rounded/reference  --bmerge $dirtemp/$rounded/inputdata.bed $dirtemp/$rounded/inputdata.bim $dirtemp/$rounded/inputdata.fam --recode12 --output-missing-genotype -9 --out $dirtemp/$rounded/combined_ref_input > $dirtemp/$rounded/combined_ref_input.log"); 
+		if($exitcode != 0)
+		{
+			die "plink command failed\nexitcode $exitcode\nPlease check the log file $dirtemp/$rounded/combined_ref_input.log\n";
+		}
 	}
 	elsif($drop > 1)
 	{
-		system("$PLINK --bfile $dirtemp/$rounded/inputdata --exclude $dirtemp/$rounded/combined_ref_input.drop  --make-bed --out $dirtemp/$rounded/inputdata1");
+		$exitcode=system("$PLINK --bfile $dirtemp/$rounded/inputdata --exclude $dirtemp/$rounded/combined_ref_input.drop  --make-bed --out $dirtemp/$rounded/inputdata1 > $dirtemp/$rounded/inputdata1.log");
+		if($exitcode != 0)
+		{
+			die "plink command failed\nexitcode $exitcode\nPlease check the log file $dirtemp/$rounded/inputdata1.log\n";
+		}
 		system(" mv $dirtemp/$rounded/inputdata1.bim $dirtemp/$rounded/inputdata.bim");
 		system(" mv $dirtemp/$rounded/inputdata1.bed $dirtemp/$rounded/inputdata.bed");
 		system(" mv $dirtemp/$rounded/inputdata1.fam $dirtemp/$rounded/inputdata.fam");	
-		system("$PLINK --bfile  $dirtemp/$rounded/reference  --bmerge $dirtemp/$rounded/inputdata.bed $dirtemp/$rounded/inputdata.bim $dirtemp/$rounded/inputdata.fam --recode12 --output-missing-genotype -9 --out $dirtemp/$rounded/combined_ref_input"); 
-
+		$exitcode=system("$PLINK --bfile  $dirtemp/$rounded/reference  --bmerge $dirtemp/$rounded/inputdata.bed $dirtemp/$rounded/inputdata.bim $dirtemp/$rounded/inputdata.fam --recode12 --output-missing-genotype -9 --out $dirtemp/$rounded/combined_ref_input > $dirtemp/$rounded/combined_ref_input.log"); 
+		if($exitcode != 0)
+		{
+			die "plink command failed\nexitcode $exitcode\nPlease check the log file $dirtemp/$rounded/combined_ref_input.log\n";
+		}
 	}
 	else
 	{
-		system("$PLINK --bfile  $dirtemp/$rounded/reference  --bmerge $dirtemp/$rounded/inputdata.bed $dirtemp/$rounded/inputdata.bim $dirtemp/$rounded/inputdata.fam --recode12 --output-missing-genotype -9 --out $dirtemp/$rounded/combined_ref_input"); 
+		$exitcode=system("$PLINK --bfile  $dirtemp/$rounded/reference  --bmerge $dirtemp/$rounded/inputdata.bed $dirtemp/$rounded/inputdata.bim $dirtemp/$rounded/inputdata.fam --recode12 --output-missing-genotype -9 --out $dirtemp/$rounded/combined_ref_input > $dirtemp/$rounded/combined_ref_input.log"); 
+		if($exitcode != 0)
+		{
+			die "plink command failed\nexitcode $exitcode\nPlease check the log file $dirtemp/$rounded/combined_ref_input.log\n";
+		}
 	}
 	#preparing the structure program
 	system("mkdir $dirtemp/$rounded/workdir");
@@ -454,9 +553,13 @@ if($option =~ m/STRUCTURE/i)
 		die "out file $dirtemp/$rounded/workdir/temp_structure.out_f does not exists\n";
 	}
 	$sys = "$PERL $dir/bin/perl_process_after_result_structure_out.pl $dirtemp/$rounded/workdir/temp_structure.out_f $dirtemp/$rounded/QC_output_structure $dir/bin/newreference_info";
-	print "$sys\n";
-	system($sys);
-
+	#print "$sys\n";
+	$exitcode=system($sys);
+	if($exitcode != 0)
+	{
+		die "command $sys failed\nexitcode $exitcode\n";
+	}
+	
 	#combining result with QC result with struture result
 	open(BUFF,"$dirtemp/$rounded/QC_output_structure") or die " no file $dirtemp/$rounded/QC_output_structure structure output exists\n";
 	open(INPUT,"$dirtemp/$rounded/inputdata.fam") or die  " no file $dirtemp/$rounded/inputdata.fam exists\n";
