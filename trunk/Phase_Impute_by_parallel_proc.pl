@@ -173,13 +173,16 @@ print "QSUB: $QSUB\n";
 print "SH: $SH\n";
 
 #checking for the right tool info config file parameters
-if($SH eq "" |$JAVA eq "" |$QSUB eq "" | $PLINK eq "" | $PERL eq "" |  $SHAPEIT eq "" | $IMPUTE eq "" |$GPROBS eq "" )
+if($SH eq "" |$JAVA eq ""  | $PLINK eq "" | $PERL eq "" |  $SHAPEIT eq "" | $IMPUTE eq "" |$GPROBS eq "" )
 {
 	die "input TOOL CONFIG FILE arguments empty please correct arguments and retry\n";
 } 
-
+if($QSUB eq "" && $envr !~ m/MANUAL/i)
+{
+		die "input TOOL CONFIG FILE argument QSUB cannot be empty when ENVR is not manual\n";
+}
 #checking for the tools mentioned in the tool config file if exists
-if(!(-e $SH) | !(-e $JAVA) | !(-e $QSUB) | !(-e $PLINK) | !(-e $PERL) | !(-e $SHAPEIT) | !(-e $IMPUTE) | !(-e $GPROBS) )
+if(!(-e $SH) | !(-e $JAVA) | !(-e $PLINK) | !(-e $PERL) | !(-e $SHAPEIT) | !(-e $IMPUTE) | !(-e $GPROBS) )
 {
 	die "input TOOL config file executables doesnot exist.Please recheck for input config file executables\n";
 }
