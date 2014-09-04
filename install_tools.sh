@@ -262,49 +262,49 @@ then
 fi
 
 #CHECK_STRAND
-if [[ !  -f $CHECK_STRAND ]]
+if [ !  -f $CHECK_STRAND ]
     then
     echo "no CHECK_STRAND Program not found $CHECK_STRAND in the ${EZIMPUTER}/"
     exit 1	
 fi
 
 #plink
-if [[ !  -f $PLINK ]]
+if [ !  -f $PLINK ]
     then
     echo "no plink found $PLINK"
     exit 1	
 fi
-if [[ !  -x $PLINK ]]
+if [ !  -x $PLINK ]
     then
     echo "plink found but it is not executable $PLINK.Pleasec give execute permissions"
     exit 1
 fi
 
 #structure
-if [[ !  -f $STRUCTURE ]]
+if [ !  -f $STRUCTURE ]
     then
     echo "no structure found $STRUCTURE"
     exit 1	
 fi
-if [[ !  -x $STRUCTURE ]]
+if [ !  -x $STRUCTURE ]
     then
     echo "structure found but it is not executable $STRUCTURE"
     exit 1
 fi
 #structure param
-if [[ !  -f $STRUCTURE_PARAM ]]
+if [ !  -f $STRUCTURE_PARAM ]
     then
     echo "no structure extraparam file found. $STRUCTURE_PARAM"
     exit 1	
 fi
 
 #impute
-if [[ !  -f $IMPUTE ]]
+if [ !  -f $IMPUTE ]
     then
     echo "no impute found $IMPUTE"
     exit 1	
 fi
-if [[ !  -x $IMPUTE ]]
+if [ !  -x $IMPUTE ]
     then
     echo "impute found but it is not executable $IMPUTE"
     exit 1
@@ -312,60 +312,60 @@ fi
 
 
 #GPROBS
-if [[ !  -f $GPROBS ]]
+if [ !  -f $GPROBS ]
     then
     echo "no GPROBS found $GPROBS"
     exit 1	
 fi
 
 #shapeit
-if [[ !  -f $SHAPEIT ]]
+if [ !  -f $SHAPEIT ]
     then
     echo "no shapeit found $SHAPEIT"
     exit 1	
 fi
-if [[ !  -x $SHAPEIT ]]
+if [ !  -x $SHAPEIT ]
     then
     echo "shapeit found but it is not executable $SHAPEIT"
     exit 1
 fi
 
 #PERL
-if [[ !  -f $PERL ]]
+if [ !  -f $PERL ]
     then
     echo "no PERL found $PERL"
     exit 1	
 fi
-if [[ !  -x $PERL ]]
+if [ !  -x $PERL ]
     then
     echo "PERL found but it is not executable $PERL"
     exit 1
 fi
 #PYTHON
-if [[ !  -f $PYTHON ]]
+if [ !  -f $PYTHON ]
     then
     echo "no PYTHON found $PYTHON"
     exit 1	
 fi
 
 #JAVA
-if [[ !  -f $JAVA ]]
+if [ !  -f $JAVA ]
     then
     echo "no JAVA found $JAVA"
     exit 1	
 fi
-if [[ !  -x $JAVA ]]
+if [ !  -x $JAVA ]
     then
     echo "JAVA found but it is not executable $JAVA"
     exit 1
 fi
 #SH
-if [[ !  -f $SH ]]
+if [ !  -f $SH ]
     then
     echo "no SH found $SH"
     exit 1	
 fi
-if [[ !  -x $SH ]]
+if [ !  -x $SH ]
     then
     echo "SH found but it is not executable $SH"
     exit 1
