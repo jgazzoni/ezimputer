@@ -63,4 +63,3 @@ Ex: sh SINGLE_SAMPLE_IMPUTATION_SGE_WRAPPER.sh /home/install/ezimputer/ /home/in
 Check the following folder for the results /home/install/ezimputer/test/SINGLE_SAMPLE/Impute_tmp/impute/
 
 NOTE: All the necessary input files will be downloaded in the example script WHOLE_GENOME_CHROMOSOME_IMPUTATION_SGE_WRAPPER.sh, so make sure you run the run the example "WHOLE_GENOME_CHROMOSOME_IMPUTATION_SGE_WRAPPER.sh" in order to run "SMALL_REGION_IMPUTATION_SGE_WRAPPER.sh" and "SINGLE_SAMPLE_IMPUTATION_SGE_WRAPPER.sh". 
-
