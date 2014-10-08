@@ -183,7 +183,7 @@ unless(-d $temp)
     system("mkdir -p $temp");
 }
 #sorting the input data
-system("sort -k1,1n -k4,4n $inputfile > $temp/input.tped");
+system("sort -T $temp -k1,1n -k4,4n $inputfile > $temp/input.tped");
 
 
 open(BUFF,"$temp/input.tped") or die " no file $temp/input.tped found\n";
