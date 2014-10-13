@@ -61,20 +61,20 @@ print "Chekcing for duplicate rsids and positions.If duplicate rsid is found the
 undef(%sample);
 while(<TPED>)
 {
-        chomp($_);
+    chomp($_);
 	@tped=split(" ",$_);
 	if(exists($rsid{$tped[1]}))
-        {
-                $tped[1]="$tped[1]__$rsid{$tped[1]}";
+    {
+        $tped[1]="$tped[1]__$rsid{$tped[1]}";
 		$rsid{$tped[1]}++;
-        }
-        else
-        {
-                $rsid{$tped[1]}=1;
-        }
-	if(!exists($pos{$tped[3]}))
+	}
+	else
 	{
-		$pos{$tped[3]}=1;
+        $rsid{$tped[1]}=1;
+    }
+	if(!exists($pos{$tped[0].' '.$tped[3]}))
+	{
+		$pos{$tped[0].' '.$tped[3]}=1;
 		$_ = join(" ",@tped);
 		print WRTPED $_."\n";
 	}
