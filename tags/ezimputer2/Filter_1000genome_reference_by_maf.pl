@@ -1,8 +1,10 @@
 #####################################################################################################################################################
-#Purpose: To recreate the new 1000 genome reference with maf base filtering
+#Purpose: To recreate the new 1000 genome reference with maf based filtering (Parallel version per chr)
 #Date: 11-09-2012
 #####################################################################################################################################################
 #!/usr/bin/perl
+use Getopt::Long;
+
 
 #get current directory
 use Cwd 'abs_path';
@@ -13,19 +15,18 @@ pop(@DR_array);
 $dir = join("/",@DR_array);
 
 
-use Getopt::Long;
-
 &Getopt::Long::GetOptions(
 'LMAF=s' => \$lmaf,
 'UMAF=s' => \$umaf,
 'POPULATION=s' => \$pop,
 'REF_GENOME_DIR=s' => \$refdir,
 'OUTPUT_DIR=s' => \$outdir,
-'INCLUDE_POP=s'=> \$include_pop
+'INCLUDE_POP=s'=> \$include_pop,
+'INCHR=s'=> \$inchr
 );
 if($include_pop eq ""  || $refdir eq "" || $outdir eq "" )
 {
-	die "missing arguments\n USAGE : perl Filter_1000genome_reference_by_maf.pl  -INCLUDE_POP <POPULATIONS TO BE INCLUDE IN THE NEW REFERENCE>  -REF_GENOME_DIR <Reference Genome Directory or Path to Metainfo file> -OUTPUT_DIR <OUTPUT DIR>  -LMAF <Lower limit of minor allele frequency for each population (optional)> -UMAF <Upper limit of minor allele frequency for each population (optional)> -POPULATION <Filtering by different population : AFR,AMR,ASN,EUR (optional)>\n";
+	die "missing arguments\n USAGE : perl Filter_1000genome_reference_by_maf.pl  -INCLUDE_POP <POPULATIONS TO BE INCLUDE IN THE NEW REFERENCE>  -REF_GENOME_DIR <Reference Genome Directory or Path to Metainfo file> -OUTPUT_DIR <OUTPUT DIR>  -LMAF <Lower limit of minor allele frequency for each population (optional)> -UMAF <Upper limit of minor allele frequency for each population (optional)> -POPULATION <Filtering by different population : AFR,AMR,ASN,EUR (optional)> -INCHR <CHROMOSOME TO BE PROCESSED optional>\n";
 }
 @include_pop=split(',',$include_pop);
 if($pop eq "")
@@ -63,11 +64,11 @@ print "LMAF : $lmaf\n";
 print "UMAF : $umaf\n";
 print "POPULATION : @pop\n";
 print "REF_GENOME_DIR: $refdir\n";
-print "OUTPUT_DIR : $outdir\n";
 print "INCLUDE_POP : $include_pop\n";
-unless((-d $refdir)||(-f $refdir))
+print "OUTPUT_DIR : $outdir\n";
+if(!(-d $refdir) && !(-f $refdir))
 {
-    print "Directory doesn't exist $refdir\n";
+    print "Directory doesn't exist $reffile_dir\n";
 }
 $refdir =~ s/\/$//g;
 
@@ -113,18 +114,17 @@ else
     die "there is a problem in the ref dir or metainfo file provided. No value for sample\n";
 }
 
-
-
 $outdir =~ s/\/$//g;
 #creating output directory if not exists
 mkdir "$outdir", unless -d "$outdir";
 
 #opening the sample in the impute 1000 genome reference and extracting the columns for population and group
-$file="$refdir/".$ref_meta{"sample"};
-open(SAMP,$file) or die "no sample file found $file\n";
-$basename_samp=`basename $ref_meta{"sample"}`;
-chomp($basename_samp);
-open(WRSAMP,">$outdir/$basename_samp") or die "no sample file found $outdir/$basename_samp\n";
+$file="$reffile_dir/".$ref_meta{"sample"};
+open(SAMP,"$refdir/$file") or die "no sample file found $file\n";
+if(!(-e "$outdir/$ref_meta{'sample'}"))
+{
+	open(WRSAMP,">$outdir/$ref_meta{'sample'}") or die "no sample file found $outdir/$ref_meta{'sample'}\n";
+}
 $samp=<SAMP>;
 print WRSAMP $samp; 
 #print $samp."\n";
@@ -185,8 +185,14 @@ for($i=0;$i<@include_pop;$i++)
 @final_combined = sort {$a <=> $b} @final_combined;
 #die "@final_combined\n";
 #die "$samp_pop hi $samp_group".$pop{"EUR"}."\n";
-for($chr=1;$chr<24;$chr++)
-#for($chr=$inchr;$chr<=$inchr;$chr++)
+#for($chr=1;$chr<24;$chr++)
+$startchr=$inchr;
+if(!defined($inchr))
+{
+	$startchr=1;
+	$inchr=23;	
+}
+for($chr=$startchr;$chr<=$inchr;$chr++)
 {
 	print "dealing with chr $chr\n";
 	$file="$refdir/".$ref_meta{"chr$chr".'_'."hap"};
@@ -207,7 +213,6 @@ for($chr=1;$chr<24;$chr++)
 	open(WRHAP,"| gzip -c > $outdir/$file") or die "unable to write $file\n";
 	$file=$basename_genetic;
 	open(WRGEN,">$outdir/$file") or die "unable to write $file\n";
-
 	$line = <LEGEND>;
 	print WRLEGEND $line;
 	#die "$line\n";

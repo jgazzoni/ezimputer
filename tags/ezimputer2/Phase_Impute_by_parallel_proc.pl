@@ -687,7 +687,10 @@ if(uc($restart_impute) ne "POST")
 					print ARRAY_SHAPEIT "$com -t 1-$count_shapeit_jobs:1\n";
 					print ARRAY_SHAPEIT "$com -M $email\n";
 					print ARRAY_SHAPEIT "$com -m a\n";
-					print ARRAY_SHAPEIT "$com -l loc2tmp=$localtempspace_shapeit\n";
+					if($envr =~ m/SGE_MAYO/i)
+					{
+						print ARRAY_SHAPEIT "$com -l loc2tmp=$localtempspace_shapeit\n";
+					}
 					print ARRAY_SHAPEIT "$com -V\n";
 					print ARRAY_SHAPEIT "$com -cwd\n";
 					if($thread != 0)
@@ -1822,7 +1825,10 @@ if(uc($restart_impute) ne "POST")
 		print ARRAY_SHAPEIT "$com -q $impute_queue\n";
 		print ARRAY_SHAPEIT "$com -l h_vmem=$impute_mem\n";
 		print ARRAY_SHAPEIT "$com -t 1-$count_impute_jobs:1\n";
-		print ARRAY_SHAPEIT "$com -l loc2tmp=$localtempspace_impute\n";
+		if($envr =~ m/SGE_MAYO/i)
+		{
+			print ARRAY_SHAPEIT "$com -l loc2tmp=$localtempspace_impute\n";
+		}
 		print ARRAY_SHAPEIT "$com -M $email\n";
 		print ARRAY_SHAPEIT "$com -m a\n";
 		print ARRAY_SHAPEIT "$com -V\n";
@@ -2192,7 +2198,7 @@ while(<ARRAY_IMPUTE>)
 		{
 			print WRPOST "$sys\n";
 			print WRPOST "$sys_info\n";
-			$sys="gunzip -c $dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob.gz|$PERL -e '".'$prev="";while(<STDIN>){split / /;if($_[1] eq $prev && length($_[3])==1 && length($_[4])==1){next;}else{print $_};$prev=$_[1];}'."' |gzip > $dirtemp/$rounded/$prevchr/Combined_impute_results_4_prob.gz";
+			$sys="gunzip -c $dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob.gz|$PERL -e '".'$prev="";while(<STDIN>){split / /;if($_[2] eq $prev && length($_[3])==$prevl1 && length($_[4])==$prevl2){next;}else{print $_};$prev=$_[2];$prevl1=length($_[3]);$prevl2=length($_[4]);}'."' |gzip > $dirtemp/$rounded/$prevchr/Combined_impute_results_4_prob.gz";
 			print WRPOST "$sys\n";
 			$sys = "mv 	$dirtemp/$rounded/$prevchr/Combined_impute_results_4_prob.gz $dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob.gz";
 			print WRPOST "$sys\n";
@@ -2312,7 +2318,7 @@ if(!(-e "$dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob.gz"))
 {
 	print WRPOST "$sys\n";
 	print WRPOST "$sys_info\n";
-	$sys="gunzip -c $dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob.gz|$PERL -e '".'$prev="";while(<STDIN>){split / /;if($_[1] eq $prev && length($_[3])==1 && length($_[4])==1){next;}else{print $_};$prev=$_[1];}'."' |gzip > $dirtemp/$rounded/$prevchr/Combined_impute_results_4_prob.gz";
+	$sys="gunzip -c $dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob.gz|$PERL -e '". '$prev="";while(<STDIN>){split / /;if($_[2] eq $prev && length($_[3])==$prevl1 && length($_[4])==$prevl2){next;}else{print $_};$prev=$_[2];$prevl1=length($_[3]);$prevl2=length($_[4]);}'."' |gzip > $dirtemp/$rounded/$prevchr/Combined_impute_results_4_prob.gz";
 	print WRPOST "$sys\n";
 	$sys = "mv 	$dirtemp/$rounded/$prevchr/Combined_impute_results_4_prob.gz $dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob.gz";
 	print WRPOST "$sys\n";
@@ -2575,6 +2581,8 @@ else
 {
 	system("mkdir $dirtemp/$rounded/SHAPEIT_OUTPUT");
 	system("mv $dirtemp/$rounded/shapeit_jobs.tar.gz $dirtemp/$rounded/SHAPEIT_OUTPUT");
+	system("mkdir $dirtemp/$rounded/SNPS_NOTIN_REF");
+	system("mv $dirtemp/$rounded/excluded_no_hapmap_processed_beagle_input.tped.gz $dirtemp/$rounded/SNPS_NOTIN_REF");
 	#system("rm $dirtemp/$rounded/post_logfiles_sungrid/*");
 	#system("rm $dirtemp/$rounded/*");
 	#system("rmdir $dirtemp/$rounded/post_logfiles_sungrid");
