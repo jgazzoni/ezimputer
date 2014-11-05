@@ -757,6 +757,10 @@ else
 #reference filtering
 if($MODULES_NEEDED =~ m/REF_FILTER/)
 {
+		
+#this code for paralizing this step
+	if($envr !~ m/SGE_MAYO/i ) 
+	{
 		$sys="$PERL $dir/Filter_1000genome_reference_by_maf.pl -POPULATION $pop -LMAF $lmaf -UMAF $umaf -REF_GENOME_DIR $impute_ref -OUTPUT_DIR $IMP2_OUT_DIR/refdat_filtered  -INCLUDE_POP  $include_pop ";
 		print "$sys\n";
 		$exitcode=system($sys);
@@ -764,20 +768,12 @@ if($MODULES_NEEDED =~ m/REF_FILTER/)
 		{
 			die "command $sys failed\nexitcode $exitcode\n";
 		}
-		$impute_ref="$IMP2_OUT_DIR/refdat_filtered";
-#this code for paralizing this step
-=head
-	if($envr !~ m/SGE/i ) 
-	{
-		$sys="$PERL $dir/Filter_1000genome_reference_by_maf.pl -POPULATION $pop -LMAF $lmaf -UMAF $umaf -REF_GENOME_DIR $impute_ref -OUTPUT_DIR $IMP2_OUT_DIR/refdat_filtered  -INCLUDE_POP  $include_pop ";
-		print "$sys\n";
-		system($sys);
 		
 	}
 	else
 	{
 		system("mkdir $IMP2_OUT_DIR/Parallel_ref_filter_sgelog");
-		open(ARRAY_SHAPEIT,"$IMP2_OUT_DIR/Parallel_ref_filter.csh")  or die "no file found $IMP2_OUT_DIR/Parallel_ref_filter.csh\n";
+		open(ARRAY_SHAPEIT,">$IMP2_OUT_DIR/Parallel_ref_filter.csh")  or die "no file found $IMP2_OUT_DIR/Parallel_ref_filter.csh\n";
 		$com = '#!';
 		print ARRAY_SHAPEIT "$com $SH\n";
 		$com = '#$';
@@ -788,12 +784,19 @@ if($MODULES_NEEDED =~ m/REF_FILTER/)
 		print ARRAY_SHAPEIT "$com -m a\n";
 		print ARRAY_SHAPEIT "$com -e $IMP2_OUT_DIR/Parallel_ref_filter_sgelog\n";
 		print ARRAY_SHAPEIT "$com -o $IMP2_OUT_DIR/Parallel_ref_filter_sgelog\n";
-		$sys="$PERL $dir/Filter_1000genome_reference_by_maf.pl -POPULATION $pop -LMAF $lmaf -UMAF $umaf -REF_GENOME_DIR $impute_ref -OUTPUT_DIR $IMP2_OUT_DIR/refdat_filtered  -INCLUDE_POP  $include_pop -INCHR $SGE_TASK_ID";
-		print ARRAY_SHAPEIT) "$sys\n";
+		$sys="$PERL $dir/Filter_1000genome_reference_by_maf.pl -POPULATION $pop -LMAF $lmaf -UMAF $umaf -REF_GENOME_DIR $impute_ref -OUTPUT_DIR $IMP2_OUT_DIR/refdat_filtered  -INCLUDE_POP  $include_pop -INCHR ".'$SGE_TASK_ID';
+		print ARRAY_SHAPEIT "$sys\n";
 		close(ARRAY_SHAPEIT);
+		$jobid=`$QSUB $IMP2_OUT_DIR/Parallel_ref_filter.csh`;
+		chomp($jobid);
+		
+		#readin job id from submit_shapeit
+		@shapeit =split(" ",$jobid);
+		@shapeit1 =split(/\./,$shapeit[2]);
+		print "JOB ID extracted: $shapeit1[0]\n";
 		#system($sys);
 	}
-=cut
+	$impute_ref="$IMP2_OUT_DIR/refdat_filtered";
 }
 
 #imputation
@@ -855,13 +858,39 @@ if($MODULES_NEEDED =~ m/IMPUTE/)
 	print WR_QC_TOOL "STRUCTURE_PARAM=$STRUCTURE_PARAM\n";
 	close(WR_QC_TOOL);
 	open(ARRAY_SHAPEIT,">$IMP2_OUT_DIR/Impute_Submit.csh")  or die "no file found $IMP2_OUT_DIR/Impute_Submit.csh\n";
+	if($MODULES_NEEDED =~ m/REF_FILTER/ && $envr =~ m/SGE_MAYO/i)
+	{	
+		$com = '#!';
+		print ARRAY_SHAPEIT "$com $SH\n";
+		$com = '#$';
+		print ARRAY_SHAPEIT "$com -q $shapeit_queue\n";
+		print ARRAY_SHAPEIT "$com -l h_vmem=$shapeit_mem\n";
+		print ARRAY_SHAPEIT "$com -M $email\n";
+		print ARRAY_SHAPEIT "$com -m a\n";
+		print ARRAY_SHAPEIT "$com -hold_jid $shapeit1[0]\n";
+		print ARRAY_SHAPEIT "$com -V\n";
+		print ARRAY_SHAPEIT "$com -e $IMP2_OUT_DIR\n";
+		print ARRAY_SHAPEIT "$com -o $IMP2_OUT_DIR\n";
+	}
 	$sys="$PERL $dir/Phase_Impute_by_parallel_proc.pl  -run_config $IMP2_OUT_DIR/Impute_run.cfg -tool_config $IMP2_OUT_DIR/Impute_tool.cfg";
 	print ARRAY_SHAPEIT "$sys\n";
 	close(ARRAY_SHAPEIT);
-	$sys="sh $IMP2_OUT_DIR/Impute_Submit.csh";
-	$exitcode=system("sh $IMP2_OUT_DIR/Impute_Submit.csh");
-	if($exitcode != 0)
-	{
-		die "command $sys failed\nexitcode $exitcode\n";
+	if($MODULES_NEEDED =~ m/REF_FILTER/ && $envr =~ m/SGE_MAYO/i)
+	{	
+		$jobid=`$QSUB $IMP2_OUT_DIR/Impute_Submit.csh`;
+		chomp($jobid);
+		#readin job id from submit_shapeit
+		@shapeit =split(" ",$jobid);
+		@shapeit1 =split(/\./,$shapeit[2]);
+		print "JOB ID extracted: $shapeit1[0]\n";
 	}
+	else
+	{	
+		$sys="sh $IMP2_OUT_DIR/Impute_Submit.csh";
+		$exitcode=system("sh $IMP2_OUT_DIR/Impute_Submit.csh");
+		if($exitcode != 0)
+		{
+			die "command $sys failed\nexitcode $exitcode\n";
+		}
+	}	
 }
