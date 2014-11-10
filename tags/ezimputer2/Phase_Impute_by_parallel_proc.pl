@@ -700,7 +700,7 @@ if(uc($restart_impute) ne "POST")
 					print ARRAY_SHAPEIT "$com -e $dirtemp/$rounded/shapeit_logfiles_sungrid\n";
 					print ARRAY_SHAPEIT "$com -o $dirtemp/$rounded/shapeit_logfiles_sungrid\n";
 					print ARRAY_SHAPEIT "$com -notify\n";
-					$temp = 'tmp='.$local_temp.'/'.$username.'/`expr $RANDOM \* $RANDOM`';
+					$temp = 'tmp='.$local_temp.'/'.$username.'/`perl -e "print int(rand()*rand()*100000000)"`';
 					print ARRAY_SHAPEIT "$temp\n";
 					print ARRAY_SHAPEIT 'cleanup () {'."\n";
 					print ARRAY_SHAPEIT 'rm -f $tmp/*'."\n";
@@ -810,7 +810,7 @@ if(uc($restart_impute) ne "POST")
 					}
 					print ARRAY_SHAPEIT 'for SGE_TASK_ID in {1..'.$count_shapeit_jobs.'}'."\n";
 					print ARRAY_SHAPEIT 'do'."\n";
-					$temp = 'tmp='.$local_temp.'/'.$username.'/`expr $RANDOM \* $RANDOM`';
+					$temp = 'tmp='.$local_temp.'/'.$username.'/`perl -e "print int(rand()*rand()*100000000)"`';
 					print ARRAY_SHAPEIT "$temp\n";
 					$temp = 'mkdir -p $tmp';
 					print ARRAY_SHAPEIT "$temp\n";
@@ -1839,7 +1839,7 @@ if(uc($restart_impute) ne "POST")
 		#print ARRAY_SHAPEIT "$temp\n";
 		#$temp = 'mkdir $tmp';
 		print ARRAY_SHAPEIT "$com -notify\n";
-		$temp = 'tmp='.$local_temp.'/'.$username.'/`expr $RANDOM \* $RANDOM`';
+		$temp = 'tmp='.$local_temp.'/'.$username.'/`perl -e "print int(rand()*rand()*100000000)"`';
 		print ARRAY_SHAPEIT "date\n";
 		print ARRAY_SHAPEIT "$temp\n";
 		print ARRAY_SHAPEIT 'cleanup () {'."\n";
@@ -1910,7 +1910,7 @@ if(uc($restart_impute) ne "POST")
 	{
 		print ARRAY_SHAPEIT 'for SGE_TASK_ID in {1..'.$count_impute_jobs.'}'."\n";
 		print ARRAY_SHAPEIT 'do'."\n";
-		$temp = 'tmp='.$local_temp.'/'.$username.'/`expr $RANDOM \* $RANDOM`';
+		$temp = 'tmp='.$local_temp.'/'.$username.'/`perl -e "print int(rand()*rand()*100000000)"`';
 		print ARRAY_SHAPEIT "date\n";
 		print ARRAY_SHAPEIT "$temp\n";
 		$temp = 'mkdir -p $tmp';

@@ -102,7 +102,7 @@ while(<INPUT>)
 	{
 		next;
 	}
-	#print "$rsid_tped\t$pos_tped\n";
+	#print "$rsid_tped\t$pos_tped\t$pos kk\n";
 	#reading dosage file
 	while($pos_tped ne $pos)
 	{
@@ -162,6 +162,12 @@ while(<INPUT>)
 	$line = <AMBI>;
 	if($line !~ m/\w/)
 	{
+		#this is to check both input tped and impute output EOF
+		$linetest=<INPUT>;
+		if($linetest !~ m/\w/)
+		{
+			next;
+		}	
 		system("rm $dos_out");
 		die "EOF in the file Combined_impute_results_3_prob_ambi_out.gz,check for duplicate positions in the ind.tped.gz\n";
 	}
