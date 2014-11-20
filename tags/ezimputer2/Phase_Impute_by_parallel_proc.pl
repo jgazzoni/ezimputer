@@ -2198,7 +2198,7 @@ while(<ARRAY_IMPUTE>)
 		{
 			print WRPOST "$sys\n";
 			print WRPOST "$sys_info\n";
-			$sys="gunzip -c $dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob.gz|$PERL -e '".'$prev="";while(<STDIN>){split / /;if($_[2] eq $prev && length($_[3])==$prevl1 && length($_[4])==$prevl2){next;}else{print $_};$prev=$_[2];$prevl1=length($_[3]);$prevl2=length($_[4]);}'."' |gzip > $dirtemp/$rounded/$prevchr/Combined_impute_results_4_prob.gz";
+			$sys="gunzip -c $dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob.gz|$PERL -e '".'$prev="";while(<STDIN>){split / /;if($_[2] eq $prev && $_[3] eq $prevl1 && $_[4] eq $prevl2){next;}else{print $_};$prev=$_[2];$prevl1=$_[3];$prevl2=$_[4];}'."' |gzip > $dirtemp/$rounded/$prevchr/Combined_impute_results_4_prob.gz";
 			print WRPOST "$sys\n";
 			$sys = "mv 	$dirtemp/$rounded/$prevchr/Combined_impute_results_4_prob.gz $dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob.gz";
 			print WRPOST "$sys\n";
@@ -2318,7 +2318,7 @@ if(!(-e "$dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob.gz"))
 {
 	print WRPOST "$sys\n";
 	print WRPOST "$sys_info\n";
-	$sys="gunzip -c $dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob.gz|$PERL -e '". '$prev="";while(<STDIN>){split / /;if($_[2] eq $prev && length($_[3])==$prevl1 && length($_[4])==$prevl2){next;}else{print $_};$prev=$_[2];$prevl1=length($_[3]);$prevl2=length($_[4]);}'."' |gzip > $dirtemp/$rounded/$prevchr/Combined_impute_results_4_prob.gz";
+	$sys="gunzip -c $dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob.gz|$PERL -e '". '$prev="";while(<STDIN>){split / /;if($_[2] eq $prev && $_[3] eq $prevl1 && $_[4] eq $prevl2){next;}else{print $_};$prev=$_[2];$prevl1=$_[3];$prevl2=$_[4];}'."' |gzip > $dirtemp/$rounded/$prevchr/Combined_impute_results_4_prob.gz";
 	print WRPOST "$sys\n";
 	$sys = "mv 	$dirtemp/$rounded/$prevchr/Combined_impute_results_4_prob.gz $dirtemp/$rounded/$prevchr/Combined_impute_results_3_prob.gz";
 	print WRPOST "$sys\n";
