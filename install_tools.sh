@@ -386,7 +386,7 @@ echo "SH=${SH}" >> $TOOLINFOFILE
 chmod -R 755 $EZIMPUTER/
 else
 
-echo "usage: install_tools.sh <path_to_install_directory> <PATH & NAME TO CREATE TOOL INFO FILE>"
+echo "usage: install_tools.sh <Full path_to_install_directory> <PATH & NAME TO CREATE TOOL INFO FILE>"
 fi
 
 #Once you are done with downloading next step is to create the tool info config file (here). 

@@ -39,13 +39,9 @@ my $shapeit_mem = $config{"SGE_SHAPEIT_MEM"};
 my $shapeit_queue = $config{"SGE_SHAPEIT_QUEUE"};
 my $impute_mem = $config{"SGE_IMPUTE_MEM"};
 my $impute_queue = $config{"SGE_IMPUTE_QUEUE"};
-my $localtempspace_shapeit = $config{"LOCALTEMP_SHAPEIT"};
-my $localtempspace_impute = $config{"LOCALTEMP_IMPUTE"};
 my $rounded = $config{"INNER_DIR"};
 my $restart_impute = $config{"RESTART"};
-my $username = $config{"USERNAME"};
 my $shapit_only = $config{"SHAPEITONLY"};
-my $local_temp=$config{"LOCALTEMP"};
 my $shapeit_states_param=$config{"SHAPEIT_EXTRA_PARAM"};
 my $envr=$config{"ENVR"};
 my $pbs_option=$config{"PBS_PARAM"};
@@ -55,7 +51,7 @@ my $small_region_extn_stop=$config{"SMALL_REGION_EXTN_STOP"};
 my $cutoff =$config{"WINDOW_CUTOFF_NUM_MARKERS"};
 my $edge_cutoff=$config{"EDGE_CUTOFF_NUM_MARKERS"};
 my $less_num_samp=$config{"LESS_NUM_SAMP"};
-#my $edge_cutoff=$config{"POP"};
+my $CHECK_POINT_STOP=$config{"CHECK_POINT_STOP"};
 
 #reading tool info parameters
 getDetails($toolconfig);
@@ -78,13 +74,9 @@ $impute_edge=~ s/\s|\t|\r|\n//g;
 $haps=~ s/\s|\t|\r|\n//g;
 $email=~ s/\s|\t|\r|\n//g;
 $less_num_samp=~ s/\s|\t|\r|\n//g;
-$localtempspace_shapeit=~ s/\s|\t|\r|\n//g;
-$localtempspace_impute=~ s/\s|\t|\r|\n//g;
 $rounded=~ s/\s|\t|\r|\n//g;
 $restart_impute=~ s/\s|\t|\r|\n//g;
-$username=~ s/\s|\t|\r|\n//g;
 $shapit_only=~ s/\s|\t|\r|\n//g;
-$local_temp=~ s/\s|\t|\r|\n//g;
 $shapeit_states_param=~ s/\t|\r|\n//g;
 $envr=~ s/\s|\t|\r|\n//g;
 $chr_start_input=~ s/\s|\t|\r|\n//g;
@@ -92,7 +84,6 @@ $small_region_extn_start=~ s/\s|\t|\r|\n//g;
 $small_region_extn_stop=~ s/\s|\t|\r|\n//g;
 $cutoff=~ s/\s|\t|\r|\n//g;
 $edge_cutoff=~ s/\s|\t|\r|\n//g;
-$local_temp =~ s/\/$//g;
 
 if($envr =~ m/SGE/i)
 {
@@ -131,13 +122,9 @@ print "IMPUTE_EDGE: $impute_edge\n";
 print "HAPS: $haps\n";
 print "EMAIL: $email\n"; 
 print "LESS_NUM_SAMP: $less_num_samp\n";
-print "Local tempspace for impute $localtempspace_impute\n";
-print "Local tempspace for shapeit $localtempspace_shapeit\n";
 print "ROUNDED $rounded\n";
 print "IMPUTE_RESTART : $restart_impute\n";
-print "USERNAME : $username\n";
 print "SHAPEIT ONLY : $shapit_only\n";
-print "LOCALTEMP : $local_temp\n";
 print "SHAPEIT_EXTRA_PARAM : $shapeit_states_param\n";
 print "ENVR : $envr\n";
 if($envr =~ m/SGE/i)
@@ -234,18 +221,9 @@ if($shapeit_states_param eq "")
 {
 	die "input argument SHAPEIT_EXTRA_PARAM :$shapeit_states_param is empty. please correct arguments and retry\n";
 }
-if($local_temp eq "")
-{
-	die "input argument LOCALTEMP :$local_temp is empty. please correct arguments and retry\n";
-}
 if($shapit_only eq "")
 {
 	die "input argument SHAPEIT ONLY :$shapit_only is empty. please correct arguments and retry\n";
-}
-
-if($username eq "")
-{
-	die "input argument USERNAME :$username is empty. please correct arguments and retry\n";
 }
 if($dirtemp eq "")
 {
@@ -279,10 +257,7 @@ if($email eq "")
 {
 	die "input argument EMAIL :$email is empty. please correct arguments and retry\n";
 }
-#if($edge_cutoff eq "" | $cutoff eq "" | $chr_start_input eq "" | $shapeit_states_param eq "" |$local_temp eq "" | $shapit_only eq "" | $username eq "" |$dirtemp eq "" | $tped eq "" | $tfam eq ""  | $impute_ref eq "" | $impute_window eq "" | $impute_edge eq "" | $haps eq "" | $email eq "" )
-# {
-#	die "input arguments empty please correct arguments and retry\n";
-# }
+
 
   
  if(!(-e $tped) | !(-e $tfam))
@@ -687,10 +662,6 @@ if(uc($restart_impute) ne "POST")
 					print ARRAY_SHAPEIT "$com -t 1-$count_shapeit_jobs:1\n";
 					print ARRAY_SHAPEIT "$com -M $email\n";
 					print ARRAY_SHAPEIT "$com -m a\n";
-					if($envr =~ m/SGE_MAYO/i)
-					{
-						print ARRAY_SHAPEIT "$com -l loc2tmp=$localtempspace_shapeit\n";
-					}
 					print ARRAY_SHAPEIT "$com -V\n";
 					print ARRAY_SHAPEIT "$com -cwd\n";
 					if($thread != 0)
@@ -699,22 +670,10 @@ if(uc($restart_impute) ne "POST")
 					}
 					print ARRAY_SHAPEIT "$com -e $dirtemp/$rounded/shapeit_logfiles_sungrid\n";
 					print ARRAY_SHAPEIT "$com -o $dirtemp/$rounded/shapeit_logfiles_sungrid\n";
-					print ARRAY_SHAPEIT "$com -notify\n";
-					$temp = 'tmp='.$local_temp.'/'.$username.'/`perl -e "print int(rand()*rand()*100000000)"`';
+					$temp = 'k1'.'=`cat  '."$dirtemp/$rounded/$input_shapeit_jobids_gunzip".' |head -$SGE_TASK_ID |tail -1`';
 					print ARRAY_SHAPEIT "$temp\n";
-					print ARRAY_SHAPEIT 'cleanup () {'."\n";
-					print ARRAY_SHAPEIT 'rm -f $tmp/*'."\n";
-					print ARRAY_SHAPEIT 'rmdir --ignore-fail-on-non-empty $tmp/'."\n";
-					print ARRAY_SHAPEIT '}'."\n";
-					print ARRAY_SHAPEIT "trap 'cleanup' USR1 USR2 EXIT\n";
-					$temp = 'mkdir -p $tmp';
+					$temp = 'cd $k1';
 					print ARRAY_SHAPEIT "$temp\n";
-					$temp = 'cd $tmp';
-					print ARRAY_SHAPEIT "$temp\n";
-					print ARRAY_SHAPEIT 't1=`pwd`'."\n";
-					print ARRAY_SHAPEIT 't2=`uname -n`'."\n";
-					print ARRAY_SHAPEIT 't3="$t1 $t2"'."\n";
-					print ARRAY_SHAPEIT 'echo $t3 > '."$dirtemp/$rounded/shapeit_system\n";
 					if($less_num_samp =~  m/YES/i)
 					{	
 						$temp = 'k=`cat  '."$dirtemp/$rounded/$input_shapeit_jobids".' |head -$SGE_TASK_ID |tail -1`';
@@ -744,15 +703,6 @@ if(uc($restart_impute) ne "POST")
 						print ARRAY_SHAPEIT "$temp";
 					}
 					$temp='gzip snps_chr*.haps';
-					print ARRAY_SHAPEIT "$temp\n";
-					print ARRAY_SHAPEIT "wait\n";
-					$temp = 'k1'.'=`cat  '."$dirtemp/$rounded/$input_shapeit_jobids_gunzip".' |head -$SGE_TASK_ID |tail -1`';
-					print ARRAY_SHAPEIT "$temp\n";
-					$temp = 'mv snps_chr* $k1';
-					print ARRAY_SHAPEIT "$temp\n";
-					$temp = 'rm -f $tmp/*';
-					print ARRAY_SHAPEIT "$temp\n";
-					$temp = 'rmdir --ignore-fail-on-non-empty $tmp/';
 					print ARRAY_SHAPEIT "$temp\n";
 					$temp = 'echo $SGE_TASK_ID >>'."$dirtemp/$rounded/shapeit_check_jobs\n";
 					print ARRAY_SHAPEIT "$temp\n";
@@ -778,21 +728,39 @@ if(uc($restart_impute) ne "POST")
 					#print ARRAY_SHAPEIT "$com -A bf0\n";
 					print ARRAY_SHAPEIT "$com -e $dirtemp/$rounded/shapeit_logfiles_sungrid\n";
 					print ARRAY_SHAPEIT "$com -o $dirtemp/$rounded/shapeit_logfiles_sungrid\n";
+					$temp = 'k1'.'=`cat  '."$dirtemp/$rounded/$input_shapeit_jobids_gunzip".' |head -$PBS_ARRAYID |tail -1`';
+					print ARRAY_SHAPEIT "$temp\n";
+					$temp = 'cd $k1';
+					print ARRAY_SHAPEIT "$temp\n";
 					if($less_num_samp =~  m/YES/i)
 					{	
-						$temp = "$SHAPEIT ".'`cat  '."$dirtemp/$rounded/$input_shapeit_jobids".' |head -${PBS_ARRAYID} |tail -1|awk -F \'___\' \'{print $1}\'`'."\n";
+						$temp = 'k=`cat  '."$dirtemp/$rounded/$input_shapeit_jobids".' |head -$PBS_ARRAYID |tail -1`';
 						print ARRAY_SHAPEIT "$temp\n";
-						$temp = "$SHAPEIT ".'`cat  '."$dirtemp/$rounded/$input_shapeit_jobids".' |head -${PBS_ARRAYID} |tail -1|awk -F \'___\' \'{print $2}\'`'."\n";
+						$temp = 'ks1=`echo  $k|awk -F "___" \'{print $1}\'`';
 						print ARRAY_SHAPEIT "$temp\n";
-						
+						$temp = "$SHAPEIT ".'$ks1 '."\n";
+						print ARRAY_SHAPEIT "$temp";
+						$temp = 'align=`echo $ks1|tr \' \' \'\n\'|grep alignments`'."\n";
+						print ARRAY_SHAPEIT "$temp\n";
+						$temp = 'touch $align.snp.strand.exclude'."\n";
+						print ARRAY_SHAPEIT "$temp\n";
+						$temp = 'ks3=`echo  $k|awk -F "___" \'{print $2}\'`';
+						print ARRAY_SHAPEIT "$temp\n";
+						$temp = '$ks3 '."\n";
+						print ARRAY_SHAPEIT "$temp";
+						$temp = 'ks2=`echo  $k|awk -F "___" \'{print $3}\'`';
+						print ARRAY_SHAPEIT "$temp\n";
+						$temp = "$SHAPEIT ".'$ks2 '."\n";
+						print ARRAY_SHAPEIT "$temp";
 					}
 					else
 					{
-						$temp = "$SHAPEIT ".'`cat  '."$dirtemp/$rounded/$input_shapeit_jobids".' |head -${PBS_ARRAYID} |tail -1`'."\n";
+						$temp = 'k=`cat  '."$dirtemp/$rounded/$input_shapeit_jobids".' |head -$PBS_ARRAYID |tail -1`';
 						print ARRAY_SHAPEIT "$temp\n";
-							
+						$temp = "$SHAPEIT ".'$k '."\n";
+						print ARRAY_SHAPEIT "$temp";
 					}
-					$temp='gzip '.'`cat  '."$dirtemp/$rounded/$input_shapeit_jobids_gunzip".' |head -${PBS_ARRAYID} |tail -1`'.'snps_chr*.haps';
+					$temp='gzip snps_chr*.haps';
 					print ARRAY_SHAPEIT "$temp\n";
 					$temp = 'echo ${PBS_ARRAYID} >>'."$dirtemp/$rounded/shapeit_check_jobs\n";
 					print ARRAY_SHAPEIT "$temp\n";
@@ -810,30 +778,12 @@ if(uc($restart_impute) ne "POST")
 					}
 					print ARRAY_SHAPEIT 'for SGE_TASK_ID in {1..'.$count_shapeit_jobs.'}'."\n";
 					print ARRAY_SHAPEIT 'do'."\n";
-					$temp = 'tmp='.$local_temp.'/'.$username.'/`perl -e "print int(rand()*rand()*100000000)"`';
+					$temp = 'k1'.'=`cat  '."$dirtemp/$rounded/$input_shapeit_jobids_gunzip".' |head -$SGE_TASK_ID |tail -1`';
 					print ARRAY_SHAPEIT "$temp\n";
-					$temp = 'mkdir -p $tmp';
-					print ARRAY_SHAPEIT "$temp\n";
-					$temp = 'cd $tmp';
+					$temp = 'cd $k1';
 					print ARRAY_SHAPEIT "$temp\n";
 					if($less_num_samp =~  m/YES/i)
 					{	
-					
-			#			$temp = 'k=`cat  '."$dirtemp/$rounded/$input_shapeit_jobids".' |head -$SGE_TASK_ID |tail -1`';
-			#			print ARRAY_SHAPEIT "$temp\n";
-			#			$temp = 'ks1=`echo  $k|awk -F "___" \'{print $1}\'`';
-			#			print ARRAY_SHAPEIT "$temp\n";
-			#			$temp = "$SHAPEIT ".'$ks1 '."\n";
-			#			print ARRAY_SHAPEIT "$temp";
-			#			$temp = 'align=`echo $ks1|tr \' \' \'\n\'|grep alignments`'."\n";
-			#			print ARRAY_SHAPEIT "$temp\n";
-			#			$temp = 'touch $align.snp.strand.exclude'."\n";
-			#			print ARRAY_SHAPEIT "$temp\n";
-			#			$temp = 'ks2=`echo  $k|awk -F "___" \'{print $2}\'`';
-			#			print ARRAY_SHAPEIT "$temp\n";
-			#			$temp = "$SHAPEIT ".'$ks2 '."\n";
-			#			print ARRAY_SHAPEIT "$temp";
-						
 						$temp = 'k=`cat  '."$dirtemp/$rounded/$input_shapeit_jobids".' |head -$SGE_TASK_ID |tail -1`';
 						print ARRAY_SHAPEIT "$temp\n";
 						$temp = 'ks1=`echo  $k|awk -F "___" \'{print $1}\'`';
@@ -852,7 +802,6 @@ if(uc($restart_impute) ne "POST")
 						print ARRAY_SHAPEIT "$temp\n";
 						$temp = "$SHAPEIT ".'$ks2 '."\n";
 						print ARRAY_SHAPEIT "$temp";
-					
 					}
 					else
 					{
@@ -863,18 +812,13 @@ if(uc($restart_impute) ne "POST")
 					}
 					$temp='gzip snps_chr*.haps';
 					print ARRAY_SHAPEIT "$temp\n";
-					print ARRAY_SHAPEIT "wait\n";
-					$temp = 'k1'.'=`cat  '."$dirtemp/$rounded/$input_shapeit_jobids_gunzip".' |head -$SGE_TASK_ID |tail -1`';
-					print ARRAY_SHAPEIT "$temp\n";
-					$temp = 'mv snps_chr* $k1';
-					print ARRAY_SHAPEIT "$temp\n";
-					$temp = 'rm -f $tmp/*';
-					print ARRAY_SHAPEIT "$temp\n";
-					$temp = 'rmdir --ignore-fail-on-non-empty $tmp';
-					print ARRAY_SHAPEIT "$temp\n";
 					$temp = 'echo $SGE_TASK_ID >>'."$dirtemp/$rounded/shapeit_check_jobs\n";
 					print ARRAY_SHAPEIT "$temp\n";
 					print ARRAY_SHAPEIT 'done'."\n";
+				}
+				if($CHECK_POINT_STOP eq "SHAPEIT")
+				{
+					die "Selected option CHECK_POINT_STOP=SHAPEIT.See manual for more details\n";
 				}
 				#submitting and storing the job id
 				if($envr =~ m/SGE/i)
@@ -1350,7 +1294,7 @@ if(uc($restart_impute) ne "POST")
 					@array = split(" ",$_);
 					if(!exists($xchr{$array[1]}))
 					{
-						die "plink file doesn't match with shapeit program output sample file\n";
+						die "plink file doesn't match with shapeit program output sample file $array[1]\n";
 					}
 					print WRXCHR "$_ $xchr{$array[1]}\n";
 				}
@@ -1825,54 +1769,25 @@ if(uc($restart_impute) ne "POST")
 		print ARRAY_SHAPEIT "$com -q $impute_queue\n";
 		print ARRAY_SHAPEIT "$com -l h_vmem=$impute_mem\n";
 		print ARRAY_SHAPEIT "$com -t 1-$count_impute_jobs:1\n";
-		if($envr =~ m/SGE_MAYO/i)
-		{
-			print ARRAY_SHAPEIT "$com -l loc2tmp=$localtempspace_impute\n";
-		}
 		print ARRAY_SHAPEIT "$com -M $email\n";
 		print ARRAY_SHAPEIT "$com -m a\n";
 		print ARRAY_SHAPEIT "$com -V\n";
 		print ARRAY_SHAPEIT "$com -cwd\n";
 		print ARRAY_SHAPEIT "$com -e $dirtemp/$rounded/impute_logfiles_sungrid\n";
 		print ARRAY_SHAPEIT "$com -o $dirtemp/$rounded/impute_logfiles_sungrid\n";
-		#$temp = 'tmp=/local2/tmp/`expr $RANDOM \* $RANDOM`';
-		#print ARRAY_SHAPEIT "$temp\n";
-		#$temp = 'mkdir $tmp';
-		print ARRAY_SHAPEIT "$com -notify\n";
-		$temp = 'tmp='.$local_temp.'/'.$username.'/`perl -e "print int(rand()*rand()*100000000)"`';
 		print ARRAY_SHAPEIT "date\n";
-		print ARRAY_SHAPEIT "$temp\n";
-		print ARRAY_SHAPEIT 'cleanup () {'."\n";
-		print ARRAY_SHAPEIT 'rm  -f $tmp/*'."\n";
-		print ARRAY_SHAPEIT 'rmdir --ignore-fail-on-non-empty $tmp'."\n";
-		print ARRAY_SHAPEIT '}'."\n";
-		print ARRAY_SHAPEIT "trap 'cleanup' USR1 USR2 EXIT\n";
-		$temp = 'mkdir -p $tmp';
-		print ARRAY_SHAPEIT "$temp\n";
-		$temp = 'cd $tmp';
-		print ARRAY_SHAPEIT "$temp\n";
-		print ARRAY_SHAPEIT 't1=`pwd`'."\n";
-		print ARRAY_SHAPEIT 't2=`uname -n`'."\n";
-		print ARRAY_SHAPEIT 't3="$t1 $t2"'."\n";
-		print ARRAY_SHAPEIT 'echo $t3 >> '."$dirtemp/$rounded/impute_system\n";
-		$temp = 'k=`cat  '."$dirtemp/$rounded/$input_impute_jobids".' |head -$SGE_TASK_ID |tail -1`';
-		print ARRAY_SHAPEIT "$temp\n";
-		$temp = "$IMPUTE ".'$k -seed 123456789 '."\n";
-		print ARRAY_SHAPEIT "$temp\n";
-		#$temp = '$k1'."\n";
-		$temp = 'gzip impute_out_*';
-		print ARRAY_SHAPEIT "$temp\n";
-		print ARRAY_SHAPEIT "wait\n";
+		
 		$temp = 'k1'.'=`cat  '."$dirtemp/$rounded/$input_impute_jobids_gunzip".' |head -$SGE_TASK_ID |tail -1`';
 		print ARRAY_SHAPEIT "$temp\n";
-		$temp = 'mv impute_out_*.gz $k1';
+		$temp = 'cd $k1';
 		print ARRAY_SHAPEIT "$temp\n";
-		$temp = 'rm  -f $tmp/*';
+		
+		print ARRAY_SHAPEIT 'echo ${SGE_TASK_ID}'."\n";
+		$temp = "$IMPUTE ".'`cat  '."$dirtemp/$rounded/$input_impute_jobids".' |head -${SGE_TASK_ID} |tail -1`'."\n";
 		print ARRAY_SHAPEIT "$temp\n";
-		$temp = 'rmdir --ignore-fail-on-non-empty $tmp';
+		$temp='gzip '.'`cat  '."$dirtemp/$rounded/$input_impute_jobids_gunzip".' |head -${SGE_TASK_ID} |tail -1`'.'/'.'`cat  '."$dirtemp/$rounded/$input_impute_jobids".' |head -${SGE_TASK_ID} |tail -1|rev|cut -f1 -d " "|rev`*';
 		print ARRAY_SHAPEIT "$temp\n";
-		#$temp = "cp $dirtemp/$rounded/ArrayJob_file_shapeit ".'`cat  '."$dirtemp/$rounded/$input_impute_jobids_gunzip".' |head -$SGE_TASK_ID |tail -1`'."/waiting.txt\n";
-		$temp = 'echo $SGE_TASK_ID >>'."$dirtemp/$rounded/impute_check_jobs\n";
+		$temp = 'echo ${SGE_TASK_ID} >>'."$dirtemp/$rounded/impute_check_jobs\n";
 		print ARRAY_SHAPEIT "$temp\n";
 		print ARRAY_SHAPEIT "date\n";
 	}
@@ -1896,11 +1811,17 @@ if(uc($restart_impute) ne "POST")
 		print ARRAY_SHAPEIT "$com -e $dirtemp/$rounded/impute_logfiles_sungrid\n";
 		print ARRAY_SHAPEIT "$com -o $dirtemp/$rounded/impute_logfiles_sungrid\n";
 		print ARRAY_SHAPEIT "date\n";
+		
+		$temp = 'k1'.'=`cat  '."$dirtemp/$rounded/$input_impute_jobids_gunzip".' |head -$SGE_TASK_ID |tail -1`';
+		print ARRAY_SHAPEIT "$temp\n";
+		$temp = 'cd $k1';
+		print ARRAY_SHAPEIT "$temp\n";
+		
 		#print ARRAY_SHAPEIT  'kk1=`echo ${PBS_ARRAYID}|$PERL -e \'$k=<STDIN>;chomp($k);if($k =~ m/-/){@a=split("-",$k);print $a[1]}else{print $k}\'`'."\n";
 		print ARRAY_SHAPEIT 'echo ${PBS_ARRAYID}'."\n";
 		$temp = "$IMPUTE ".'`cat  '."$dirtemp/$rounded/$input_impute_jobids".' |head -${PBS_ARRAYID} |tail -1`'."\n";
 		print ARRAY_SHAPEIT "$temp\n";
-		$temp='gzip '.'`cat  '."$dirtemp/$rounded/$input_impute_jobids_gunzip".' |head -${PBS_ARRAYID} |tail -1`'.'*';
+		$temp='gzip '.'`cat  '."$dirtemp/$rounded/$input_impute_jobids_gunzip".' |head -${SGE_TASK_ID} |tail -1`'.'/'.'`cat  '."$dirtemp/$rounded/$input_impute_jobids".' |head -${SGE_TASK_ID} |tail -1|rev|cut -f1 -d " "|rev`*';
 		print ARRAY_SHAPEIT "$temp\n";
 		$temp = 'echo ${PBS_ARRAYID} >>'."$dirtemp/$rounded/impute_check_jobs\n";
 		print ARRAY_SHAPEIT "$temp\n";
@@ -1910,35 +1831,19 @@ if(uc($restart_impute) ne "POST")
 	{
 		print ARRAY_SHAPEIT 'for SGE_TASK_ID in {1..'.$count_impute_jobs.'}'."\n";
 		print ARRAY_SHAPEIT 'do'."\n";
-		$temp = 'tmp='.$local_temp.'/'.$username.'/`perl -e "print int(rand()*rand()*100000000)"`';
 		print ARRAY_SHAPEIT "date\n";
-		print ARRAY_SHAPEIT "$temp\n";
-		$temp = 'mkdir -p $tmp';
-		print ARRAY_SHAPEIT "$temp\n";
-		$temp = 'cd $tmp';
-		print ARRAY_SHAPEIT "$temp\n";
-		print ARRAY_SHAPEIT 't1=`pwd`'."\n";
-		print ARRAY_SHAPEIT 't2=`uname -n`'."\n";
-		print ARRAY_SHAPEIT 't3="$t1 $t2"'."\n";
-		print ARRAY_SHAPEIT 'echo $t3 >> '."$dirtemp/$rounded/impute_system\n";
-		$temp = 'k=`cat  '."$dirtemp/$rounded/$input_impute_jobids".' |head -$SGE_TASK_ID |tail -1`';
-		print ARRAY_SHAPEIT "$temp\n";
-		$temp = "$IMPUTE ".'$k -seed 123456789 '."\n";
-		print ARRAY_SHAPEIT "$temp\n";
-		#$temp = '$k1'."\n";
-		$temp = 'gzip impute_out_*';
-		print ARRAY_SHAPEIT "$temp\n";
-		print ARRAY_SHAPEIT "wait\n";
+		print ARRAY_SHAPEIT 'echo ${SGE_TASK_ID}'."\n";
+		
 		$temp = 'k1'.'=`cat  '."$dirtemp/$rounded/$input_impute_jobids_gunzip".' |head -$SGE_TASK_ID |tail -1`';
 		print ARRAY_SHAPEIT "$temp\n";
-		$temp = 'mv impute_out_*.gz $k1';
+		$temp = 'cd $k1';
 		print ARRAY_SHAPEIT "$temp\n";
-		$temp = 'rm  -f $tmp/*';
+		
+		$temp = "$IMPUTE ".'`cat  '."$dirtemp/$rounded/$input_impute_jobids".' |head -${SGE_TASK_ID} |tail -1`'."\n";
 		print ARRAY_SHAPEIT "$temp\n";
-		$temp = 'rmdir --ignore-fail-on-non-empty $tmp';
+		$temp='gzip '.'`cat  '."$dirtemp/$rounded/$input_impute_jobids_gunzip".' |head -${SGE_TASK_ID} |tail -1`'.'/'.'`cat  '."$dirtemp/$rounded/$input_impute_jobids".' |head -${SGE_TASK_ID} |tail -1|rev|cut -f1 -d " "|rev`*';
 		print ARRAY_SHAPEIT "$temp\n";
-		#$temp = "cp $dirtemp/$rounded/ArrayJob_file_shapeit ".'`cat  '."$dirtemp/$rounded/$input_impute_jobids_gunzip".' |head -$SGE_TASK_ID |tail -1`'."/waiting.txt\n";
-		$temp = 'echo $SGE_TASK_ID >>'."$dirtemp/$rounded/impute_check_jobs\n";
+		$temp = 'echo ${SGE_TASK_ID} >>'."$dirtemp/$rounded/impute_check_jobs\n";
 		print ARRAY_SHAPEIT "$temp\n";
 		print ARRAY_SHAPEIT "date\n";
 		print ARRAY_SHAPEIT 'done'."\n";
@@ -1946,9 +1851,12 @@ if(uc($restart_impute) ne "POST")
 	#print ARRAY_SHAPEIT $impute;
 	close(ARRAY_SHAPEIT);
 	#close(ARRAY_IMPUTE);
-
 	if($counter_jobs >0)
 		{
+			if($CHECK_POINT_STOP eq "IMPUTE")
+			{
+				die "Selected option CHECK_POINT_STOP=IMPUTE.See manual for more details\n";
+			}
 			if($envr =~ m/SGE/i)
 			{
 				$sys="$QSUB $dirtemp/$rounded/ArrayJob_impute.csh &> $dirtemp/$rounded/jobid_impute";
@@ -2455,7 +2363,10 @@ else
 	print ARRAY_SHAPEIT 'done'."\n";
 }
 #submitting and storing the job id
-
+if($CHECK_POINT_STOP eq "POST")
+{
+	die "Selected option CHECK_POINT_STOP=POST.See manual for more details\n";
+}
 if($envr =~ m/SGE/i)
 {
 	$sys="$QSUB $dirtemp/$rounded/ArrayJob_post.csh > $dirtemp/$rounded/jobid_shapeit";
@@ -2582,7 +2493,7 @@ else
 	system("mkdir $dirtemp/$rounded/SHAPEIT_OUTPUT");
 	system("mv $dirtemp/$rounded/shapeit_jobs.tar.gz $dirtemp/$rounded/SHAPEIT_OUTPUT");
 	system("mkdir $dirtemp/$rounded/SNPS_NOTIN_REF");
-	system("mv $dirtemp/$rounded/excluded_no_hapmap_processed_beagle_input.tped.gz $dirtemp/$rounded/SNPS_NOTIN_REF");
+	system("mv $dirtemp/$rounded/excluded_no_hapmap_processed_beagle_input.tped.gz $dirtemp/$rounded/SNPS_NOTIN_REF/inputmarkers_notonRef.tped.gz");
 	#system("rm $dirtemp/$rounded/post_logfiles_sungrid/*");
 	#system("rm $dirtemp/$rounded/*");
 	#system("rmdir $dirtemp/$rounded/post_logfiles_sungrid");

@@ -61,7 +61,7 @@ echo " "
 echo " "
 
 #running the WHOLECHROMSOME EXAMPLE
-echo "running the whole chromosome example in the directory  $EZIMPUTER/test "
+echo "running the whole chromosome example in the directory  $EXAMPLES_DIR "
 echo "executing $SH $EZIMPUTER/examples/WHOLE_GENOME_CHROMOSOME_IMPUTATION_SGE_WRAPPER.sh  $EZIMPUTER $EXAMPLES_DIR $TOOLINFO"
 $SH $EZIMPUTER/examples/WHOLE_GENOME_CHROMOSOME_IMPUTATION_SGE_WRAPPER.sh  $EZIMPUTER $EXAMPLES_DIR $TOOLINFO
 if [ $? -ne 0 ]
@@ -75,7 +75,7 @@ echo " "
 echo " "
 
 #running the SMALL REGION IMPUTATION EXAMPLE
-echo "running the small region example in the directory  $EZIMPUTER/test "
+echo "running the small region example in the directory  $EXAMPLES_DIR "
 echo "executing $SH $EZIMPUTER/examples/SMALL_REGION_IMPUTATION_SGE_WRAPPER.sh   $EZIMPUTER $EXAMPLES_DIR $TOOLINFO"
 $SH $EZIMPUTER/examples/SMALL_REGION_IMPUTATION_SGE_WRAPPER.sh   $EZIMPUTER $EXAMPLES_DIR $TOOLINFO
 if [ $? -ne 0 ]
@@ -89,7 +89,7 @@ echo " "
 echo " "
 
 #running the SINGLE SAMPLE EXAMPLE
-echo "running the single sample example in the directory  $EZIMPUTER/test "
+echo "running the single sample example in the directory  $EXAMPLES_DIR "
 echo "executing $SH $EZIMPUTER/examples/SINGLE_SAMPLE_IMPUTATION_SGE_WRAPPER.sh   $EZIMPUTER $EXAMPLES_DIR $TOOLINFO"
 $SH $EZIMPUTER/examples/SINGLE_SAMPLE_IMPUTATION_SGE_WRAPPER.sh   $EZIMPUTER $EXAMPLES_DIR $TOOLINFO
 if [ $? -ne 0 ]
