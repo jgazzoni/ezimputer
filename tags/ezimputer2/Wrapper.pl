@@ -47,7 +47,6 @@ my $include_pop= $config{"INCLUDE_POP"};
 my $impute_ref= $config{"IMPUTE_REF"};
 my $pop= $config{"POPULATION"};
 
-my $ref_keyword = $config{"IMPUTEREF_VERSION"};
 my $geno = $config{"GENOTYPE_PERCENT_CUTOFF"};
 my $mind = $config{"SAMPLE_PERCENT_CUTOFF"};
 my $db=$config{"BEAGLE_REF_DB"};
@@ -61,12 +60,8 @@ my $shapeit_mem = $config{"SGE_SHAPEIT_MEM"};
 my $shapeit_queue = $config{"SGE_SHAPEIT_QUEUE"};
 my $impute_mem = $config{"SGE_IMPUTE_MEM"};
 my $impute_queue = $config{"SGE_IMPUTE_QUEUE"};
-my $localtempspace_shapeit = $config{"LOCALTEMP_SHAPEIT"};
-my $localtempspace_impute = $config{"LOCALTEMP_IMPUTE"};
 my $restart_impute = $config{"RESTART"};
-my $username = $config{"USERNAME"};
 my $shapit_only = $config{"SHAPEITONLY"};
-my $local_temp=$config{"LOCALTEMP"};
 my $shapeit_states_param=$config{"SHAPEIT_EXTRA_PARAM"};
 my $envr=$config{"ENVR"};
 my $pbs_option=$config{"PBS_PARAM"};
@@ -103,7 +98,6 @@ $lmaf=~ s/\t|\r|\n//g;
 $umaf=~ s/\t|\r|\n//g;
 $include_pop=~ s/\t|\r|\n//g;
 $impute_ref =~ s/\t|\r|\n//g;
-$ref_keyword =~ s/\t|\r|\n//g;
 $geno =~ s/\t|\r|\n//g;
 $mind =~ s/\t|\r|\n//g;
 $db=~ s/\t|\r|\n//g;
@@ -116,12 +110,8 @@ $shapeit_mem =~ s/\t|\r|\n//g;
 $shapeit_queue =~ s/\t|\r|\n//g;
 $impute_mem =~ s/\t|\r|\n//g;
 $impute_queue =~ s/\t|\r|\n//g;
-$localtempspace_shapeit =~ s/\t|\r|\n//g;
-$localtempspace_impute =~ s/\t|\r|\n//g;
 $restart_impute =~ s/\t|\r|\n//g;
-$username =~ s/\t|\r|\n//g;
 $shapit_only =~ s/\t|\r|\n//g;
-$local_temp=~ s/\t|\r|\n//g;
 $shapeit_states_param=~ s/\t|\r|\n//g;
 $envr=~ s/\t|\r|\n//g;
 $pbs_option=~ s/\t|\r|\n//g;
@@ -240,7 +230,6 @@ if($MODULES_NEEDED =~ m/QC_REQUIRED/)
 	}
 	print "PARAMETER FOR MODULE : QC_REQUIRED\n";
 	print "IMPUTE_REF: $impute_ref\n";
-	print "IMPUTEREF_VERSION: $ref_keyword\n"; 
 	print "GENOTYPE_PERCENT_CUTOFF: $geno\n"; 
 	print "SAMPLE_PERCENT_CUTOFF: $mind\n"; 
 	print "BEAGLE_REF_DB: $db\n";
@@ -294,14 +283,6 @@ if($MODULES_NEEDED =~ m/IMPUTE/)
 	{
 		$impute_queue="1-day";
 	}
-	if(not defined($localtempspace_shapeit) )
-	{
-		$localtempspace_shapeit="4G";
-	}
-	if(not defined($localtempspace_impute) )
-	{
-		$localtempspace_impute="1G";
-	}
 	if(not defined($restart_impute) )
 	{
 		$restart_impute="NO";
@@ -309,10 +290,6 @@ if($MODULES_NEEDED =~ m/IMPUTE/)
 	if(not defined($shapit_only) )
 	{
 		$shapit_only="NO";
-	}
-	if(not defined($local_temp) )
-	{
-		$local_temp="$IMP2_OUT_DIR/LOCAL_TEMP";
 	}
 	if(not defined($shapeit_states_param) )
 	{
@@ -348,12 +325,8 @@ if($MODULES_NEEDED =~ m/IMPUTE/)
 	print "SGE_SHAPEIT_QUEUE: $shapeit_queue\n"; 
 	print "SGE_IMPUTE_MEM: $impute_mem\n"; 
 	print "SGE_IMPUTE_QUEUE: $impute_queue\n"; 
-	print "LOCALTEMP_SHAPEIT: $localtempspace_shapeit\n"; 
-	print "LOCALTEMP_IMPUTE: $localtempspace_impute\n"; 
 	print "RESTART: $restart_impute\n"; 
-	print "USERNAME: $username\n"; 
 	print "SHAPEITONLY: $shapit_only\n"; 
-	print "LOCALTEMP: $local_temp\n";
 	print "SHAPEIT_EXTRA_PARAM: $shapeit_states_param\n";
 	print "ENVR: $envr\n";
 	if($ENVR =~ m/PBS/)
@@ -374,11 +347,7 @@ if($MODULES_NEEDED =~ m/IMPUTE/)
 		print "MODULE_NEEDED has QC_REQUIRED, so PARAMETER EMAIL cannot be empty\n";
 		$parameterflag++;
 	}
-	if(not defined($username) )
-	{
-		print "MODULE_NEEDED has QC_REQUIRED, so PARAMETER USERNAME_DB cannot be empty\n";
-		$parameterflag++;
-	}
+
 	
 }		
 
@@ -821,12 +790,8 @@ if($MODULES_NEEDED =~ m/IMPUTE/)
 	print WR_QC_RUN "SGE_SHAPEIT_QUEUE=$shapeit_queue\n"; 
 	print WR_QC_RUN "SGE_IMPUTE_MEM=$impute_mem\n"; 
 	print WR_QC_RUN "SGE_IMPUTE_QUEUE=$impute_queue\n"; 
-	print WR_QC_RUN "LOCALTEMP_SHAPEIT=$localtempspace_shapeit\n"; 
-	print WR_QC_RUN "LOCALTEMP_IMPUTE=$localtempspace_impute\n"; 
 	print WR_QC_RUN "RESTART=$restart_impute\n"; 
-	print WR_QC_RUN "USERNAME=$username\n"; 
 	print WR_QC_RUN "SHAPEITONLY=$shapit_only\n"; 
-	print WR_QC_RUN "LOCALTEMP=$local_temp\n";
 	print WR_QC_RUN "SHAPEIT_EXTRA_PARAM=$shapeit_states_param\n";
 	print WR_QC_RUN "ENVR=$envr\n";
 	if($ENVR =~ m/PBS/)

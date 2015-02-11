@@ -138,11 +138,17 @@ print "Number of Markers with no rsid : $num_nors\n";
 $num_db=0;
 #parsing through the dbsnp file
 open(DB,"gunzip -c $dbsnp_dir/$file1 |") or die " no file exists $file1\n";
+$num="";
 while($db=<DB>)
 {
 	chomp($db);
+	$db =~ s/\t\t//g;
 	@db=split("\t",$db);
-	if(exists($hash{$db[0]}))
+	if($num eq "")
+	{
+		$num=@db;
+	}
+	if(exists($hash{$db[0]}) && @db ==$num)
 	{
 		$db[1] =~ s/X/23/g;
 		$db[1] =~ s/Y/24/g;
