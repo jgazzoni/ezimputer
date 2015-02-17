@@ -60,6 +60,10 @@ while($line = <DOS>)
 {	
 	chomp($line);
 	@array = split(" ",$line);
+	if(length($array[3]) == 1 && $array[3] =~ m/A|T|G|C/ &&  $array[4] eq "0")
+	{
+		$array[4]=$array[3];
+	}
 	if(length($array[3]) == 1 && length($array[4]) == 1 && $array[4] =~ m/A|T|G|C/ && $array[3] =~ m/A|T|G|C/)
 	{
 		if($num_samp ==0)
